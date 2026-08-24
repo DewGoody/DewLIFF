@@ -348,21 +348,22 @@ export async function matchAndCompute(
     resultTitle: outcome.result.title,
     scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
   };
-  writeResultToLineKit(bUserId, {
-    ...lineKitPayloadBase,
-    axisMe: bAxisMe,
-    axisBuddy: bAxisBuddy,
-  }, pair.id).catch((e) => console.error('LineKit write-back failed (B):', e));
-  writeResultToLineKit(inviterId, {
-    ...lineKitPayloadBase,
-    axisMe: outcome.axisA,
-    axisBuddy: outcome.axisB,
-  }, pair.id).catch((e) => console.error('LineKit write-back failed (A):', e));
-
-  // Await both pushes before returning so Vercel doesn't kill the function early
+  // Await everything below before returning — on Vercel, work left running after the
+  // response is sent can be frozen mid-flight, so pushes and the LineKit write-back
+  // (which never throws on its own) all have to finish inside this function call.
   const [pushBResult, pushAResult] = await Promise.allSettled([
     pushMessage(bUserId, resultCard),
     pushMessage(inviterId, pushToA),
+    writeResultToLineKit(bUserId, {
+      ...lineKitPayloadBase,
+      axisMe: bAxisMe,
+      axisBuddy: bAxisBuddy,
+    }, pair.id).catch((e) => console.error('LineKit write-back failed (B):', e)),
+    writeResultToLineKit(inviterId, {
+      ...lineKitPayloadBase,
+      axisMe: outcome.axisA,
+      axisBuddy: outcome.axisB,
+    }, pair.id).catch((e) => console.error('LineKit write-back failed (A):', e)),
   ]);
 
   if (pushBResult.status === 'rejected') console.error('Push to B failed:', pushBResult.reason);

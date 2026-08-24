@@ -143,7 +143,10 @@ export async function submitSoloAnswers(
 
   // Also tell LineKit this player's result — server-to-server, doesn't touch
   // KimLIFF's own DB write or trust model, and must never break the response above.
-  writeResultToLineKit(userId, {
+  // Awaited (not fire-and-forget): on Vercel, work left running after the response
+  // is sent can be frozen mid-flight before the fetch ever completes — writeResultToLineKit
+  // never throws, so awaiting it costs a little latency but no reliability.
+  await writeResultToLineKit(userId, {
     source: 'buddy_quiz_solo',
     campaignId: session.campaign_id,
     sessionId,
