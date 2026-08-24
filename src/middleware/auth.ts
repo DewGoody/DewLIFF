@@ -6,6 +6,7 @@ import { db } from '../db/client.js';
 export const auth: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
+    console.error('[auth debug] no Authorization header on', req.path);
     next(new UnauthorizedError());
     return;
   }
@@ -15,6 +16,7 @@ export const auth: RequestHandler = async (req, _res, next) => {
   try {
     const profile = await verifyIdToken(idToken);
     req.userId = profile.sub;
+    console.error('[auth debug] verified ok, sub:', profile.sub);
 
     // Upsert user — fire and forget
     db()
@@ -32,6 +34,7 @@ export const auth: RequestHandler = async (req, _res, next) => {
 
     next();
   } catch (err) {
+    console.error('[auth debug] verifyIdToken failed:', err instanceof Error ? err.message : err);
     next(err instanceof UnauthorizedError ? err : new UnauthorizedError());
   }
 };
