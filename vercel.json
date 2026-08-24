@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "regions": ["sin1"],
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node",
+      "config": { "maxLambdaSize": "10mb" }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/api/webhook/(.*)", "dest": "/api/index.ts" },
+    { "src": "/api/(.*)", "dest": "/api/index.ts" },
+    { "src": "/quiz/(.*)", "dest": "/api/index.ts" },
+    { "src": "/healthz", "dest": "/api/index.ts" },
+    { "src": "/admin/assets/(.*)", "dest": "/public/admin-app/assets/$1" },
+    { "src": "/admin", "dest": "/public/admin-app/index.html" },
+    { "src": "/admin/(.*)", "dest": "/public/admin-app/index.html" },
+    { "src": "/liff-app/(.*)", "dest": "/public/liff-app/$1" },
+    { "src": "/liff-app", "dest": "/public/liff-app/index.html" },
+    { "src": "/(.*\\.(html|js|css|png|jpg|svg|ico))", "dest": "/public/$1" },
+    { "src": "/(.*)", "dest": "/public/liff-app/index.html" }
+  ],
+  "crons": [],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/liff-app",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/liff-app/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/version.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    }
+  ]
+}

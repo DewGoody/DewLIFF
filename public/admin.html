@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Config Playground — Buddy Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #FFFFFF; --text: #111111; --dim: #9B9B98; --dim2: #5C5C58;
+  --line: #E5E5E3; --line2: #F0F0EE; --elevated: #F7F7F5;
+  --sans: 'DM Sans', 'Noto Sans Thai', sans-serif;
+  --thai: 'Noto Sans Thai', 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --red: #E63B2E; --blue: #2563EB; --green: #16A34A; --yellow: #F5B800;
+}
+body { font-family: var(--thai); color: var(--text); background: var(--bg); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+input, textarea, select, button { font-family: inherit; font-size: inherit; }
+button { cursor: pointer; }
+.mono { font-family: var(--mono); }
+.label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); font-weight: 500; }
+.label-lg { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--dim2); font-weight: 500; }
+
+/* ── Header ── */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 100; background: var(--bg);
+}
+.app-header .left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.app-header .host-label { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: .06em; white-space: nowrap; }
+.app-header .title { font-weight: 700; font-size: 16px; white-space: nowrap; }
+.app-header .badge {
+  font-family: var(--mono); font-size: 10px; background: var(--elevated);
+  border: 1px solid var(--line); padding: 2px 8px; border-radius: 4px; color: var(--dim2);
+  white-space: nowrap;
+}
+.app-header .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Pill toggle */
+.pill-group { display: flex; background: var(--elevated); border-radius: 8px; padding: 3px; gap: 2px; }
+.pill-btn {
+  padding: 6px 16px; border-radius: 6px; border: none; background: none;
+  font-size: 13px; font-weight: 600; color: var(--dim2); transition: all .15s;
+}
+.pill-btn.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+/* Header buttons */
+.hdr-btn {
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text);
+  transition: all .12s; white-space: nowrap;
+}
+.hdr-btn:hover { background: var(--elevated); }
+.hdr-btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.hdr-btn.primary:hover { opacity: .85; }
+.hdr-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Setup Layout ── */
+#app { display: none; min-height: calc(100vh - 56px); }
+#setup-view { display: flex; width: 100%; }
+#sidebar {
+  width: 280px; min-width: 280px; background: var(--elevated); border-right: 1px solid var(--line);
+  padding: 24px 20px; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+}
+#main { flex: 1; padding: 32px 40px; overflow-y: auto; max-width: 960px; }
+
+/* ── Sidebar ── */
+.sb-section { margin-bottom: 28px; }
+.sb-title {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--dim); margin-bottom: 12px; font-weight: 500;
+}
+.count-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.count-box {
+  flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 8px; text-align: center;
+}
+.count-box .num { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.count-box .lbl {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--dim); margin-top: 4px;
+}
+
+/* Pair matrix */
+.matrix { margin-bottom: 16px; }
+.matrix table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.matrix th, .matrix td { padding: 5px 6px; text-align: center; }
+.matrix th {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--dim);
+}
+.matrix .dot-filled { color: var(--green); }
+.matrix .dot-empty { color: var(--line); }
+
+/* Validate */
+.validate-ok { color: var(--green); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.validate-err { color: var(--red); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.validate-list { font-size: 12px; color: var(--red); margin-top: 6px; padding-left: 18px; line-height: 1.7; }
+.sb-play-btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: var(--text); color: var(--bg); font-size: 14px; font-weight: 700;
+  margin-top: 20px; transition: opacity .12s;
+}
+.sb-play-btn:hover { opacity: .85; }
+
+/* ── Section headings ── */
+.section { margin-bottom: 48px; }
+.section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.section-num {
+  font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 500;
+  background: var(--elevated); padding: 2px 8px; border-radius: 4px;
+}
+.section-title { font-size: 18px; font-weight: 700; }
+.section-desc { font-size: 13px; color: var(--dim2); margin-bottom: 20px; line-height: 1.6; }
+
+/* ── Axes ── */
+.axes-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; }
+.axis-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 18px; min-width: 200px; transition: border-color .12s;
+}
+.axis-card:hover { border-color: var(--dim); }
+.axis-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.axis-label-input {
+  border: none; background: none; font-size: 15px; font-weight: 600; width: 120px;
+  outline: none; color: var(--text);
+}
+.axis-id { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 1px; }
+.axis-del {
+  border: none; background: none; color: var(--dim); font-size: 16px;
+  margin-left: auto; width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.axis-del:hover { color: var(--red); background: #FEE2E2; }
+.add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 2px dashed var(--line); border-radius: 12px; padding: 14px 18px;
+  background: none; color: var(--dim2); font-size: 13px; font-weight: 500;
+  min-width: 160px; transition: all .12s;
+}
+.add-btn:hover { border-color: var(--dim); color: var(--text); background: var(--elevated); }
+
+/* ── Questions ── */
+.q-card {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px 24px; margin-bottom: 16px; transition: border-color .12s;
+}
+.q-card:hover { border-color: #D0D0CE; }
+.q-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.q-num {
+  font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 500;
+  white-space: nowrap; background: var(--elevated); padding: 2px 8px; border-radius: 4px;
+}
+.q-text-input {
+  flex: 1; border: none; background: none; font-size: 14px; font-weight: 500;
+  outline: none; border-bottom: 1px solid transparent; color: var(--text);
+  padding-bottom: 2px;
+}
+.q-text-input:focus { border-bottom-color: var(--line); }
+.q-charcount { font-family: var(--mono); font-size: 10px; color: var(--dim); white-space: nowrap; }
+.q-scored {
+  font-family: var(--mono); font-size: 9px; padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap; font-weight: 500;
+}
+.q-scored.yes { background: #DCFCE7; color: var(--green); }
+.q-scored.no { background: #FEE2E2; color: var(--red); }
+.q-actions { display: flex; gap: 4px; }
+.q-actions button {
+  width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); font-size: 13px; color: var(--dim2); display: flex;
+  align-items: center; justify-content: center; transition: all .12s;
+}
+.q-actions button:hover { background: var(--elevated); border-color: var(--dim); }
+.q-actions button:disabled { opacity: .3; cursor: not-allowed; }
+
+/* Options — vertical axis scores */
+.opt-block {
+  padding: 12px 0; border-top: 1px solid var(--line2);
+}
+.opt-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.opt-radio {
+  width: 16px; height: 16px; border: 2px solid var(--line); border-radius: 50%; flex-shrink: 0;
+}
+.opt-label-input {
+  flex: 1; border: none; background: none; font-size: 13px; outline: none;
+  min-width: 0; color: var(--text);
+}
+.opt-label-input:focus { border-bottom: 1px solid var(--line); }
+.opt-del {
+  border: none; background: none; color: var(--dim); font-size: 14px;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; transition: all .12s;
+}
+.opt-del:hover { color: var(--red); background: #FEE2E2; }
+
+/* Score rows (one per axis, indented under option) */
+.opt-scores-vertical { padding-left: 26px; }
+.score-row {
+  display: flex; align-items: center; gap: 8px; height: 26px;
+}
+.score-row .axis-name {
+  font-family: var(--mono); font-size: 10px; color: var(--dim2); width: 72px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 4px;
+}
+.score-row .axis-name .mini-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.score-dots { display: flex; gap: 4px; align-items: center; }
+.score-dot {
+  width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line);
+  cursor: pointer; transition: all .1s; flex-shrink: 0;
+}
+.score-dot.active { border-color: transparent; }
+.score-dot:hover { transform: scale(1.3); }
+.score-val {
+  font-family: var(--mono); font-size: 10px; color: var(--dim); width: 24px;
+  text-align: right;
+}
+
+.add-opt-btn {
+  border: none; background: none; color: var(--dim2); font-size: 12px;
+  padding: 8px 0; font-weight: 500; transition: color .12s;
+}
+.add-opt-btn:hover { color: var(--text); }
+
+/* ── Results ── */
+.results-layout { display: flex; gap: 24px; }
+.results-grid { flex: 1; }
+.results-editor {
+  width: 340px; min-width: 340px; background: var(--elevated);
+  border-radius: 12px; padding: 24px; position: sticky; top: 100px;
+  align-self: flex-start;
+}
+.res-table { width: 100%; border-collapse: collapse; }
+.res-table th, .res-table td { padding: 6px 8px; text-align: center; font-size: 12px; }
+.res-table th {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--dim);
+}
+.res-table .axis-header { display: flex; align-items: center; gap: 4px; justify-content: center; }
+.res-cell-btn {
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  background: var(--bg); font-size: 11px; width: 100%; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;
+  transition: all .12s;
+}
+.res-cell-btn:hover { background: var(--elevated); border-color: var(--dim); }
+.res-cell-btn.active { border-color: var(--text); background: var(--elevated); font-weight: 600; }
+.res-cell-btn.empty { color: var(--dim); }
+.res-editor-label {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--dim); margin-bottom: 6px; font-weight: 500;
+}
+.res-input {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  font-size: 14px; background: var(--bg); margin-bottom: 16px; outline: none;
+  color: var(--text);
+}
+.res-input:focus { border-color: var(--dim); }
+.res-textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  font-size: 13px; background: var(--bg); margin-bottom: 16px; outline: none;
+  min-height: 80px; resize: vertical; font-family: var(--thai); color: var(--text);
+}
+.res-textarea:focus { border-color: var(--dim); }
+.res-dropzone {
+  border: 2px dashed var(--line); border-radius: 8px; padding: 20px;
+  text-align: center; color: var(--dim); font-size: 12px; margin-bottom: 16px;
+}
+.fallback-note {
+  font-size: 12px; color: var(--dim2); margin-top: 20px; padding: 12px 16px;
+  background: var(--elevated); border-radius: 10px; border: 1px solid var(--line2);
+}
+
+/* ── Accordion ── */
+.accordion { border-top: 1px solid var(--line); margin-top: 40px; }
+.acc-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 0; border: none; background: none; font-size: 16px; font-weight: 700;
+  color: var(--text); text-align: left;
+}
+.acc-toggle .chevron { transition: transform .2s; font-size: 18px; color: var(--dim); }
+.acc-toggle.open .chevron { transform: rotate(180deg); }
+.acc-body { display: none; padding-bottom: 20px; }
+.acc-body.open { display: block; }
+
+.adv-section { margin-bottom: 20px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.adv-header {
+  display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+  background: var(--elevated); cursor: pointer; user-select: none;
+  transition: background .12s;
+}
+.adv-header:hover { background: #F0F0EE; }
+.adv-header .mark { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.adv-header .atitle { font-weight: 700; font-size: 14px; }
+.adv-header .ahint { font-size: 12px; color: var(--dim2); margin-left: auto; }
+.adv-header .achevron { transition: transform .2s; color: var(--dim); }
+.adv-header.open .achevron { transform: rotate(180deg); }
+.adv-body { display: none; }
+.adv-body.open { display: block; }
+.adv-group-label {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--dim); padding: 14px 18px 6px; font-weight: 500;
+}
+.adv-row {
+  display: grid; grid-template-columns: 180px 1fr 1fr; gap: 8px;
+  padding: 8px 18px; align-items: center; border-top: 1px solid var(--line2);
+}
+.adv-row .akey { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.adv-row input[type="text"], .adv-row input[type="number"] {
+  width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px;
+  font-size: 13px; outline: none; background: var(--bg); color: var(--text);
+}
+.adv-row input:focus { border-color: var(--dim); }
+.adv-row .aeffect { font-size: 11px; color: var(--dim); }
+.color-field { display: flex; align-items: center; gap: 8px; }
+.color-swatch {
+  width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--line);
+  flex-shrink: 0; cursor: pointer; position: relative;
+}
+.color-swatch input[type="color"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.toggle-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: all .15s; user-select: none;
+}
+.toggle-pill.on { background: #DCFCE7; color: var(--green); }
+.toggle-pill.off { background: #FEE2E2; color: var(--red); }
+.unit-label { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-left: 4px; }
+
+/* ── Play Mode ── */
+#play-view { display: none; }
+#play-view.active { display: flex; }
+.play-layout {
+  display: flex; gap: 32px; padding: 32px; justify-content: center;
+  width: 100%; min-height: calc(100vh - 56px);
+}
+.phone-frame {
+  width: 340px; min-width: 340px; height: 700px; border-radius: 32px;
+  border: 3px solid #222; overflow: hidden; position: relative;
+  display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,.12);
+}
+.phone-screen {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 32px 24px; overflow-y: auto;
+  text-align: center; position: relative;
+}
+.phone-screen .ptitle { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.phone-screen .pbody { font-size: 14px; margin-bottom: 24px; opacity: .8; }
+.phone-screen .pbtn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; margin-bottom: 10px; cursor: pointer;
+  transition: opacity .12s;
+}
+.phone-screen .pbtn:hover { opacity: .85; }
+.phone-screen .pbtn.secondary { background: transparent !important; border: 2px solid; font-size: 13px; }
+.phone-progress { width: 100%; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; margin-bottom: 16px; }
+.phone-progress-bar { height: 100%; border-radius: 2px; transition: width .3s; }
+.phone-counter { font-family: var(--mono); font-size: 11px; margin-bottom: 12px; opacity: .7; }
+.phone-q-text { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+.phone-opt-btn {
+  width: 100%; padding: 14px 16px; border: 2px solid rgba(255,255,255,.2);
+  border-radius: 12px; background: rgba(255,255,255,.08); font-size: 14px;
+  text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s;
+}
+.phone-opt-btn:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.4); }
+.wait-dots { font-size: 32px; margin-bottom: 16px; }
+@keyframes blink { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+.wait-dots span { animation: blink 1.4s infinite; display: inline-block; }
+.wait-dots span:nth-child(2) { animation-delay: .2s; }
+.wait-dots span:nth-child(3) { animation-delay: .4s; }
+.res-preview-img {
+  width: 120px; height: 120px; border-radius: 16px; background: rgba(255,255,255,.1);
+  margin-bottom: 16px; display: flex; align-items: center; justify-content: center; font-size: 40px;
+}
+.res-eyebrow { font-size: 12px; opacity: .7; margin-bottom: 4px; }
+.res-title-play { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.res-body-play { font-size: 13px; opacity: .8; margin-bottom: 16px; }
+.axis-tags { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+.axis-tag { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+/* Score panel */
+.score-panel { width: 420px; min-width: 420px; }
+.sp-section { background: var(--elevated); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.sp-title {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--dim); margin-bottom: 12px; font-weight: 500;
+}
+.sp-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sp-bar-label { font-size: 12px; width: 80px; display: flex; align-items: center; gap: 4px; }
+.sp-bar-label .mini-dot { width: 8px; height: 8px; border-radius: 50%; }
+.sp-bar-track { flex: 1; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.sp-bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+.sp-bar-val { font-family: var(--mono); font-size: 11px; color: var(--dim2); width: 24px; text-align: right; }
+.sp-dominant {
+  font-size: 13px; font-weight: 600; margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.sp-result { font-size: 14px; font-weight: 600; }
+.sp-result-code { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.sp-result-body { font-size: 13px; color: var(--dim2); margin-top: 4px; }
+.sp-placeholder { color: var(--dim); font-size: 13px; font-style: italic; }
+
+/* ── JSON Drawer ── */
+#json-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 200; backdrop-filter: blur(2px);
+}
+#json-overlay.open { display: block; }
+#json-drawer {
+  position: fixed; top: 0; right: 0; width: 520px; height: 100vh;
+  background: var(--bg); border-left: 1px solid var(--line);
+  z-index: 201; display: none; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,.08);
+}
+#json-drawer.open { display: flex; }
+.drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--line);
+}
+.drawer-header .dtitle { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.drawer-close {
+  border: none; background: none; font-size: 20px; color: var(--dim2);
+  cursor: pointer; width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.drawer-close:hover { background: var(--elevated); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.drawer-body pre {
+  font-family: var(--mono); font-size: 12px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* ── Import input ── */
+#import-input { display: none; }
+
+/* ── Campaign Selector ── */
+#campaign-selector { display: none; }
+#campaign-selector.visible { display: block !important; }
+.camp-list { display: flex; flex-direction: column; gap: 12px; }
+.camp-card {
+  display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+  border: 1px solid var(--line); background: var(--bg); border-radius: 14px;
+  text-align: left; width: 100%; cursor: pointer; transition: all .15s;
+  position: relative;
+}
+.camp-card:hover { border-color: var(--text); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.camp-card .camp-icon {
+  width: 44px; height: 44px; border-radius: 12px; display: flex;
+  align-items: center; justify-content: center; font-size: 20px;
+  background: var(--elevated); flex-shrink: 0;
+}
+.camp-card .camp-info { flex: 1; min-width: 0; }
+.camp-card .camp-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.camp-card .camp-meta {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.camp-card .camp-meta-item {
+  font-family: var(--mono); font-size: 11px; color: var(--dim);
+}
+.camp-card .camp-status {
+  font-family: var(--mono); font-size: 10px; padding: 3px 10px; border-radius: 99px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+}
+.camp-card .camp-arrow {
+  font-size: 18px; color: var(--dim); flex-shrink: 0;
+  transition: transform .12s;
+}
+.camp-card:hover .camp-arrow { transform: translateX(3px); color: var(--text); }
+.camp-empty {
+  text-align: center; padding: 80px 24px; color: var(--dim); font-size: 15px;
+}
+
+/* ── Create Dialog ── */
+.dialog-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 300; backdrop-filter: blur(2px);
+}
+.dialog-box {
+  display: none; position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); width: 440px; background: #fff;
+  border: 1px solid var(--line); border-radius: 16px; padding: 32px;
+  z-index: 301; box-shadow: 0 16px 48px rgba(0,0,0,.12);
+}
+.dialog-box h3 { font-size: 18px; font-weight: 700; margin: 0 0 24px; }
+.dialog-field { margin-bottom: 20px; }
+.dialog-field label { display: block; margin-bottom: 6px; }
+.dialog-input {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--line);
+  border-radius: 10px; font-size: 14px; outline: none; color: var(--text);
+  transition: border-color .12s;
+}
+.dialog-input:focus { border-color: var(--dim); }
+.dialog-hint { font-size: 11px; color: var(--dim); margin-top: 6px; }
+.dialog-radios { display: flex; gap: 8px; }
+.dialog-radio-label {
+  flex: 1; display: flex; align-items: center; gap: 8px; padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+  transition: all .12s; font-size: 14px;
+}
+.dialog-radio-label:hover { border-color: var(--dim); background: var(--elevated); }
+.dialog-radio-label input:checked + span { font-weight: 600; }
+.dialog-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
+.dialog-error {
+  display: none; margin-top: 12px; padding: 10px 14px; background: #FEF2F2;
+  color: #C00; border-radius: 8px; font-size: 13px;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+  background: #111; color: #fff; border-radius: 10px; font-size: 13px;
+  font-weight: 500; z-index: 999; transition: opacity .3s; opacity: 0;
+  pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,.2);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ -->
+<!-- Campaign Selector Page            -->
+<!-- ══════════════════════════════════ -->
+<div id="campaign-selector">
+  <div class="app-header">
+    <div class="left">
+      <span class="host-label">Krob &middot; Host Console</span>
+      <span class="title">Campaigns</span>
+    </div>
+    <div class="right">
+      <button class="hdr-btn primary" onclick="showCreateDialog()">+ สร้าง Campaign</button>
+    </div>
+  </div>
+  <div style="max-width:720px;margin:40px auto;padding:0 24px">
+    <div id="campaign-list" class="camp-list"></div>
+    <div id="campaign-empty" class="camp-empty" style="display:none">
+      ยังไม่มี campaign &mdash; กด <strong>+ สร้าง Campaign</strong> เพื่อเริ่มต้น
+    </div>
+  </div>
+</div>
+
+<!-- Create Campaign Dialog -->
+<div id="create-overlay" class="dialog-overlay" onclick="hideCreateDialog()"></div>
+<div id="create-dialog" class="dialog-box">
+  <h3>สร้าง Campaign ใหม่</h3>
+  <div class="dialog-field">
+    <label class="label">Campaign ID</label>
+    <input id="new-camp-id" class="dialog-input" placeholder="เช่น mbti_demo" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+    <div class="dialog-hint">ตัวเล็ก ตัวเลข _ เท่านั้น (ใช้เป็น URL)</div>
+  </div>
+  <div class="dialog-field">
+    <label class="label">โหมด</label>
+    <div class="dialog-radios">
+      <label class="dialog-radio-label">
+        <input type="radio" name="new-mode" value="pair" checked> <span>จับคู่ (Pair)</span>
+      </label>
+      <label class="dialog-radio-label">
+        <input type="radio" name="new-mode" value="solo"> <span>เดี่ยว (Solo/MBTI)</span>
+      </label>
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="hdr-btn" onclick="hideCreateDialog()">ยกเลิก</button>
+    <button class="hdr-btn primary" id="create-btn" onclick="createCampaign()">สร้าง</button>
+  </div>
+  <div id="create-error" class="dialog-error"></div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- Editor Header                     -->
+<!-- ══════════════════════════════════ -->
+<div id="editor-header" class="app-header" style="display:none">
+  <div class="left">
+    <button class="hdr-btn" onclick="backToList()" title="กลับ">&larr;</button>
+    <span class="host-label">Krob &middot; Host Console</span>
+    <span class="title">Config Playground</span>
+    <span class="badge mono" id="campaign-id"></span>
+    <span class="badge mono" id="campaign-mode-badge"></span>
+    <span class="badge mono" id="campaign-status-badge"></span>
+  </div>
+  <div class="right">
+    <div class="pill-group">
+      <button class="pill-btn active" onclick="setMode('setup')">&#9881; ตั้งค่า</button>
+      <button class="pill-btn" onclick="setMode('play')">&#9654; ลองเล่น</button>
+    </div>
+    <button class="hdr-btn" onclick="openJSON()">&#123;&#125; JSON</button>
+    <button class="hdr-btn" onclick="exportJSON()">&#8595; Export</button>
+    <button class="hdr-btn" onclick="document.getElementById('import-input').click()">&#8593; Import</button>
+    <input type="file" id="import-input" accept=".json" onchange="importJSON(event)">
+    <button class="hdr-btn primary" id="save-btn" onclick="saveToAPI()">Save</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- App (Setup + Play)                -->
+<!-- ══════════════════════════════════ -->
+<div id="app">
+  <div id="setup-view">
+    <div id="sidebar"></div>
+    <div id="main"></div>
+  </div>
+  <div id="play-view"></div>
+</div>
+
+<!-- JSON Drawer -->
+<div id="json-overlay" onclick="closeJSON()"></div>
+<div id="json-drawer">
+  <div class="drawer-header">
+    <span class="dtitle">campaign.json</span>
+    <button class="drawer-close" onclick="closeJSON()">&times;</button>
+  </div>
+  <div class="drawer-body"><pre id="json-pre"></pre></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Data ──
+const PALETTE = ['#E63B2E','#2563EB','#16A34A','#F5B800','#8B5CF6','#EC4899'];
+
+let state = {
+  axes: [
+    { id:'energy', label:'สายลุย', color:'#E63B2E' },
+    { id:'calm', label:'สายนิ่ง', color:'#2563EB' },
+    { id:'detail', label:'สายละเอียด', color:'#16A34A' }
+  ],
+  questions: [
+    { text:'เช้าวันจันทร์ งานกองอยู่เต็มโต๊ะ คุณทำอะไรก่อน', options:[
+      { label:'ลุยต่อทันที ไม่ต้องคิดมาก', scores:{energy:2} },
+      { label:'หากาแฟก่อน ค่อยเริ่ม', scores:{calm:2} },
+      { label:'ไล่ดูตารางแล้วจัดลำดับ', scores:{detail:2} }
+    ]},
+    { text:'งานด่วนเข้ามาตอนห้าโมงเย็นวันศุกร์ คุณทำยังไง', options:[
+      { label:'ลุยเลย เดี๋ยวเสร็จ', scores:{energy:2} },
+      { label:'เลื่อนไปเช้าวันจันทร์', scores:{calm:2} },
+      { label:'ขอดูสโคปก่อนค่อยตอบ', scores:{detail:2} }
+    ]},
+    { text:'เจอปัญหาที่ไม่เคยเจอมาก่อน', options:[
+      { label:'ลองผิดลองถูกไปเรื่อย', scores:{energy:2} },
+      { label:'ถามคนที่เคยทำก่อน', scores:{calm:1,detail:1} },
+      { label:'อ่านเอกสารให้จบก่อนลงมือ', scores:{detail:2} }
+    ]},
+    { text:'ประชุมยาวเกินเวลาไปครึ่งชั่วโมง', options:[
+      { label:'ขอสรุปแล้วจบเลย', scores:{energy:2} },
+      { label:'นั่งฟังจนจบ ไม่ขัด', scores:{calm:2} },
+      { label:'จดประเด็นที่ยังค้างไว้', scores:{detail:2} }
+    ]},
+    { text:'ถ้าต้องพรีเซนต์งานพรุ่งนี้ คุณอยากให้คู่หูทำอะไร', options:[
+      { label:'ซ้อมกับเราสองรอบ', scores:{energy:2} },
+      { label:'นั่งฟังแล้วให้กำลังใจ', scores:{calm:2} },
+      { label:'ช่วยเช็กสไลด์รอบสุดท้าย', scores:{detail:2} }
+    ]}
+  ],
+  results: {
+    'calm|energy': { title:'คู่หูสายคันเร่งกับเบรก', body:'คนหนึ่งดันให้ไปข้างหน้า อีกคนคอยดึงให้อยู่กับความจริง' },
+    'energy|energy': { title:'คู่หูสายไฟลุก', body:'สองคนนี้เจอกันเมื่อไหร่เป็นได้เรื่อง งานเสร็จเร็วจนคนอื่นตามไม่ทัน' },
+    'detail|energy': { title:'คู่หูสายลุยมีแผน', body:'คนหนึ่งออกตัวก่อน อีกคนกางแผนตามทัน' },
+    'calm|calm': { title:'คู่หูสายนิ่งคูณสอง', body:'ไม่มีอะไรทำให้แตกตื่นได้ งานอาจช้าหน่อยแต่ไม่เคยพัง' },
+    'calm|detail': { title:'คู่หูสายนิ่งลึก', body:'คิดเยอะทั้งคู่ แต่คิดคนละมุม พอมารวมกันเลยได้งานที่รอบคอบ' },
+    'detail|detail': { title:'คู่หูสายละเอียดยิบ', body:'งานที่ออกจากมือสองคนนี้แทบไม่ต้องตรวจซ้ำ' }
+  },
+  fallback: { title:'คู่หูสายกลาง', body:'ไม่มีใครสุดทางไหน เลยปรับเข้าหากันได้ตลอด' },
+  config: {
+    brand: { name:'คู่หูสายไหน', logo_url:'', primary:'#FF3D8B', surface:'#1B1430', on_surface:'#FFF3E4' },
+    copy: {
+      intro_title:'คู่หูสายไหน', intro_body:'ตอบ 5 ข้อ แล้วส่งให้เพื่อนร่วมงานตอบ',
+      intro_cta:'เริ่มตอบ', demo_cta:'ลองกับคู่หูตัวอย่าง',
+      question_counter:'ข้อ {current} จาก {total}',
+      invited_title:'{inviter} ชวนคุณมาตอบ', invited_cta:'ตอบเลย',
+      share_title:'ส่งให้คู่หูตอบ', share_cta:'เลือกเพื่อนแล้วส่ง',
+      waiting_title:'รอคู่หูตอบอยู่', waiting_close:'ปิดหน้าต่าง',
+      result_eyebrow:'คุณสองคนคือ', result_share_cta:'อวดผลให้คนอื่น',
+      friend_gate_title:'เพิ่มเพื่อนก่อนดูผล', expired_title:'คำเชิญหมดอายุแล้ว',
+      limit_title:'วันนี้ครบโควตาแล้ว',
+      chat_trigger_enabled:'true',
+      chat_trigger_text:'✨ ฉันเล่นควิซเสร็จแล้ว ดูผลลัพธ์ให้หน่อย!'
+    },
+    rules: { invite_ttl_hours:48, max_pairs_per_user_per_day:5, require_friend:true, allow_self_pair:false },
+    messages: {
+      invite_title:'{inviter} ชวนคุณตอบควิซคู่หู', invite_cta:'ตอบควิซ',
+      partner_done_title:'คู่หูตอบแล้ว มาดูผลกัน'
+    }
+  }
+};
+
+const SECTIONS = [
+  { id:'brand', mark:'01', title:'Brand', hint:'ชื่อ · โลโก้ · สี', groups:[
+    { label:'ตัวตนแบรนด์', rows:[
+      { path:'brand.name', type:'text', effect:'ชื่อแคมเปญในหน้า Intro และหัว Flex Message' },
+      { path:'brand.logo_url', type:'text', effect:'โลโก้มุมบนของหน้า Intro — เว้นว่างได้' }
+    ]},
+    { label:'สี 3 ตัวที่คุมทั้งระบบ', rows:[
+      { path:'brand.primary', type:'color', effect:'ปุ่ม CTA ทุกปุ่ม · progress bar · ชื่อผลลัพธ์ · ปุ่มใน Flex Message' },
+      { path:'brand.surface', type:'color', effect:'พื้นหลังทุกหน้าใน LIFF' },
+      { path:'brand.on_surface', type:'color', effect:'ตัวอักษรทั้งหมดที่วางบนพื้นหลัง' }
+    ]}
+  ]},
+  { id:'copy', mark:'02', title:'Copy', hint:'ข้อความทุกหน้าจอ', groups:[
+    { label:'Intro', rows:[
+      { path:'copy.intro_title', type:'text', effect:'หัวข้อใหญ่หน้าแรก' },
+      { path:'copy.intro_body', type:'text', effect:'คำอธิบายใต้หัวข้อ' },
+      { path:'copy.intro_cta', type:'text', effect:'ปุ่มเริ่มเกม' },
+      { path:'copy.demo_cta', type:'text', effect:'ปุ่มลองเล่นกับคู่หูตัวอย่าง' }
+    ]},
+    { label:'Question', rows:[
+      { path:'copy.question_counter', type:'text', effect:'ตัวนับบนหน้าคำถาม — ใช้ {current} / {total}' }
+    ]},
+    { label:'Invite · Share · Waiting', rows:[
+      { path:'copy.invited_title', type:'text', effect:'หน้าที่ B เห็นตอนเปิดลิงก์ — ใช้ {inviter}' },
+      { path:'copy.invited_cta', type:'text', effect:'ปุ่มเริ่มตอบของ B' },
+      { path:'copy.share_title', type:'text', effect:'หน้า Share หลัง A ตอบครบ' },
+      { path:'copy.share_cta', type:'text', effect:'ปุ่มเปิด shareTargetPicker' },
+      { path:'copy.waiting_title', type:'text', effect:'หน้ารอคู่หูตอบ' },
+      { path:'copy.waiting_close', type:'text', effect:'ปุ่มปิดหน้าต่าง' }
+    ]},
+    { label:'Result', rows:[
+      { path:'copy.result_eyebrow', type:'text', effect:'บรรทัดเล็กเหนือชื่อผลลัพธ์' },
+      { path:'copy.result_share_cta', type:'text', effect:'ปุ่มแชร์ผลลัพธ์' }
+    ]},
+    { label:'Gate · Error', rows:[
+      { path:'copy.friend_gate_title', type:'text', effect:'bottom sheet ที่กั้นก่อน add friend' },
+      { path:'copy.expired_title', type:'text', effect:'HTTP 410 — token หมดอายุ' },
+      { path:'copy.limit_title', type:'text', effect:'HTTP 409 — เกินโควตาต่อวัน' }
+    ]}
+  ]},
+  { id:'rules', mark:'03', title:'Rules', hint:'TTL · โควตา · friend gate', groups:[
+    { label:'backend บังคับใช้ — LIFF ไม่เห็นค่าเหล่านี้', rows:[
+      { path:'rules.invite_ttl_hours', type:'number', unit:'ชม.', effect:'เลยเวลานี้ B เปิดลิงก์จะเจอหน้า "คำเชิญหมดอายุ"' },
+      { path:'rules.max_pairs_per_user_per_day', type:'number', unit:'คู่/วัน', effect:'เกินโควตาจะเจอหน้า "วันนี้ครบโควตาแล้ว"' },
+      { path:'rules.require_friend', type:'bool', effect:'สวิตช์ที่ทำให้ได้ follower — เปิด = ต้อง add friend ก่อนดูผล' },
+      { path:'rules.allow_self_pair', type:'bool', effect:'ปิดไว้ = ส่งลิงก์ให้ตัวเองแล้วเจอหน้า "จับคู่กับตัวเองไม่ได้"' }
+    ]}
+  ]},
+  { id:'messages', mark:'04', title:'Messages', hint:'ข้อความใน LINE chat', groups:[
+    { label:'invite — Flex ที่ A ส่งหา B', rows:[
+      { path:'messages.invite_title', type:'text', effect:'หัวการ์ดใน chat ของ B' },
+      { path:'messages.invite_cta', type:'text', effect:'ปุ่มบนการ์ด → เปิด LIFF พร้อม token' }
+    ]},
+    { label:'partner_done — push กลับหา A', rows:[
+      { path:'messages.partner_done_title', type:'text', effect:'กลไกดึงคนกลับมาดูผล — ข้อความนี้ต้องน่ากด' }
+    ]}
+  ]},
+  { id:'chat_trigger', mark:'05', title:'Chat Trigger', hint:'ส่งผลลัพธ์เข้า chat อัตโนมัติ', groups:[
+    { label:'เล่นเสร็จ → ส่งข้อความเข้า chat แทน user → bot ตอบ Flex Card ผลลัพธ์ (ฟรี)', rows:[
+      { path:'copy.chat_trigger_enabled', type:'bool', effect:'เปิด = เล่นเสร็จแล้วส่งข้อความ+ผลลัพธ์เข้า chat อัตโนมัติ · ปิด = แสดงผลบน LIFF อย่างเดียว' },
+      { path:'copy.chat_trigger_text', type:'text', effect:'ข้อความที่ user เห็นใน chat ก่อน bot ตอบ Flex Card ผลลัพธ์กลับ' }
+    ]}
+  ]}
+];
+
+// ── Helpers ──
+const pairKey = (a,b) => [a,b].sort().join('|');
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function getByPath(obj, path) {
+  return path.split('.').reduce((o,k) => o && o[k], obj);
+}
+function setByPath(obj, path, val) {
+  const parts = path.split('.');
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+  o[parts[parts.length-1]] = val;
+}
+
+function scoreAnswers(questions, axes, answers) {
+  const t = {};
+  axes.forEach(a => t[a.id] = 0);
+  answers.forEach((oi, qi) => {
+    if (oi === undefined) return;
+    const o = questions[qi]?.options[oi];
+    if (!o) return;
+    Object.entries(o.scores).forEach(([k,v]) => { t[k] = (t[k]||0) + v; });
+  });
+  return t;
+}
+function topAxis(axes, score) {
+  let best = null;
+  axes.forEach(a => { if (!best || (score[a.id]||0) > (score[best]||0)) best = a.id; });
+  return (score[best]||0) > 0 ? best : null;
+}
+
+// ── Selected result pair ──
+let selectedPair = null;
+
+// ── Mode ──
+let currentMode = 'setup';
+function setMode(m) {
+  currentMode = m;
+  document.querySelectorAll('#editor-header .pill-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&m==='setup')||(i===1&&m==='play')));
+  document.getElementById('setup-view').style.display = m==='setup' ? 'flex' : 'none';
+  document.getElementById('play-view').style.display = m==='play' ? 'flex' : 'none';
+  if (m==='play') { resetPlay(); renderPlay(); }
+  if (m==='setup') render();
+}
+
+// ── Render Setup ──
+function render() {
+  renderSidebar();
+  renderMain();
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  const axes = state.axes;
+  const qs = state.questions;
+  const totalPairs = axes.length * (axes.length + 1) / 2;
+  const filledPairs = Object.keys(state.results).length;
+
+  // Result count text
+  let resultText;
+  if (filledPairs >= totalPairs && totalPairs > 0) {
+    resultText = `ครบ ${totalPairs} คู่`;
+  } else {
+    resultText = `${filledPairs} ผลลัพธ์`;
+  }
+
+  // Validate
+  const issues = [];
+  if (axes.length < 2) issues.push('ต้องมีแกนอย่างน้อย 2 แกน');
+  if (qs.length < 1) issues.push('ต้องมีคำถามอย่างน้อย 1 ข้อ');
+  qs.forEach((q,i) => {
+    if (!q.text.trim()) issues.push(`คำถามข้อ ${i+1} ยังไม่มีข้อความ`);
+    const hasScore = q.options.some(o => Object.values(o.scores).some(v => v > 0));
+    if (!hasScore) issues.push(`คำถามข้อ ${i+1} ยังไม่มีคะแนน`);
+    if (q.options.length < 2) issues.push(`คำถามข้อ ${i+1} ต้องมีตัวเลือกอย่างน้อย 2 ข้อ`);
+  });
+  for (let i = 0; i < axes.length; i++) {
+    for (let j = i; j < axes.length; j++) {
+      const key = pairKey(axes[i].id, axes[j].id);
+      if (!state.results[key]) issues.push(`ยังไม่มีผลลัพธ์สำหรับ ${axes[i].label}+${axes[j].label}`);
+    }
+  }
+
+  let html = `
+    <div class="sb-section">
+      <div class="sb-title">ภาพรวม</div>
+      <div class="count-row">
+        <div class="count-box"><div class="num">${axes.length}</div><div class="lbl">แกน</div></div>
+        <div class="count-box"><div class="num">${qs.length}</div><div class="lbl">คำถาม</div></div>
+        <div class="count-box"><div class="num" style="font-size:${resultText.length > 6 ? 16 : 22}px">${resultText}</div><div class="lbl">ผลลัพธ์</div></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Pair Matrix</div>
+      <div class="matrix"><table><tr><th></th>`;
+  axes.forEach(a => { html += `<th><span style="color:${a.color}">&#9679;</span> ${a.label.substring(0,4)}</th>`; });
+  html += '</tr>';
+  for (let i = 0; i < axes.length; i++) {
+    html += `<tr><th style="text-align:right"><span style="color:${axes[i].color}">&#9679;</span> ${axes[i].label.substring(0,4)}</th>`;
+    for (let j = 0; j < axes.length; j++) {
+      if (j < i) { html += '<td></td>'; continue; }
+      const key = pairKey(axes[i].id, axes[j].id);
+      const has = !!state.results[key];
+      html += `<td class="${has?'dot-filled':'dot-empty'}">${has?'&#9679;':'&#9675;'}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table></div></div>';
+
+  html += `<div class="sb-section">
+    <div class="sb-title">สถานะ</div>
+    ${issues.length === 0
+      ? '<div class="validate-ok">&#10003; พร้อมใช้งาน</div>'
+      : `<div class="validate-err">&#10005; ขาด ${issues.length} อย่าง</div>
+         <ul class="validate-list">${issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`
+    }
+  </div>
+  <button class="sb-play-btn" onclick="setMode('play')">&#9654; ลองเล่น</button>`;
+
+  sb.innerHTML = html;
+}
+
+function renderMain() {
+  const main = document.getElementById('main');
+  let html = '';
+
+  // Step 1: Axes
+  html += `<div class="section" id="sec-axes">
+    <div class="section-head"><span class="section-num">Step 1</span><span class="section-title">ตั้งแกนบุคลิก</span></div>
+    <div class="axes-row">`;
+  state.axes.forEach((ax,i) => {
+    html += `<div class="axis-card">
+      <div class="axis-dot" style="background:${ax.color}"></div>
+      <div>
+        <input class="axis-label-input" value="${esc(ax.label)}" onchange="state.axes[${i}].label=this.value;render()">
+        <div class="axis-id mono">${ax.id}</div>
+      </div>
+      <button class="axis-del" onclick="deleteAxis(${i})" title="ลบแกน">&times;</button>
+    </div>`;
+  });
+  if (state.axes.length < PALETTE.length) {
+    html += `<button class="add-btn" onclick="addAxis()">+ เพิ่มแกน</button>`;
+  }
+  html += '</div></div>';
+
+  // Step 2: Questions
+  html += `<div class="section" id="sec-questions">
+    <div class="section-head"><span class="section-num">Step 2</span><span class="section-title">เขียนคำถาม</span></div>
+    <div class="section-desc">กดวงกลมเพื่อให้คะแนนแกน &middot; กดวงเดิมซ้ำเพื่อล้างเป็น 0</div>`;
+  state.questions.forEach((q,qi) => {
+    const hasScore = q.options.some(o => Object.values(o.scores).some(v => v > 0));
+    html += `<div class="q-card">
+      <div class="q-header">
+        <span class="q-num">ข้อ ${qi+1}</span>
+        <input class="q-text-input" value="${esc(q.text)}" onchange="state.questions[${qi}].text=this.value;render()">
+        <span class="q-charcount mono">${q.text.length}</span>
+        <span class="q-scored ${hasScore?'yes':'no'}">${hasScore?'scored':'no score'}</span>
+        <div class="q-actions">
+          <button onclick="moveQ(${qi},-1)" ${qi===0?'disabled':''}>&uarr;</button>
+          <button onclick="moveQ(${qi},1)" ${qi===state.questions.length-1?'disabled':''}>&darr;</button>
+          <button onclick="dupeQ(${qi})">&#10697;</button>
+          <button onclick="delQ(${qi})">&times;</button>
+        </div>
+      </div>`;
+    q.options.forEach((opt,oi) => {
+      html += `<div class="opt-block">
+        <div class="opt-top">
+          <div class="opt-radio"></div>
+          <input class="opt-label-input" value="${esc(opt.label)}" onchange="state.questions[${qi}].options[${oi}].label=this.value">
+          <button class="opt-del" onclick="delOpt(${qi},${oi})">&times;</button>
+        </div>
+        <div class="opt-scores-vertical">`;
+      state.axes.forEach(ax => {
+        const val = opt.scores[ax.id] || 0;
+        html += `<div class="score-row">
+            <span class="axis-name"><span class="mini-dot" style="background:${ax.color}"></span> ${esc(ax.label)}</span>
+            <span class="score-dots">`;
+        for (let s = 1; s <= 5; s++) {
+          const active = val >= s;
+          html += `<span class="score-dot ${active?'active':''}" style="${active?'background:'+ax.color:''}" onclick="setScore(${qi},${oi},'${ax.id}',${s})"></span>`;
+        }
+        html += `</span>
+            <span class="score-val">${val > 0 ? '+' + val : '0'}</span>
+          </div>`;
+      });
+      html += `</div></div>`;
+    });
+    if (q.options.length < 4) {
+      html += `<button class="add-opt-btn" onclick="addOpt(${qi})">+ เพิ่มตัวเลือก</button>`;
+    }
+    html += '</div>';
+  });
+  html += `<button class="add-btn" style="width:100%;padding:16px" onclick="addQ()">+ เพิ่มคำถาม</button></div>`;
+
+  // Step 3: Results
+  html += `<div class="section" id="sec-results">
+    <div class="section-head"><span class="section-num">Step 3</span><span class="section-title">ตั้งผลลัพธ์</span></div>
+    <div class="results-layout">
+      <div class="results-grid"><table class="res-table"><tr><th></th>`;
+  state.axes.forEach(ax => {
+    html += `<th><div class="axis-header"><span style="color:${ax.color}">&#9679;</span> ${esc(ax.label)}</div></th>`;
+  });
+  html += '</tr>';
+  for (let i = 0; i < state.axes.length; i++) {
+    html += `<tr><th style="text-align:right"><div class="axis-header"><span style="color:${state.axes[i].color}">&#9679;</span> ${esc(state.axes[i].label)}</div></th>`;
+    for (let j = 0; j < state.axes.length; j++) {
+      if (j < i) { html += '<td></td>'; continue; }
+      const key = pairKey(state.axes[i].id, state.axes[j].id);
+      const res = state.results[key];
+      const isActive = selectedPair === key;
+      html += `<td><button class="res-cell-btn ${isActive?'active':''} ${res?'':'empty'}" onclick="selectPair('${key}')">${res ? esc(res.title.substring(0,12)) : '+'}</button></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  html += `<div class="fallback-note">ไม่ตรงเลย &rarr; <strong>${esc(state.fallback.title)}</strong></div>`;
+  html += '</div>';
+
+  // Editor panel
+  html += '<div class="results-editor">';
+  if (selectedPair) {
+    const res = state.results[selectedPair] || { title:'', body:'', image_url:'' };
+    const parts = selectedPair.split('|');
+    const a1 = state.axes.find(a=>a.id===parts[0]);
+    const a2 = state.axes.find(a=>a.id===parts[1]);
+    html += `<div class="label-lg" style="margin-bottom:16px">${a1?a1.label:'?'} + ${a2?a2.label:'?'}</div>
+      <div class="res-editor-label">Title</div>
+      <input class="res-input" value="${esc(res.title)}" oninput="updateResult('${selectedPair}','title',this.value)">
+      <div class="res-editor-label">Body</div>
+      <textarea class="res-textarea" oninput="updateResult('${selectedPair}','body',this.value)">${esc(res.body)}</textarea>
+      <div class="res-editor-label">Image</div>
+      <div class="res-dropzone">&#128247; วาง URL หรือลากไฟล์มาที่นี่<br><input class="res-input" style="margin-top:8px;margin-bottom:0" placeholder="image URL" value="${esc(res.image_url||'')}" oninput="updateResult('${selectedPair}','image_url',this.value)"></div>`;
+    if (!state.results[selectedPair]) {
+      html += `<button class="hdr-btn primary" style="width:100%;margin-top:12px" onclick="createResult('${selectedPair}')">สร้างผลลัพธ์นี้</button>`;
+    }
+  } else {
+    html += '<div style="color:var(--dim);text-align:center;padding:48px 0;font-size:13px;">เลือกช่องจาก grid ด้านซ้าย</div>';
+  }
+  html += '</div></div></div>';
+
+  // Advanced settings accordion
+  html += `<div class="accordion">
+    <button class="acc-toggle ${advOpen?'open':''}" onclick="advOpen=!advOpen;render()">
+      <span>&#9881; ตั้งค่าเพิ่มเติม</span>
+      <span class="chevron">&#9660;</span>
+    </button>
+    <div class="acc-body ${advOpen?'open':''}">`;
+  SECTIONS.forEach(sec => {
+    const secOpen = advSections[sec.id] !== false;
+    html += `<div class="adv-section">
+      <div class="adv-header ${secOpen?'open':''}" onclick="advSections['${sec.id}']=!advSections['${sec.id}'];if(advSections['${sec.id}']===undefined)advSections['${sec.id}']=false;render()">
+        <span class="mark mono">${sec.mark}</span>
+        <span class="atitle">${sec.title}</span>
+        <span class="ahint">${sec.hint}</span>
+        <span class="achevron">&#9660;</span>
+      </div>
+      <div class="adv-body ${secOpen?'open':''}">`;
+    sec.groups.forEach(g => {
+      html += `<div class="adv-group-label">${esc(g.label)}</div>`;
+      g.rows.forEach(row => {
+        const val = getByPath(state.config, row.path);
+        const keyDisplay = row.path.split('.').pop();
+        html += `<div class="adv-row">
+          <div class="akey">${keyDisplay}</div>
+          <div>`;
+        if (row.type === 'text') {
+          html += `<input type="text" value="${esc(String(val||''))}" onchange="setByPath(state.config,'${row.path}',this.value);render()">`;
+        } else if (row.type === 'number') {
+          html += `<div style="display:flex;align-items:center;gap:4px"><input type="number" value="${val}" style="width:80px" onchange="setByPath(state.config,'${row.path}',Number(this.value));render()">${row.unit?`<span class="unit-label">${row.unit}</span>`:''}</div>`;
+        } else if (row.type === 'color') {
+          html += `<div class="color-field">
+            <div class="color-swatch" style="background:${val}"><input type="color" value="${val}" onchange="setByPath(state.config,'${row.path}',this.value);render()"></div>
+            <input type="text" value="${esc(val)}" style="width:100px;font-family:var(--mono);font-size:12px" onchange="setByPath(state.config,'${row.path}',this.value);render()">
+          </div>`;
+        } else if (row.type === 'bool') {
+          html += `<button class="toggle-pill ${val?'on':'off'}" onclick="setByPath(state.config,'${row.path}',!${val});render()">${val?'ON':'OFF'}</button>`;
+        }
+        html += `</div>
+          <div class="aeffect">${esc(row.effect)}</div>
+        </div>`;
+      });
+    });
+    html += '</div></div>';
+  });
+  html += '</div></div>';
+
+  main.innerHTML = html;
+}
+
+let advOpen = false;
+let advSections = { brand: true, copy: true, rules: true, messages: true };
+
+// ── Axis actions ──
+function addAxis() {
+  const idx = state.axes.length;
+  if (idx >= PALETTE.length) return;
+  const id = 'axis_' + Date.now();
+  state.axes.push({ id, label: 'แกนใหม่', color: PALETTE[idx] });
+  render();
+}
+function deleteAxis(i) {
+  const removed = state.axes.splice(i, 1)[0];
+  Object.keys(state.results).forEach(k => {
+    if (k.includes(removed.id)) delete state.results[k];
+  });
+  state.questions.forEach(q => {
+    q.options.forEach(o => { delete o.scores[removed.id]; });
+  });
+  if (selectedPair && selectedPair.includes(removed.id)) selectedPair = null;
+  render();
+}
+
+// ── Question actions ──
+function addQ() {
+  state.questions.push({ text:'', options:[
+    { label:'ตัวเลือก 1', scores:{} },
+    { label:'ตัวเลือก 2', scores:{} }
+  ]});
+  render();
+}
+function delQ(i) { state.questions.splice(i,1); render(); }
+function moveQ(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= state.questions.length) return;
+  [state.questions[i], state.questions[j]] = [state.questions[j], state.questions[i]];
+  render();
+}
+function dupeQ(i) {
+  state.questions.splice(i+1, 0, JSON.parse(JSON.stringify(state.questions[i])));
+  render();
+}
+function addOpt(qi) {
+  if (state.questions[qi].options.length >= 4) return;
+  state.questions[qi].options.push({ label:'ตัวเลือกใหม่', scores:{} });
+  render();
+}
+function delOpt(qi, oi) {
+  if (state.questions[qi].options.length <= 1) return;
+  state.questions[qi].options.splice(oi, 1);
+  render();
+}
+function setScore(qi, oi, axId, val) {
+  const opt = state.questions[qi].options[oi];
+  if ((opt.scores[axId]||0) === val) {
+    delete opt.scores[axId];
+  } else {
+    opt.scores[axId] = val;
+  }
+  renderMain();
+  renderSidebar();
+}
+
+// ── Result actions ──
+function selectPair(key) {
+  selectedPair = selectedPair === key ? null : key;
+  renderMain();
+}
+function updateResult(key, field, val) {
+  if (!state.results[key]) state.results[key] = { title:'', body:'', image_url:'' };
+  state.results[key][field] = val;
+  renderSidebar();
+}
+function createResult(key) {
+  if (!state.results[key]) state.results[key] = { title:'', body:'', image_url:'' };
+  render();
+}
+
+// ── API ──
+const API_BASE = location.origin;
+let currentVersion = 1;
+let isSaving = false;
+
+function buildBackendConfig() {
+  const CAMPAIGN_ID = window._CAMPAIGN_ID || 'buddy_demo';
+  const resultsArray = [];
+  const axisIds = state.axes.map(a => a.id);
+
+  for (let i = 0; i < axisIds.length; i++) {
+    for (let j = i; j < axisIds.length; j++) {
+      const key = pairKey(axisIds[i], axisIds[j]);
+      const r = state.results[key];
+      if (r) {
+        resultsArray.push({
+          code: key.replace(/\|/g, '_'),
+          pair: [axisIds[i], axisIds[j]],
+          title: r.title,
+          body: r.body,
+          ...(r.image_url ? { image_url: r.image_url } : {})
+        });
+      }
+    }
+  }
+
+  resultsArray.push({
+    code: 'balanced',
+    title: state.fallback.title,
+    body: state.fallback.body
+  });
+
+  const questions = state.questions.map((q, qi) => ({
+    id: q.id || ('q_' + (qi + 1)),
+    text: q.text,
+    options: q.options.map((o, oi) => ({
+      id: o.id || (q.id || 'q_' + (qi + 1)) + '_' + String.fromCharCode(97 + oi),
+      label: o.label,
+      scores: o.scores || {}
+    }))
+  }));
+
+  return {
+    id: CAMPAIGN_ID,
+    type: 'buddy_quiz',
+    version: currentVersion,
+    brand: state.config.brand,
+    copy: state.config.copy,
+    axes: state.axes.map(a => ({ id: a.id, label: a.label })),
+    questions,
+    results: resultsArray,
+    fallback_result: 'balanced',
+    rules: state.config.rules,
+    messages: {
+      invite: {
+        template: 'invite_v1',
+        slots: {
+          title: state.config.messages.invite_title,
+          body: state.config.copy.intro_body || '',
+          cta: state.config.messages.invite_cta
+        }
+      },
+      partner_done: {
+        template: 'notify_v1',
+        slots: {
+          title: state.config.messages.partner_done_title,
+          body: '',
+          cta: 'ดูผลลัพธ์'
+        }
+      },
+      welcome: {
+        template: 'notify_v1',
+        slots: { title: 'ยินดีต้อนรับ', body: '', cta: 'เริ่มเลย' }
+      }
+    }
+  };
+}
+
+function loadFromBackendConfig(cfg) {
+  state.axes = (cfg.axes || []).map((a, i) => ({
+    id: a.id,
+    label: a.label,
+    color: PALETTE[i % PALETTE.length]
+  }));
+
+  state.questions = (cfg.questions || []).map(q => ({
+    id: q.id,
+    text: q.text,
+    options: q.options.map(o => ({
+      id: o.id,
+      label: o.label,
+      scores: o.scores || {}
+    }))
+  }));
+
+  state.results = {};
+  for (const r of (cfg.results || [])) {
+    if (r.pair && r.pair.length === 2) {
+      const key = pairKey(r.pair[0], r.pair[1]);
+      state.results[key] = { title: r.title, body: r.body, image_url: r.image_url };
+    }
+  }
+
+  const fb = (cfg.results || []).find(r => r.code === cfg.fallback_result) ||
+             (cfg.results || []).find(r => !r.pair);
+  state.fallback = fb ? { title: fb.title, body: fb.body } :
+    { title: 'คู่หูสายกลาง', body: 'ไม่มีใครสุดทางไหน' };
+
+  state.config.brand = cfg.brand || state.config.brand;
+  state.config.copy = cfg.copy || state.config.copy;
+  state.config.rules = cfg.rules || state.config.rules;
+
+  if (cfg.messages) {
+    state.config.messages.invite_title = cfg.messages.invite?.slots?.title || state.config.messages.invite_title;
+    state.config.messages.invite_cta = cfg.messages.invite?.slots?.cta || state.config.messages.invite_cta;
+    state.config.messages.partner_done_title = cfg.messages.partner_done?.slots?.title || state.config.messages.partner_done_title;
+  }
+
+  currentVersion = cfg.version || 1;
+}
+
+async function loadFromAPI() {
+  const CAMPAIGN_ID = window._CAMPAIGN_ID || 'buddy_demo';
+  try {
+    const res = await fetch(API_BASE + '/api/admin/campaign/' + CAMPAIGN_ID);
+    if (!res.ok) {
+      console.warn('API load failed, using defaults');
+      return false;
+    }
+    const data = await res.json();
+    loadFromBackendConfig(data.config);
+    currentVersion = data.campaign.currentVersion;
+    const sb = document.getElementById('campaign-status-badge');
+    if (sb) sb.textContent = data.campaign.status;
+    return true;
+  } catch (e) {
+    console.warn('API not available, using defaults:', e.message);
+    return false;
+  }
+}
+
+async function saveToAPI() {
+  if (isSaving) return;
+  isSaving = true;
+  updateSaveButton();
+  const CAMPAIGN_ID = window._CAMPAIGN_ID || 'buddy_demo';
+
+  try {
+    const config = buildBackendConfig();
+    const res = await fetch(API_BASE + '/api/admin/campaign/' + CAMPAIGN_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const msg = data.error?.message || 'Save failed';
+      const details = data.error?.details;
+      if (details) {
+        alert('Validation error:\n' + details.map(d => '• ' + d.path.join('.') + ': ' + d.message).join('\n'));
+      } else {
+        alert('Error: ' + msg);
+      }
+      return;
+    }
+
+    currentVersion = data.version;
+    showToast('บันทึกแล้ว — version ' + currentVersion);
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  } finally {
+    isSaving = false;
+    updateSaveButton();
+  }
+}
+
+function updateSaveButton() {
+  const btn = document.getElementById('save-btn');
+  if (btn) {
+    btn.textContent = isSaving ? 'กำลังบันทึก...' : 'Save';
+    btn.disabled = isSaving;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+function buildExportJSON() {
+  return buildBackendConfig();
+}
+function openJSON() {
+  document.getElementById('json-pre').textContent = JSON.stringify(buildExportJSON(), null, 2);
+  document.getElementById('json-overlay').classList.add('open');
+  document.getElementById('json-drawer').classList.add('open');
+}
+function closeJSON() {
+  document.getElementById('json-overlay').classList.remove('open');
+  document.getElementById('json-drawer').classList.remove('open');
+}
+function exportJSON() {
+  const CAMPAIGN_ID = window._CAMPAIGN_ID || 'buddy_demo';
+  const blob = new Blob([JSON.stringify(buildExportJSON(), null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = CAMPAIGN_ID + '-v' + currentVersion + '.json';
+  a.click();
+}
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      loadFromBackendConfig(data);
+      selectedPair = null;
+      render();
+      showToast('Import สำเร็จ');
+    } catch(err) { alert('Invalid JSON: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ══════════════════════════════════
+// ── Play Mode ──
+// ══════════════════════════════════
+let playState = { screen:'intro', qi:0, player:'A', answersA:[], answersB:[], done:false };
+
+function resetPlay() {
+  playState = { screen:'intro', qi:0, player:'A', answersA:[], answersB:[], done:false };
+}
+
+function renderPlay() {
+  const pv = document.getElementById('play-view');
+  const { primary, surface, on_surface } = state.config.brand;
+  const copy = state.config.copy;
+
+  let phoneHTML = '';
+  const ps = playState;
+
+  if (ps.screen === 'intro') {
+    phoneHTML = `
+      <div class="ptitle">${esc(copy.intro_title)}</div>
+      <div class="pbody">${esc(copy.intro_body)}</div>
+      <button class="pbtn primary" style="background:${primary};color:${surface}" onclick="playStart()">${esc(copy.intro_cta)}</button>
+      <button class="pbtn secondary" style="color:${on_surface};border-color:${on_surface}" onclick="playDemo()">${esc(copy.demo_cta)}</button>`;
+  } else if (ps.screen === 'question') {
+    const q = state.questions[ps.qi];
+    const total = state.questions.length;
+    const counter = copy.question_counter.replace('{current}', ps.qi+1).replace('{total}', total);
+    const pct = ((ps.qi) / total * 100);
+    phoneHTML = `
+      <div style="width:100%">
+        <div class="phone-progress"><div class="phone-progress-bar" style="width:${pct}%;background:${primary}"></div></div>
+        <div class="phone-counter" style="color:${on_surface}">${esc(counter)}</div>
+        <div class="phone-q-text">${esc(q.text)}</div>
+      </div>`;
+    q.options.forEach((opt, oi) => {
+      phoneHTML += `<button class="phone-opt-btn" style="color:${on_surface};border-color:rgba(255,255,255,.2)" onclick="playAnswer(${oi})">${esc(opt.label)}</button>`;
+    });
+  } else if (ps.screen === 'wait') {
+    phoneHTML = `
+      <div class="wait-dots"><span>&#9679;</span><span>&#9679;</span><span>&#9679;</span></div>
+      <div class="ptitle">${esc(copy.waiting_title)}</div>
+      <button class="pbtn primary" style="background:${primary};color:${surface};margin-top:24px" onclick="playAutoBuddy()">จำลองให้คู่หูตอบเลย</button>
+      <button class="pbtn secondary" style="color:${on_surface};border-color:${on_surface}" onclick="playAsB()">ตอบเองเป็น B</button>`;
+  } else if (ps.screen === 'result') {
+    const sa = scoreAnswers(state.questions, state.axes, ps.answersA);
+    const sb2 = scoreAnswers(state.questions, state.axes, ps.answersB);
+    const ta = topAxis(state.axes, sa);
+    const tb = topAxis(state.axes, sb2);
+    let result = state.fallback;
+    if (ta && tb) {
+      const key = pairKey(ta, tb);
+      result = state.results[key] || state.fallback;
+    }
+    phoneHTML = `
+      <div class="res-preview-img">&#127919;</div>
+      <div class="res-eyebrow" style="color:${on_surface}">${esc(copy.result_eyebrow)}</div>
+      <div class="res-title-play" style="color:${primary}">${esc(result.title)}</div>
+      <div class="res-body-play" style="color:${on_surface}">${esc(result.body)}</div>
+      <div class="axis-tags">`;
+    if (ta) {
+      const axA = state.axes.find(a=>a.id===ta);
+      phoneHTML += `<span class="axis-tag" style="background:${axA?axA.color:'#888'};color:#fff">A: ${axA?axA.label:ta}</span>`;
+    }
+    if (tb) {
+      const axB = state.axes.find(a=>a.id===tb);
+      phoneHTML += `<span class="axis-tag" style="background:${axB?axB.color:'#888'};color:#fff">B: ${axB?axB.label:tb}</span>`;
+    }
+    phoneHTML += `</div>
+      <button class="pbtn primary" style="background:${primary};color:${surface}" onclick="resetPlay();renderPlay()">เริ่มใหม่</button>`;
+  }
+
+  // Score panel
+  const sa = scoreAnswers(state.questions, state.axes, ps.answersA);
+  const sb2 = scoreAnswers(state.questions, state.axes, ps.answersB);
+  const ta = topAxis(state.axes, sa);
+  const tb = topAxis(state.axes, sb2);
+  const maxScore = state.questions.length * 5 || 1;
+
+  let scoreHTML = `<div class="sp-section">
+    <div class="sp-title">Player A</div>`;
+  if (ps.answersA.some(a => a !== undefined)) {
+    state.axes.forEach(ax => {
+      const v = sa[ax.id] || 0;
+      scoreHTML += `<div class="sp-bar-row">
+        <div class="sp-bar-label"><span class="mini-dot" style="background:${ax.color}"></span> ${esc(ax.label)}</div>
+        <div class="sp-bar-track"><div class="sp-bar-fill" style="width:${v/maxScore*100}%;background:${ax.color}"></div></div>
+        <div class="sp-bar-val">${v}</div>
+      </div>`;
+    });
+    if (ta) {
+      const axD = state.axes.find(a=>a.id===ta);
+      scoreHTML += `<div class="sp-dominant">Dominant: <span style="color:${axD?axD.color:'#888'}">${axD?axD.label:ta}</span></div>`;
+    }
+  } else {
+    scoreHTML += '<div class="sp-placeholder">ยังไม่ได้ตอบ</div>';
+  }
+  scoreHTML += '</div>';
+
+  scoreHTML += `<div class="sp-section"><div class="sp-title">Player B</div>`;
+  if (ps.answersB.some(a => a !== undefined)) {
+    state.axes.forEach(ax => {
+      const v = sb2[ax.id] || 0;
+      scoreHTML += `<div class="sp-bar-row">
+        <div class="sp-bar-label"><span class="mini-dot" style="background:${ax.color}"></span> ${esc(ax.label)}</div>
+        <div class="sp-bar-track"><div class="sp-bar-fill" style="width:${v/maxScore*100}%;background:${ax.color}"></div></div>
+        <div class="sp-bar-val">${v}</div>
+      </div>`;
+    });
+    if (tb) {
+      const axD = state.axes.find(a=>a.id===tb);
+      scoreHTML += `<div class="sp-dominant">Dominant: <span style="color:${axD?axD.color:'#888'}">${axD?axD.label:tb}</span></div>`;
+    }
+  } else {
+    scoreHTML += '<div class="sp-placeholder">ยังไม่ได้ตอบ</div>';
+  }
+  scoreHTML += '</div>';
+
+  // Result match
+  scoreHTML += `<div class="sp-section"><div class="sp-title">ผลลัพธ์ที่ match</div>`;
+  if (ps.done && ta && tb) {
+    const key = pairKey(ta, tb);
+    const res = state.results[key] || state.fallback;
+    const isFallback = !state.results[key];
+    scoreHTML += `<div class="sp-result-code">${key}${isFallback?' (fallback)':''}</div>
+      <div class="sp-result">${esc(res.title)}</div>
+      <div class="sp-result-body">${esc(res.body)}</div>`;
+  } else {
+    scoreHTML += '<div class="sp-placeholder">ทั้งคู่ตอบครบแล้วจะแสดง</div>';
+  }
+  scoreHTML += '</div>';
+
+  pv.innerHTML = `<div class="play-layout">
+    <div class="phone-frame" style="background:${surface}">
+      <div class="phone-screen" style="color:${on_surface}">${phoneHTML}</div>
+    </div>
+    <div class="score-panel">${scoreHTML}</div>
+  </div>`;
+  pv.className = 'active';
+}
+
+function playStart() {
+  playState.player = 'A';
+  playState.qi = 0;
+  playState.screen = 'question';
+  playState.answersA = new Array(state.questions.length);
+  playState.answersB = new Array(state.questions.length);
+  playState.done = false;
+  renderPlay();
+}
+function playDemo() {
+  playStart();
+}
+function playAnswer(oi) {
+  const ps = playState;
+  if (ps.player === 'A') {
+    ps.answersA[ps.qi] = oi;
+  } else {
+    ps.answersB[ps.qi] = oi;
+  }
+  ps.qi++;
+  if (ps.qi >= state.questions.length) {
+    if (ps.player === 'A') {
+      ps.screen = 'wait';
+    } else {
+      ps.done = true;
+      ps.screen = 'result';
+    }
+  }
+  renderPlay();
+}
+function playAutoBuddy() {
+  const ps = playState;
+  state.questions.forEach((q, i) => {
+    ps.answersB[i] = i % q.options.length;
+  });
+  ps.done = true;
+  ps.screen = 'result';
+  renderPlay();
+}
+function playAsB() {
+  playState.player = 'B';
+  playState.qi = 0;
+  playState.screen = 'question';
+  playState.answersB = new Array(state.questions.length);
+  renderPlay();
+}
+
+// ══════════════════════════════════
+// ── Campaign Selector ──
+// ══════════════════════════════════
+
+let activeCampaignId = null;
+
+async function loadCampaignList() {
+  try {
+    const res = await fetch(API_BASE + '/api/admin/campaigns');
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    console.warn('Failed to load campaigns:', e);
+    return [];
+  }
+}
+
+function renderCampaignList(campaigns) {
+  const list = document.getElementById('campaign-list');
+  const empty = document.getElementById('campaign-empty');
+
+  if (!campaigns.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const statusColors = { live: '#16A34A', draft: '#F5B800', ended: '#9B9B98' };
+  const statusLabels = { live: 'LIVE', draft: 'DRAFT', ended: 'ENDED' };
+  const modeLabels = { pair: 'จับคู่', solo: 'เดี่ยว' };
+  const modeIcons = { pair: '&#127919;', solo: '&#129504;' };
+
+  list.innerHTML = campaigns.map(c => `
+    <button class="camp-card" onclick="openCampaign('${c.id}')">
+      <div class="camp-icon">${modeIcons[c.mode] || '&#127919;'}</div>
+      <div class="camp-info">
+        <div class="camp-name">${esc(c.brandName || c.id)}</div>
+        <div class="camp-meta">
+          <span class="camp-meta-item">${c.id}</span>
+          <span class="camp-meta-item">&middot;</span>
+          <span class="camp-meta-item">${modeLabels[c.mode] || c.mode}</span>
+          <span class="camp-meta-item">&middot;</span>
+          <span class="camp-meta-item">v${c.currentVersion}</span>
+          <span class="camp-status" style="background:${statusColors[c.status] || '#9B9B98'}18;color:${statusColors[c.status] || '#9B9B98'}">${statusLabels[c.status] || c.status}</span>
+        </div>
+      </div>
+      <span class="camp-arrow">&rarr;</span>
+    </button>
+  `).join('');
+}
+
+async function openCampaign(id) {
+  activeCampaignId = id;
+  window._CAMPAIGN_ID = id;
+
+  document.getElementById('campaign-selector').classList.remove('visible');
+  document.getElementById('editor-header').style.display = 'flex';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('campaign-id').textContent = id;
+
+  const loaded = await loadFromAPI();
+  if (loaded) {
+    document.getElementById('campaign-mode-badge').textContent = state.config.mode || 'pair';
+    showToast('โหลด ' + id + ' สำเร็จ — v' + currentVersion);
+  }
+  render();
+}
+
+function backToList() {
+  activeCampaignId = null;
+  document.getElementById('editor-header').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('campaign-selector').classList.add('visible');
+  initSelector();
+}
+
+function showCreateDialog() {
+  document.getElementById('create-overlay').style.display = 'block';
+  document.getElementById('create-dialog').style.display = 'block';
+  document.getElementById('new-camp-id').value = '';
+  document.getElementById('create-error').style.display = 'none';
+  document.getElementById('new-camp-id').focus();
+}
+
+function hideCreateDialog() {
+  document.getElementById('create-overlay').style.display = 'none';
+  document.getElementById('create-dialog').style.display = 'none';
+}
+
+async function createCampaign() {
+  const id = document.getElementById('new-camp-id').value.trim();
+  const mode = document.querySelector('input[name="new-mode"]:checked')?.value || 'pair';
+  const errEl = document.getElementById('create-error');
+
+  if (!id) {
+    errEl.textContent = 'กรุณาใส่ Campaign ID';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('create-btn').disabled = true;
+  document.getElementById('create-btn').textContent = 'กำลังสร้าง...';
+
+  try {
+    const res = await fetch(API_BASE + '/api/admin/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, mode }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error?.message || 'สร้างไม่สำเร็จ';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    hideCreateDialog();
+    openCampaign(id);
+  } catch (e) {
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    document.getElementById('create-btn').disabled = false;
+    document.getElementById('create-btn').textContent = 'สร้าง';
+  }
+}
+
+async function initSelector() {
+  const campaigns = await loadCampaignList();
+  renderCampaignList(campaigns);
+}
+
+// ── Init ──
+Object.defineProperty(window, 'CAMPAIGN_ID', {
+  get() { return window._CAMPAIGN_ID || 'buddy_demo'; }
+});
+window._CAMPAIGN_ID = 'buddy_demo';
+
+(async function() {
+  try {
+    const urlId = new URLSearchParams(location.search).get('id');
+    if (urlId) {
+      await openCampaign(urlId);
+    } else {
+      document.getElementById('campaign-selector').classList.add('visible');
+      await initSelector();
+    }
+  } catch (e) {
+    console.error('Init error:', e);
+    document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif"><h2>Error</h2><pre>' + e.message + '\n' + e.stack + '</pre></div>';
+  }
+})();
+</script>
+</body>
+</html>

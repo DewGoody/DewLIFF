@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Manager — ลานกิจกรรม</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--text:#111;--dim:#9B9B98;--dim2:#5C5C58;--line:#E5E5E3;--elev:#F7F7F5;--red:#E63B2E;--green:#16A34A;--blue:#2563EB;--mono:'DM Mono',monospace;--thai:'Noto Sans Thai','DM Sans',sans-serif}
+body{font-family:var(--thai);color:var(--text);background:var(--bg);font-size:14px;line-height:1.6}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;background:var(--bg)}
+.header .left{display:flex;align-items:center;gap:12px}
+.header .left a{color:var(--text);text-decoration:none;font-size:18px;padding:4px 8px;border-radius:6px}
+.header .left a:hover{background:var(--elev)}
+.host{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em}
+.title{font-weight:700;font-size:16px}
+
+.shell{max-width:960px;margin:0 auto;padding:32px 28px 80px}
+.label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:10px}
+
+/* Cards */
+.card{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:24px}
+.card h2{font-size:18px;font-weight:700;margin:0 0 6px}
+.card p.desc{font-size:13px;color:var(--dim2);margin:0 0 20px}
+
+/* Table */
+.kw-table{width:100%;border-collapse:collapse}
+.kw-table th{text-align:left;padding:8px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);border-bottom:1px solid var(--line);background:var(--elev)}
+.kw-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.kw-table tr:hover td{background:rgba(0,0,0,.01)}
+
+.kw-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.02em}
+.kw-badge.campaign{background:rgba(37,99,235,.08);color:var(--blue)}
+.kw-badge.text{background:rgba(22,163,74,.08);color:var(--green)}
+.kw-badge.custom{background:rgba(245,184,0,.12);color:#B8860B}
+.kw-badge.off{background:var(--elev);color:var(--dim)}
+
+.kw-keyword{font-family:var(--mono);font-size:13px;font-weight:500;background:var(--elev);padding:4px 10px;border-radius:6px}
+
+.kw-actions{display:flex;gap:4px}
+.kw-actions button{width:28px;height:28px;border:1px solid var(--line);background:var(--bg);border-radius:6px;font-size:12px;color:var(--dim2);display:flex;align-items:center;justify-content:center}
+.kw-actions button:hover{background:var(--elev)}
+.kw-actions button.del{color:var(--red)}
+
+/* Buttons */
+.btn{padding:8px 16px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:13px;font-weight:500}
+.btn:hover{background:var(--elev)}
+.btn.primary{background:var(--text);color:#fff;border-color:var(--text)}
+.btn.primary:hover{opacity:.85}
+.btn.danger{color:var(--red);border-color:#fcc}
+.btn.sm{padding:5px 10px;font-size:12px}
+
+/* Form */
+.form-row{display:flex;gap:12px;margin-bottom:14px;align-items:start;flex-wrap:wrap}
+.form-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.form-field label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+.form-field input,.form-field textarea,.form-field select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;outline:none;background:var(--bg)}
+.form-field input:focus,.form-field textarea:focus{border-color:var(--blue)}
+.form-field textarea{resize:vertical;min-height:70px}
+
+/* Dialog */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300}
+.dialog{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px;z-index:301;max-height:90vh;overflow-y:auto}
+.dialog h3{font-size:17px;font-weight:700;margin:0 0 20px}
+.dialog-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.dialog .error{margin-top:12px;padding:10px;background:#FEF2F2;color:var(--red);border-radius:6px;font-size:13px;display:none}
+
+/* Preview */
+.preview-box{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--elev);margin-top:16px}
+.preview-header{padding:8px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+.preview-body{padding:16px}
+.preview-flex{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px}
+.preview-flex h4{font-size:15px;font-weight:600;margin:0 0 6px}
+.preview-flex p{font-size:13px;color:#888;margin:0}
+.preview-flex .cta{margin-top:12px;padding:10px;text-align:center;border-radius:8px;color:#fff;font-size:14px;font-weight:600}
+
+/* Welcome */
+.welcome-box{border:1px solid var(--line);border-radius:10px;background:var(--elev);padding:16px;position:relative}
+.welcome-text{font-size:15px;line-height:1.7;white-space:pre-wrap}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:#111;color:#fff;border-radius:8px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Empty */
+.empty{padding:40px;text-align:center;color:var(--dim);font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="left">
+    <a href="admin.html">&larr;</a>
+    <span class="host">Krob &middot; Host Console</span>
+    <span class="title">Message Manager</span>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- Welcome Message -->
+  <div class="card">
+    <h2>👋 ข้อความต้อนรับ</h2>
+    <p class="desc">ส่งอัตโนมัติเมื่อ user follow OA (ฟรี ไม่นับ quota)</p>
+    <div class="welcome-box">
+      <div class="welcome-text" id="welcome-text">กำลังโหลด...</div>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn sm" onclick="editWelcome()">แก้ข้อความ</button>
+    </div>
+  </div>
+
+  <!-- Keyword Rules -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>🔑 Keyword Auto-Reply</h2>
+      <button class="btn primary" onclick="showAddDialog()">+ เพิ่ม Keyword</button>
+    </div>
+    <p class="desc">User พิมพ์ keyword → ตอบกลับอัตโนมัติ (ใช้ Reply Message = ฟรี ไม่นับ quota)</p>
+
+    <table class="kw-table">
+      <thead>
+        <tr>
+          <th>Keyword</th>
+          <th>ตอบด้วย</th>
+          <th>Campaign</th>
+          <th>สถานะ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="kw-tbody">
+        <tr><td colspan="5" class="empty">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Preview -->
+  <div class="card">
+    <h2>🔍 ทดสอบ Keyword</h2>
+    <p class="desc">พิมพ์ข้อความทดสอบ ดูว่าจะตอบอะไร</p>
+    <div class="form-row">
+      <div class="form-field" style="flex:3">
+        <input id="preview-input" placeholder="พิมพ์ข้อความ เช่น ควิซ" onkeyup="if(event.key==='Enter')testPreview()">
+      </div>
+      <button class="btn primary" onclick="testPreview()" style="align-self:flex-end;height:38px">ทดสอบ</button>
+    </div>
+    <div id="preview-result"></div>
+  </div>
+
+</div>
+
+<!-- Add/Edit Dialog -->
+<div class="overlay" id="dlg-overlay" onclick="hideDialog()"></div>
+<div class="dialog" id="dlg">
+  <h3 id="dlg-title">เพิ่ม Keyword</h3>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Keyword</label>
+      <input id="dlg-keyword" placeholder="เช่น ควิซ, mbti, สมัคร">
+      <div style="font-size:11px;color:var(--dim);margin-top:2px">1 keyword ต่อ 1 rule</div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>ตอบด้วย</label>
+      <select id="dlg-type" onchange="dlgTypeChanged()">
+        <option value="flex_campaign">📋 Flex Card จาก Campaign</option>
+        <option value="text">💬 ข้อความ</option>
+      </select>
+    </div>
+  </div>
+  <div id="dlg-campaign-row" class="form-row">
+    <div class="form-field">
+      <label>เลือก Campaign</label>
+      <select id="dlg-campaign"></select>
+    </div>
+  </div>
+  <div id="dlg-text-row" class="form-row" style="display:none">
+    <div class="form-field">
+      <label>ข้อความตอบกลับ</label>
+      <textarea id="dlg-text" rows="3" placeholder="ข้อความที่จะส่งกลับ"></textarea>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field" style="max-width:120px">
+      <label>Priority</label>
+      <input id="dlg-priority" type="number" value="0" min="0">
+      <div style="font-size:11px;color:var(--dim);margin-top:2px">สูง = match ก่อน</div>
+    </div>
+  </div>
+  <div class="error" id="dlg-error"></div>
+  <div class="dialog-footer">
+    <button class="btn" onclick="hideDialog()">ยกเลิก</button>
+    <button class="btn primary" id="dlg-submit" onclick="submitDialog()">เพิ่ม</button>
+  </div>
+</div>
+
+<!-- Welcome Edit Dialog -->
+<div class="overlay" id="wel-overlay" onclick="hideWelcomeDialog()"></div>
+<div class="dialog" id="wel-dlg">
+  <h3>แก้ข้อความต้อนรับ</h3>
+  <div class="form-row">
+    <div class="form-field">
+      <label>ข้อความ (รองรับ \n ขึ้นบรรทัดใหม่)</label>
+      <textarea id="wel-text" rows="4"></textarea>
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn" onclick="hideWelcomeDialog()">ยกเลิก</button>
+    <button class="btn primary" onclick="saveWelcome()">บันทึก</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin + '/api/admin/messages';
+let rules = [];
+let campaigns = [];
+let editingId = null;
+
+// ── API helpers ──
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Load ──
+async function loadAll() {
+  const [kwRes, campRes, setRes] = await Promise.all([
+    api('GET', '/keywords'),
+    fetch(location.origin + '/api/admin/campaigns').then(r => r.json()),
+    api('GET', '/settings'),
+  ]);
+
+  rules = kwRes.data || [];
+  campaigns = campRes || [];
+
+  // Welcome
+  const welcome = setRes.data?.welcome_message?.text || 'ยินดีต้อนรับ!';
+  document.getElementById('welcome-text').textContent = welcome;
+
+  renderTable();
+  renderCampaignOptions();
+}
+
+// ── Render table ──
+function renderTable() {
+  const tbody = document.getElementById('kw-tbody');
+  if (!rules.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">ยังไม่มี keyword — กด + เพิ่ม Keyword</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rules.map(r => {
+    const typeBadge = r.reply_type === 'flex_campaign'
+      ? '<span class="kw-badge campaign">📋 Flex Card</span>'
+      : r.reply_type === 'text'
+        ? '<span class="kw-badge text">💬 Text</span>'
+        : '<span class="kw-badge custom">🎨 Custom</span>';
+
+    const campLabel = r.campaignName || r.campaign_id || '—';
+    const statusBadge = r.enabled
+      ? '<span class="kw-badge" style="background:rgba(22,163,74,.08);color:#16A34A">เปิด</span>'
+      : '<span class="kw-badge off">ปิด</span>';
+
+    return `<tr>
+      <td><span class="kw-keyword">${esc(r.keyword)}</span></td>
+      <td>${typeBadge}</td>
+      <td style="font-size:13px;color:var(--dim2)">${esc(campLabel)}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="kw-actions">
+          <button onclick="toggleRule(${r.id},${!r.enabled})" title="${r.enabled ? 'ปิด' : 'เปิด'}">${r.enabled ? '⏸' : '▶'}</button>
+          <button onclick="editRule(${r.id})" title="แก้ไข">✎</button>
+          <button class="del" onclick="deleteRule(${r.id},'${esc(r.keyword)}')" title="ลบ">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCampaignOptions() {
+  const sel = document.getElementById('dlg-campaign');
+  sel.innerHTML = '<option value="">— เลือก Campaign —</option>' +
+    campaigns.map(c => `<option value="${c.id}">${c.brandName} (${c.id})</option>`).join('');
+}
+
+// ── Add/Edit Dialog ──
+function showAddDialog() {
+  editingId = null;
+  document.getElementById('dlg-title').textContent = 'เพิ่ม Keyword';
+  document.getElementById('dlg-submit').textContent = 'เพิ่ม';
+  document.getElementById('dlg-keyword').value = '';
+  document.getElementById('dlg-type').value = 'flex_campaign';
+  document.getElementById('dlg-campaign').value = '';
+  document.getElementById('dlg-text').value = '';
+  document.getElementById('dlg-priority').value = '0';
+  document.getElementById('dlg-error').style.display = 'none';
+  dlgTypeChanged();
+  document.getElementById('dlg-overlay').style.display = 'block';
+  document.getElementById('dlg').style.display = 'block';
+  dlgTypeChanged();
+  document.getElementById('dlg-keyword').focus();
+}
+
+function editRule(id) {
+  const r = rules.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('dlg-title').textContent = 'แก้ไข Keyword';
+  document.getElementById('dlg-submit').textContent = 'บันทึก';
+  document.getElementById('dlg-keyword').value = r.keyword;
+  document.getElementById('dlg-type').value = r.reply_type;
+  document.getElementById('dlg-campaign').value = r.campaign_id || '';
+  document.getElementById('dlg-text').value = r.reply_text || '';
+  document.getElementById('dlg-priority').value = r.priority;
+  document.getElementById('dlg-error').style.display = 'none';
+  dlgTypeChanged();
+  document.getElementById('dlg-overlay').style.display = 'block';
+  document.getElementById('dlg').style.display = 'block';
+}
+
+function hideDialog() {
+  document.getElementById('dlg-overlay').style.display = 'none';
+  document.getElementById('dlg').style.display = 'none';
+}
+
+function dlgTypeChanged() {
+  const t = document.getElementById('dlg-type').value;
+  document.getElementById('dlg-campaign-row').style.display = t === 'flex_campaign' ? '' : 'none';
+  document.getElementById('dlg-text-row').style.display = t === 'text' ? '' : 'none';
+}
+
+async function submitDialog() {
+  const errEl = document.getElementById('dlg-error');
+  const keyword = document.getElementById('dlg-keyword').value.trim();
+  const replyType = document.getElementById('dlg-type').value;
+  const campaignId = document.getElementById('dlg-campaign').value || null;
+  const replyText = document.getElementById('dlg-text').value || null;
+  const priority = parseInt(document.getElementById('dlg-priority').value) || 0;
+
+  if (!keyword) {
+    errEl.textContent = 'กรุณาใส่ keyword';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (replyType === 'flex_campaign' && !campaignId) {
+    errEl.textContent = 'กรุณาเลือก campaign';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (replyType === 'text' && !replyText) {
+    errEl.textContent = 'กรุณาใส่ข้อความ';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const body = { keyword, replyType, campaignId, replyText, priority };
+
+  let res;
+  if (editingId) {
+    res = await api('PUT', '/keywords/' + editingId, body);
+  } else {
+    res = await api('POST', '/keywords', body);
+  }
+
+  if (!res.ok) {
+    errEl.textContent = res.data?.error?.message || 'เกิดข้อผิดพลาด';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  hideDialog();
+  toast(editingId ? 'บันทึกแล้ว' : 'เพิ่ม keyword แล้ว');
+  await loadAll();
+}
+
+async function toggleRule(id, enabled) {
+  await api('PUT', '/keywords/' + id, { enabled });
+  toast(enabled ? 'เปิดแล้ว' : 'ปิดแล้ว');
+  await loadAll();
+}
+
+async function deleteRule(id, keyword) {
+  if (!confirm('ลบ keyword "' + keyword + '" ?')) return;
+  await api('DELETE', '/keywords/' + id);
+  toast('ลบแล้ว');
+  await loadAll();
+}
+
+// ── Welcome ──
+function editWelcome() {
+  const text = document.getElementById('welcome-text').textContent;
+  document.getElementById('wel-text').value = text;
+  document.getElementById('wel-overlay').style.display = 'block';
+  document.getElementById('wel-dlg').style.display = 'block';
+}
+
+function hideWelcomeDialog() {
+  document.getElementById('wel-overlay').style.display = 'none';
+  document.getElementById('wel-dlg').style.display = 'none';
+}
+
+async function saveWelcome() {
+  const text = document.getElementById('wel-text').value;
+  await api('PUT', '/settings/welcome_message', { value: { text } });
+  document.getElementById('welcome-text').textContent = text;
+  hideWelcomeDialog();
+  toast('บันทึกข้อความต้อนรับแล้ว');
+}
+
+// ── Preview ──
+async function testPreview() {
+  const text = document.getElementById('preview-input').value.trim();
+  if (!text) return;
+
+  const res = await api('GET', '/preview?text=' + encodeURIComponent(text));
+  const el = document.getElementById('preview-result');
+
+  if (!res.data.match) {
+    el.innerHTML = '<div class="preview-box"><div class="preview-header">ผลลัพธ์</div><div class="preview-body" style="color:var(--dim)">❌ ไม่ตรงกับ keyword ไหน — จะไม่ตอบ</div></div>';
+    return;
+  }
+
+  const r = res.data.rule;
+  let previewHTML = '';
+
+  if (r.reply_type === 'text') {
+    previewHTML = '<div style="background:#E8F5E9;padding:12px 16px;border-radius:10px;font-size:14px;white-space:pre-wrap">' + esc(r.reply_text) + '</div>';
+  } else if (r.reply_type === 'flex_campaign' && r.campaign_id) {
+    const camp = campaigns.find(c => c.id === r.campaign_id);
+    previewHTML = '<div class="preview-flex"><h4>' + esc(camp?.brandName || r.campaign_id) + '</h4><p>กดปุ่มเปิด LIFF</p><div class="cta" style="background:#FF3D8B">เริ่มเลย</div></div>';
+  }
+
+  el.innerHTML = `
+    <div class="preview-box">
+      <div class="preview-header">✅ match keyword: "${esc(r.keyword)}"</div>
+      <div class="preview-body">${previewHTML}</div>
+    </div>`;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Init ──
+loadAll();
+</script>
+</body>
+</html>

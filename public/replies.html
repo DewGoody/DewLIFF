@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reply Designer — ลานกิจกรรม</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--text:#111;--dim:#9B9B98;--dim2:#5C5C58;--line:#E5E5E3;--elev:#F7F7F5;--mono:'DM Mono',monospace;--thai:'Noto Sans Thai','DM Sans',sans-serif}
+body{font-family:var(--thai);color:var(--text);background:var(--bg);font-size:14px;line-height:1.6}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;background:var(--bg)}
+.header .left{display:flex;align-items:center;gap:12px}
+.header .left a{color:var(--text);text-decoration:none;font-size:18px;padding:4px 8px;border-radius:6px}
+.header .left a:hover{background:var(--elev)}
+.host{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em}
+.title{font-weight:700;font-size:16px}
+.badge{font-family:var(--mono);font-size:10px;background:var(--elev);border:1px solid var(--line);padding:2px 8px;border-radius:4px;color:var(--dim2)}
+.btn{padding:8px 16px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:13px;font-weight:500}
+.btn:hover{background:var(--elev)}
+.btn.primary{background:var(--text);color:#fff;border-color:var(--text)}
+
+.shell{max-width:1100px;margin:0 auto;padding:32px 28px 80px}
+
+/* Flow cards */
+.flow-grid{display:flex;flex-direction:column;gap:20px}
+.flow-card{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.flow-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--elev);border-bottom:1px solid var(--line);cursor:pointer}
+.flow-header:hover{background:#F0F0EE}
+.flow-header .left{display:flex;align-items:center;gap:12px}
+.flow-num{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;width:20px}
+.flow-title{font-size:15px;font-weight:600}
+.flow-when{font-size:12px;color:var(--dim2)}
+.flow-type{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
+.flow-type.free{background:rgba(22,163,74,.08);color:#16A34A}
+.flow-type.quota{background:rgba(230,59,46,.08);color:#E63B2E}
+.flow-arrow{font-size:14px;color:var(--dim);transition:transform .2s}
+.flow-card.open .flow-arrow{transform:rotate(90deg)}
+
+.flow-body{display:none;padding:20px}
+.flow-card.open .flow-body{display:grid;grid-template-columns:1fr 340px;gap:24px}
+
+/* Editor side */
+.editor{display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+.field input,.field textarea,.field select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;outline:none}
+.field input:focus,.field textarea:focus{border-color:#2563EB}
+.field textarea{resize:vertical;min-height:60px}
+.field .hint{font-size:11px;color:var(--dim);margin-top:2px}
+.color-row{display:flex;gap:8px;align-items:center}
+.color-row input[type=color]{width:36px;height:36px;border:1px solid var(--line);border-radius:6px;padding:2px;cursor:pointer}
+.color-row input[type=text]{flex:1}
+
+/* Preview side */
+.preview{display:flex;flex-direction:column;align-items:center}
+.preview-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:10px;align-self:flex-start}
+
+/* Chat bubble preview */
+.chat-preview{width:340px;background:#8CABD9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:200px}
+.chat-msg-user{align-self:flex-end;background:#A6E35C;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:13px;max-width:260px;word-wrap:break-word;white-space:pre-wrap}
+.chat-msg-bot{align-self:flex-start;max-width:280px}
+
+/* Flex card preview */
+.flex-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);width:280px}
+.flex-hero{height:120px;background:var(--elev);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--dim)}
+.flex-hero img{width:100%;height:100%;object-fit:cover}
+.flex-body{padding:14px 16px}
+.flex-eyebrow{font-size:11px;color:#888;margin-bottom:4px}
+.flex-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.flex-desc{font-size:12px;color:#666;line-height:1.5;margin-bottom:8px}
+.flex-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.flex-tag{font-size:10px;padding:3px 8px;border-radius:99px;border:1px solid}
+.flex-footer{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
+.flex-btn{padding:10px;text-align:center;border-radius:8px;font-size:13px;font-weight:600}
+.flex-btn.primary{color:#fff}
+.flex-btn.secondary{background:var(--elev);color:var(--text)}
+
+/* Text bubble preview */
+.text-bubble{background:#fff;border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.6;box-shadow:0 1px 4px rgba(0,0,0,.1);max-width:280px;white-space:pre-wrap}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:#111;color:#fff;border-radius:8px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Trigger info box */
+.trigger-box{background:var(--elev);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.trigger-box .trigger-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:8px}
+.trigger-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+.trigger-row:last-child{margin-bottom:0}
+.trigger-icon{width:20px;text-align:center;font-size:14px}
+.trigger-action{color:var(--text);font-weight:500}
+.trigger-desc{color:var(--dim2)}
+
+/* Keyword tags */
+.kw-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.kw-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#fff;border:1px solid var(--line);border-radius:99px;font-family:var(--mono);font-size:11px;color:var(--dim2)}
+.kw-tag.active{border-color:#2563EB;color:#2563EB;background:rgba(37,99,235,.04)}
+.kw-add{padding:4px 10px;border:1px dashed var(--dim);border-radius:99px;font-size:11px;color:var(--dim);background:none;font-family:var(--mono)}
+.kw-add:hover{border-color:var(--text);color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="left">
+    <a href="admin.html">&larr;</a>
+    <span class="host">Krob &middot; Host Console</span>
+    <span class="title">Reply Designer</span>
+    <span class="badge" id="camp-badge">loading...</span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="messages.html" class="btn">Keyword Manager</a>
+    <button class="btn primary" onclick="saveAll()">💾 Save</button>
+  </div>
+</div>
+
+<div class="shell">
+  <p style="color:var(--dim2);margin-bottom:24px">ตั้งค่าข้อความที่ส่งกลับในแต่ละจุดของ flow — ทุกอย่าง preview ได้ทันที</p>
+  <div class="flow-grid" id="flow-grid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin;
+const CAMPAIGN_ID = new URLSearchParams(location.search).get('id') || 'buddy_demo';
+
+let config = null;
+let copy = {};
+let brand = {};
+let messages = {};
+
+// ── Flow definitions ──
+let keywordRules = []; // loaded from API
+
+const FLOWS = [
+  {
+    id: 'welcome',
+    num: '01',
+    title: 'ข้อความต้อนรับ',
+    when: 'user follow OA',
+    type: 'free',
+    typeLabel: 'Reply · ฟรี',
+    msgType: 'text',
+    triggers: [
+      { icon: '👤', action: 'User กด Follow OA', desc: 'webhook event: follow → replyToken (ฟรี)' }
+    ],
+    fields: [
+      { key: 'welcome_text', label: 'ข้อความ', type: 'textarea', default: 'ยินดีต้อนรับ! 🎯\nพิมพ์ "ควิซ" เพื่อเริ่มเล่น', hint: 'ส่งเมื่อ user กด follow OA · รองรับ \\n ขึ้นบรรทัดใหม่' }
+    ],
+    buildPreview: (vals) => ({ type: 'text', text: vals.welcome_text })
+  },
+  {
+    id: 'invite',
+    num: '02',
+    title: 'การ์ดชวนเพื่อน (Invite)',
+    when: 'A กด share ให้ B',
+    type: 'free',
+    typeLabel: 'ShareTargetPicker',
+    msgType: 'flex',
+    triggers: [
+      { icon: '📤', action: 'LIFF: กดปุ่ม "เลือกเพื่อนแล้วส่ง"', desc: 'หน้า Share → shareTargetPicker() → ส่งการ์ดนี้ไปใน chat ที่เลือก' }
+    ],
+    fields: [
+      { key: 'invite_title', label: 'หัวข้อ', type: 'input', source: 'messages', default: '{inviter} ชวนคุณตอบควิซคู่หู', hint: 'ใช้ {inviter} แทนชื่อคนส่ง' },
+      { key: 'invite_body', label: 'คำอธิบาย', type: 'textarea', source: 'messages', default: 'ตอบ 5 ข้อ แล้วดูว่าเราสองคนทำงานด้วยกันแล้วเป็นคู่แบบไหน' },
+      { key: 'invite_cta', label: 'ปุ่ม CTA', type: 'input', source: 'messages', default: 'ตอบควิซ' }
+    ],
+    buildPreview: (vals) => ({
+      type: 'flex',
+      title: vals.invite_title.replace('{inviter}', 'ปุ๊กกี้'),
+      body: vals.invite_body,
+      cta: vals.invite_cta
+    })
+  },
+  {
+    id: 'chat_result',
+    num: '03',
+    title: 'ผลลัพธ์ใน Chat (Chat Trigger)',
+    when: 'user เล่นเสร็จ → ส่งเข้า chat อัตโนมัติ',
+    type: 'free',
+    typeLabel: 'Reply · ฟรี',
+    msgType: 'flex',
+    triggers: [
+      { icon: '✅', action: 'LIFF: ตอบครบข้อสุดท้าย + เห็นผลลัพธ์', desc: 'LIFF ส่งข้อความแทน user → webhook จับ #ref → ตอบ Flex Card กลับ (ฟรี)' },
+      { icon: '⚙️', action: 'ใช้ liff.sendMessages()', desc: 'ต้องเปิด scope chat_message.write ใน LIFF' }
+    ],
+    fields: [
+      { key: 'chat_trigger_enabled', label: 'เปิดใช้งาน', type: 'bool', source: 'copy', default: 'true', hint: 'ปิด = แสดงผลบน LIFF อย่างเดียว ไม่ส่งเข้า chat' },
+      { key: 'chat_trigger_text', label: 'ข้อความที่ user เห็น', type: 'input', source: 'copy', default: '✨ ฉันเล่นควิซเสร็จแล้ว ดูผลลัพธ์ให้หน่อย!', hint: 'ข้อความที่ส่งในนาม user ก่อน bot ตอบ Flex Card' },
+      { key: 'result_eyebrow', label: 'Eyebrow', type: 'input', source: 'copy', default: 'คุณสองคนคือ' },
+      { key: 'result_share_cta', label: 'ปุ่ม CTA 1', type: 'input', source: 'copy', default: 'ชวนเพื่อนเล่น' },
+    ],
+    buildPreview: (vals) => ({
+      type: 'flex_result',
+      userText: vals.chat_trigger_text,
+      eyebrow: vals.result_eyebrow,
+      title: 'คู่หูสายไฟลุก',
+      body: 'สองคนนี้เจอกันเมื่อไหร่งานเดินทันที...',
+      cta: vals.result_share_cta,
+      tags: ['คุณ · สายลุย', 'คู่หู · สายนิ่ง'],
+      enabled: vals.chat_trigger_enabled !== 'false'
+    })
+  },
+  {
+    id: 'partner_done',
+    num: '04',
+    title: 'แจ้ง A ว่าคู่หูตอบแล้ว',
+    when: 'B ตอบเสร็จ → push หา A',
+    type: 'quota',
+    typeLabel: 'Push · นับ quota',
+    msgType: 'flex',
+    triggers: [
+      { icon: '🔔', action: 'Backend: B ตอบครบ + pair completed', desc: 'queue job → push message หา A (นับ quota เพราะไม่มี event จาก A)' }
+    ],
+    fields: [
+      { key: 'partner_done_title', label: 'หัวข้อ', type: 'input', source: 'messages', default: 'คู่หูตอบแล้ว', hint: 'ข้อความที่ดึง A กลับมาดูผล — ต้องน่ากด' },
+      { key: 'partner_done_body', label: 'คำอธิบาย', type: 'input', source: 'messages', default: 'มาดูกันว่าเราเป็นคู่หูสายไหน' },
+      { key: 'partner_done_cta', label: 'ปุ่ม CTA', type: 'input', source: 'messages', default: 'ดูผลลัพธ์' }
+    ],
+    buildPreview: (vals) => ({
+      type: 'flex',
+      title: vals.partner_done_title,
+      body: vals.partner_done_body,
+      cta: vals.partner_done_cta
+    })
+  },
+  {
+    id: 'keyword_campaign',
+    num: '05',
+    title: 'Keyword → Campaign Card',
+    when: 'user พิมพ์ keyword ใน chat',
+    type: 'free',
+    typeLabel: 'Reply · ฟรี',
+    msgType: 'flex',
+    showKeywords: true,
+    triggers: [
+      { icon: '⌨️', action: 'User พิมพ์ keyword ใน chat ของ OA', desc: 'webhook จับ text → match keyword → reply Flex Card (ฟรี)' },
+      { icon: '🔗', action: 'ผูก keyword ที่ Keyword Manager', desc: 'เพิ่ม/ลบ keyword ได้ที่หน้า Keyword Manager' }
+    ],
+    fields: [
+      { key: 'intro_title', label: 'หัวข้อ (จาก brand name)', type: 'input', source: 'brand_name', default: 'คู่หูสายไหน', hint: 'ดึงจาก Brand Name อัตโนมัติ' },
+      { key: 'intro_body', label: 'คำอธิบาย', type: 'textarea', source: 'copy', default: 'ตอบ 5 ข้อ แล้วส่งให้เพื่อนร่วมงานตอบ' },
+      { key: 'intro_cta', label: 'ปุ่ม CTA', type: 'input', source: 'copy', default: 'เริ่มตอบ' }
+    ],
+    buildPreview: (vals) => ({
+      type: 'flex',
+      title: vals.intro_title,
+      body: vals.intro_body,
+      cta: vals.intro_cta
+    })
+  },
+  {
+    id: 'result_share',
+    num: '06',
+    title: 'แชร์ผลลัพธ์ให้เพื่อน',
+    when: 'user กด "อวดผลให้คนอื่น" บนหน้า Result',
+    type: 'free',
+    typeLabel: 'ShareTargetPicker',
+    msgType: 'flex',
+    triggers: [
+      { icon: '📤', action: 'LIFF: กดปุ่ม "อวดผลให้คนอื่น"', desc: 'หน้า Result → shareTargetPicker() → ส่งการ์ดผลลัพธ์ไปใน chat ที่เลือก' }
+    ],
+    fields: [
+      { key: 'result_eyebrow', label: 'Eyebrow', type: 'input', source: 'copy', default: 'คุณสองคนคือ', hint: 'ใช้ค่าเดียวกับ Chat Trigger' },
+      { key: 'result_again_cta', label: 'ปุ่มชวนเพื่อน', type: 'input', source: 'copy', default: 'ลองเล่นบ้าง' }
+    ],
+    buildPreview: (vals) => ({
+      type: 'flex_result',
+      eyebrow: vals.result_eyebrow,
+      title: 'คู่หูสายไฟลุก',
+      body: 'สองคนนี้เจอกันเมื่อไหร่...',
+      cta: vals.result_again_cta,
+      tags: ['คุณ · สายลุย', 'คู่หู · สายนิ่ง']
+    })
+  }
+];
+
+// ── Load config ──
+async function load() {
+  try {
+    const res = await fetch(API + '/api/admin/campaign/' + CAMPAIGN_ID);
+    if (!res.ok) throw new Error('Campaign not found');
+    const data = await res.json();
+    config = data.config;
+    copy = config.copy || {};
+    brand = config.brand || {};
+    messages = {};
+    // Flatten messages slots
+    if (config.messages) {
+      for (const [k, v] of Object.entries(config.messages)) {
+        if (v && typeof v === 'object' && v.slots) {
+          for (const [sk, sv] of Object.entries(v.slots)) {
+            messages[k + '_' + sk] = sv;
+          }
+        }
+      }
+    }
+    // Also load welcome from oa_settings
+    const setRes = await fetch(API + '/api/admin/messages/settings');
+    if (setRes.ok) {
+      const settings = await setRes.json();
+      if (settings.welcome_message?.text) {
+        messages.welcome_text = settings.welcome_message.text;
+      }
+    }
+
+    // Load keyword rules
+    try {
+      const kwRes = await fetch(API + '/api/admin/messages/keywords');
+      if (kwRes.ok) keywordRules = await kwRes.json();
+    } catch(e) {}
+
+    document.getElementById('camp-badge').textContent = CAMPAIGN_ID + ' · v' + data.campaign.currentVersion;
+    renderFlows();
+  } catch (e) {
+    document.getElementById('flow-grid').innerHTML = '<p style="color:#E63B2E;padding:20px">Error: ' + e.message + '</p>';
+  }
+}
+
+// ── Get field value ──
+function getVal(flow, field) {
+  // Check input element first
+  const el = document.getElementById('f-' + flow.id + '-' + field.key);
+  if (el) {
+    if (field.type === 'bool') return el.dataset.val || field.default;
+    return el.value;
+  }
+  // From loaded data
+  if (field.source === 'copy') return copy[field.key] || field.default;
+  if (field.source === 'messages') return messages[field.key] || field.default;
+  if (field.source === 'brand_name') return brand.name || field.default;
+  return field.default;
+}
+
+function getAllVals(flow) {
+  const vals = {};
+  flow.fields.forEach(f => vals[f.key] = getVal(flow, f));
+  return vals;
+}
+
+// ── Render ──
+function renderFlows() {
+  const grid = document.getElementById('flow-grid');
+  grid.innerHTML = FLOWS.map(flow => {
+    const typeClass = flow.type === 'free' ? 'free' : 'quota';
+    return `
+    <div class="flow-card" id="fc-${flow.id}">
+      <div class="flow-header" onclick="toggleFlow('${flow.id}')">
+        <div class="left">
+          <span class="flow-num">${flow.num}</span>
+          <span class="flow-title">${flow.title}</span>
+          <span class="flow-when">— ${flow.when}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="flow-type ${typeClass}">${flow.typeLabel}</span>
+          <span class="flow-arrow">›</span>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="editor">
+          ${flow.triggers ? renderTriggers(flow) : ''}
+          ${flow.showKeywords ? renderKeywordTags(flow) : ''}
+          ${flow.fields.map(f => renderField(flow, f)).join('')}
+        </div>
+        <div class="preview">
+          <div class="preview-label">Preview</div>
+          <div id="preview-${flow.id}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Set values + render previews
+  FLOWS.forEach(flow => {
+    flow.fields.forEach(f => {
+      const el = document.getElementById('f-' + flow.id + '-' + f.key);
+      if (!el) return;
+      const val = getVal(flow, f);
+      if (f.type === 'bool') {
+        el.dataset.val = val;
+        el.textContent = val === 'true' || val === true ? '✅ เปิด' : '❌ ปิด';
+        el.style.color = val === 'true' || val === true ? '#16A34A' : '#E63B2E';
+      } else {
+        el.value = val;
+      }
+    });
+    updatePreview(flow.id);
+  });
+}
+
+function renderTriggers(flow) {
+  if (!flow.triggers || !flow.triggers.length) return '';
+  return `<div class="trigger-box">
+    <div class="trigger-label">Trigger — อะไรทำให้ส่งการ์ดนี้</div>
+    ${flow.triggers.map(t => `
+      <div class="trigger-row">
+        <span class="trigger-icon">${t.icon}</span>
+        <span class="trigger-action">${t.action}</span>
+      </div>
+      <div style="font-size:12px;color:var(--dim2);margin-left:28px;margin-bottom:8px">${t.desc}</div>
+    `).join('')}
+  </div>`;
+}
+
+function renderKeywordTags(flow) {
+  const campKeywords = keywordRules.filter(r => r.campaign_id === CAMPAIGN_ID && r.enabled);
+  const allKeywords = keywordRules.filter(r => r.campaign_id === CAMPAIGN_ID);
+
+  return `<div class="trigger-box">
+    <div class="trigger-label">Keywords ที่ผูกกับ campaign นี้</div>
+    <div class="kw-tags">
+      ${allKeywords.length === 0 ? '<span style="font-size:12px;color:var(--dim)">ยังไม่มี keyword ผูกอยู่</span>' : ''}
+      ${allKeywords.map(k => `
+        <span class="kw-tag ${k.enabled ? 'active' : ''}" title="${k.enabled ? 'เปิดอยู่' : 'ปิดอยู่'}">
+          ${k.enabled ? '✅' : '❌'} ${esc(k.keyword)}
+        </span>
+      `).join('')}
+      <a href="messages.html" class="kw-add">+ จัดการ keyword</a>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px">
+      user พิมพ์ keyword ข้างบน → ได้ Flex Card ด้านล่างกลับ (ฟรี)
+    </div>
+  </div>`;
+}
+
+function renderField(flow, f) {
+  const id = 'f-' + flow.id + '-' + f.key;
+  if (f.type === 'bool') {
+    return `<div class="field">
+      <label>${f.label}</label>
+      <button id="${id}" class="btn" style="text-align:left" onclick="toggleBool('${flow.id}','${f.key}',this)">${f.default === 'true' ? '✅ เปิด' : '❌ ปิด'}</button>
+      ${f.hint ? '<div class="hint">' + f.hint + '</div>' : ''}
+    </div>`;
+  }
+  if (f.type === 'textarea') {
+    return `<div class="field">
+      <label>${f.label}</label>
+      <textarea id="${id}" rows="3" oninput="updatePreview('${flow.id}')">${f.default}</textarea>
+      ${f.hint ? '<div class="hint">' + f.hint + '</div>' : ''}
+    </div>`;
+  }
+  return `<div class="field">
+    <label>${f.label}</label>
+    <input id="${id}" value="${esc(f.default)}" oninput="updatePreview('${flow.id}')">
+    ${f.hint ? '<div class="hint">' + f.hint + '</div>' : ''}
+  </div>`;
+}
+
+function toggleFlow(id) {
+  document.getElementById('fc-' + id).classList.toggle('open');
+  updatePreview(id);
+}
+
+function toggleBool(flowId, key, btn) {
+  const cur = btn.dataset.val;
+  const next = cur === 'true' ? 'false' : 'true';
+  btn.dataset.val = next;
+  btn.textContent = next === 'true' ? '✅ เปิด' : '❌ ปิด';
+  btn.style.color = next === 'true' ? '#16A34A' : '#E63B2E';
+  updatePreview(flowId);
+}
+
+// ── Preview ──
+function updatePreview(flowId) {
+  const flow = FLOWS.find(f => f.id === flowId);
+  if (!flow) return;
+  const el = document.getElementById('preview-' + flowId);
+  if (!el) return;
+
+  const vals = getAllVals(flow);
+  const data = flow.buildPreview(vals);
+  const primary = brand.primary || '#FF3D8B';
+
+  if (data.type === 'text') {
+    el.innerHTML = `<div class="chat-preview"><div class="chat-msg-bot"><div class="text-bubble">${esc(data.text)}</div></div></div>`;
+  } else if (data.type === 'flex') {
+    el.innerHTML = `<div class="chat-preview"><div class="chat-msg-bot">${flexCard(data.title, data.body, data.cta, primary)}</div></div>`;
+  } else if (data.type === 'flex_result') {
+    let html = '<div class="chat-preview">';
+    if (data.userText && data.enabled !== false) {
+      html += '<div class="chat-msg-user">' + esc(data.userText) + '</div>';
+    }
+    if (data.enabled === false) {
+      html += '<div style="text-align:center;padding:20px;color:#fff;opacity:.6;font-size:13px">ปิดอยู่ — ไม่ส่งเข้า chat</div>';
+    } else {
+      html += '<div class="chat-msg-bot">' + flexResultCard(data, primary) + '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  }
+}
+
+function flexCard(title, body, cta, primary) {
+  return `<div class="flex-card">
+    <div class="flex-body">
+      <div class="flex-title">${esc(title)}</div>
+      <div class="flex-desc">${esc(body)}</div>
+    </div>
+    <div class="flex-footer">
+      <div class="flex-btn primary" style="background:${primary}">${esc(cta)}</div>
+    </div>
+  </div>`;
+}
+
+function flexResultCard(data, primary) {
+  let tagsHtml = '';
+  if (data.tags) {
+    tagsHtml = '<div class="flex-tags">' + data.tags.map(t => '<span class="flex-tag" style="border-color:' + primary + ';color:' + primary + '">' + esc(t) + '</span>').join('') + '</div>';
+  }
+  return `<div class="flex-card">
+    <div class="flex-hero">RESULT IMAGE</div>
+    <div class="flex-body">
+      <div class="flex-eyebrow">${esc(data.eyebrow)}</div>
+      <div class="flex-title" style="color:${primary}">${esc(data.title)}</div>
+      <div class="flex-desc">${esc(data.body)}</div>
+      ${tagsHtml}
+    </div>
+    <div class="flex-footer">
+      <div class="flex-btn primary" style="background:${primary}">${esc(data.cta)}</div>
+      <div class="flex-btn secondary">ดูผลอีกครั้ง</div>
+    </div>
+  </div>`;
+}
+
+// ── Save ──
+async function saveAll() {
+  // Collect all values back into config
+  const updates = { copy: { ...copy }, messages: { ...config.messages } };
+
+  FLOWS.forEach(flow => {
+    flow.fields.forEach(f => {
+      const val = getVal(flow, f);
+      if (f.source === 'copy') {
+        updates.copy[f.key] = val;
+      }
+    });
+  });
+
+  // Update messages slots
+  const inviteFlow = FLOWS.find(f => f.id === 'invite');
+  if (inviteFlow) {
+    const v = getAllVals(inviteFlow);
+    if (!updates.messages.invite) updates.messages.invite = { template: 'invite_v1', slots: {} };
+    updates.messages.invite.slots = { title: v.invite_title, body: v.invite_body || '', cta: v.invite_cta };
+  }
+
+  const pdFlow = FLOWS.find(f => f.id === 'partner_done');
+  if (pdFlow) {
+    const v = getAllVals(pdFlow);
+    if (!updates.messages.partner_done) updates.messages.partner_done = { template: 'notify_v1', slots: {} };
+    updates.messages.partner_done.slots = { title: v.partner_done_title, body: v.partner_done_body || '', cta: v.partner_done_cta };
+  }
+
+  // Save campaign config
+  const newConfig = { ...config, copy: updates.copy, messages: updates.messages };
+  const res = await fetch(API + '/api/admin/campaign/' + CAMPAIGN_ID, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config: newConfig })
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    alert('Save failed: ' + (data.error?.message || 'Unknown error'));
+    return;
+  }
+
+  // Save welcome message to oa_settings
+  const welFlow = FLOWS.find(f => f.id === 'welcome');
+  if (welFlow) {
+    const v = getAllVals(welFlow);
+    await fetch(API + '/api/admin/messages/settings/welcome_message', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: { text: v.welcome_text } })
+    });
+  }
+
+  const rData = await res.json();
+  toast('บันทึกแล้ว — v' + rData.version);
+  document.getElementById('camp-badge').textContent = CAMPAIGN_ID + ' · v' + rData.version;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Init ──
+load();
+</script>
+</body>
+</html>

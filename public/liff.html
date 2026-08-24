@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>คู่หูสายไหน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#FF3D8B;--surface:#1B1430;--on:#FFF3E4;--line:rgba(255,243,228,.18);--dim:rgba(255,243,228,.16);--radius:12px}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans Thai',sans-serif;background:var(--surface);color:var(--on)}
+
+.app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Loading */
+.loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-spinner{width:32px;height:32px;border:3px solid var(--dim);border-top-color:var(--primary);border-radius:99px;animation:spin .7s linear infinite}
+.loading-text{font-size:14px;opacity:.6}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Screens */
+.screen{display:none;flex:1;flex-direction:column;overflow-y:auto}
+.screen.active{display:flex}
+.screen-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 28px}
+.screen-footer{padding:20px 24px 40px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+
+h2{font-weight:700;letter-spacing:-.02em;line-height:1.2}
+p.desc{font-size:15px;line-height:1.6;opacity:.72;max-width:280px;margin:14px auto 0}
+
+.btn-primary{width:100%;padding:17px;border:0;border-radius:var(--radius);background:var(--primary);color:#fff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.btn-primary:active{opacity:.85}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.btn-outline{width:100%;padding:15px;border:1px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--on);opacity:.8;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.btn-result{width:100%;padding:17px;border:0;border-radius:var(--radius);background:#fff;color:var(--primary);font-family:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.btn-result-outline{width:100%;padding:15px;border:1px solid rgba(255,255,255,.42);border-radius:var(--radius);background:transparent;color:#fff;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer}
+
+/* Intro */
+.logo-box{width:64px;height:64px;border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--dim);font-size:20px;margin-bottom:28px}
+
+/* Question */
+.progress-track{height:3px;background:var(--dim);flex-shrink:0}
+.progress-fill{height:100%;background:var(--primary);transition:width .4s ease}
+.q-header{padding:22px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.q-counter{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.5}
+.q-dots{display:flex;gap:5px}
+.q-dot{width:6px;height:6px;border-radius:99px;background:var(--dim);transition:background .3s}
+.q-dot.done{background:var(--primary)}
+.q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px}
+.q-text{font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.4;text-align:left;margin:0 0 30px}
+.q-options{display:flex;flex-direction:column;gap:10px}
+.q-option{text-align:left;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--on);font-family:inherit;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s}
+.q-option:active,.q-option.selected{border-color:var(--primary);background:var(--primary);color:#fff;font-weight:600}
+.q-submitting{display:none;align-items:center;gap:9px;margin-top:26px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.55}
+.q-submitting.show{display:flex}
+.spinner{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:99px;animation:spin .7s linear infinite}
+
+/* Share */
+.share-icon{width:56px;height:56px;border-radius:14px;background:var(--primary);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.flex-preview{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--dim);margin-top:26px;width:100%}
+.flex-preview-header{padding:8px 14px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.5}
+.flex-preview-body{padding:16px}
+.flex-preview-body h4{font-size:15px;font-weight:600;margin:0 0 6px}
+.flex-preview-body p{font-size:13px;opacity:.68;margin:0}
+.flex-preview-cta{margin-top:14px;padding:11px;text-align:center;border-radius:var(--radius);background:var(--primary);color:#fff;font-size:14px;font-weight:600}
+
+/* Waiting */
+@keyframes ringPulse{0%{transform:scale(.85);opacity:.55}70%{transform:scale(1.35);opacity:0}100%{opacity:0}}
+@keyframes dotPulse{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+.ring-container{position:relative;width:96px;height:96px;margin-bottom:30px}
+.ring{position:absolute;inset:0;border-radius:99px;background:var(--primary)}
+.ring-1{animation:ringPulse 2.4s ease-out infinite}
+.ring-2{animation:ringPulse 2.4s ease-out infinite .8s}
+.ring-core{position:relative;width:52px;height:52px;border-radius:99px;background:var(--primary);opacity:.16;margin:22px auto}
+.wait-dots{display:flex;gap:6px;margin-top:24px}
+.wait-dot{width:7px;height:7px;border-radius:99px;background:var(--primary)}
+.wait-dot:nth-child(1){animation:dotPulse 1.4s ease-in-out infinite}
+.wait-dot:nth-child(2){animation:dotPulse 1.4s ease-in-out infinite .2s}
+.wait-dot:nth-child(3){animation:dotPulse 1.4s ease-in-out infinite .4s}
+
+/* Result */
+.result-screen{background:var(--primary)!important;color:#fff!important}
+.result-image{height:160px;border:1px solid rgba(255,255,255,.3);border-radius:14px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:.08em;opacity:.7;margin-bottom:24px;width:100%}
+.result-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;text-align:left;width:100%}
+.result-title{font-size:36px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin:8px 0 0;text-align:left;width:100%}
+.result-body{font-size:15px;line-height:1.6;opacity:.85;margin:14px 0 0;text-align:left;width:100%}
+.axis-tags{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;width:100%}
+.axis-tag{padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.42);font-size:13px;font-weight:500}
+
+/* Error */
+.err-icon{width:52px;height:52px;border-radius:99px;border:1px solid var(--line);background:var(--dim);display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.6;margin-bottom:22px}
+
+/* Fade */
+.fade-enter{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- LOADING -->
+  <div class="screen active" id="s-loading">
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">กำลังเตรียมควิซ...</div>
+      <div id="debug-log" style="font-size:11px;opacity:.6;max-width:300px;text-align:left;white-space:pre-wrap;word-break:break-all;margin-top:16px"></div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="screen" id="s-intro">
+    <div class="screen-body">
+      <div class="logo-box">🎯</div>
+      <h2 style="font-size:34px" id="intro-title"></h2>
+      <p class="desc" id="intro-body"></p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" id="intro-cta" onclick="startQuiz(false)"></button>
+      <button class="btn-outline" id="intro-demo" onclick="startQuiz(true)"></button>
+    </div>
+  </div>
+
+  <!-- INVITED -->
+  <div class="screen" id="s-invited">
+    <div class="screen-body">
+      <div style="position:relative;width:76px;height:76px;margin-bottom:26px">
+        <div style="position:absolute;inset:0;border-radius:99px;background:var(--primary);opacity:.14"></div>
+        <div style="position:absolute;inset:6px;border-radius:99px;background:var(--dim);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600" id="invited-avatar"></div>
+      </div>
+      <h2 style="font-size:28px" id="invited-title"></h2>
+      <p class="desc" id="invited-body"></p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" id="invited-cta" onclick="startAnswering()"></button>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="s-question">
+    <div class="progress-track"><div class="progress-fill" id="q-progress"></div></div>
+    <div class="q-header">
+      <span class="q-counter" id="q-counter"></span>
+      <div class="q-dots" id="q-dots"></div>
+    </div>
+    <div class="q-body fade-enter" id="q-body">
+      <h2 class="q-text" id="q-text"></h2>
+      <div class="q-options" id="q-options"></div>
+      <div class="q-submitting" id="q-submitting"><span class="spinner"></span><span>กำลังส่งคำตอบ</span></div>
+    </div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="screen" id="s-share">
+    <div class="screen-body" style="align-items:flex-start;text-align:left">
+      <div class="share-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+      </div>
+      <h2 style="font-size:30px" id="share-title"></h2>
+      <p style="margin:12px 0 0;font-size:15px;line-height:1.6;opacity:.72;max-width:290px" id="share-body"></p>
+      <div class="flex-preview">
+        <div class="flex-preview-header">ตัวอย่างข้อความที่จะส่ง</div>
+        <div class="flex-preview-body">
+          <h4 id="flex-title"></h4>
+          <p id="flex-body"></p>
+          <div class="flex-preview-cta" id="flex-cta"></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" id="share-cta" onclick="doShare()"></button>
+    </div>
+  </div>
+
+  <!-- WAITING -->
+  <div class="screen" id="s-waiting">
+    <div class="screen-body">
+      <div class="ring-container">
+        <span class="ring ring-1"></span>
+        <span class="ring ring-2"></span>
+        <div class="ring-core"></div>
+      </div>
+      <h2 style="font-size:28px" id="wait-title"></h2>
+      <p class="desc" id="wait-body"></p>
+      <div class="wait-dots"><span class="wait-dot"></span><span class="wait-dot"></span><span class="wait-dot"></span></div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-outline" onclick="closeWindow()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen result-screen" id="s-result">
+    <div class="screen-body" style="align-items:flex-start;justify-content:center;padding:0 26px">
+      <div class="result-image" id="res-image">RESULT</div>
+      <div class="result-eyebrow" id="res-eyebrow"></div>
+      <h2 class="result-title" id="res-title"></h2>
+      <p class="result-body" id="res-body"></p>
+      <div class="axis-tags" id="res-tags"></div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-result" id="res-share" onclick="shareResult()"></button>
+      <button class="btn-result-outline" id="res-again" onclick="playAgain()"></button>
+    </div>
+  </div>
+
+  <!-- FRIEND GATE -->
+  <div class="screen" id="s-friend-gate">
+    <div class="screen-body">
+      <div style="width:56px;height:56px;border-radius:99px;background:#06C755;display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      </div>
+      <h2 style="font-size:26px" id="gate-title">เพิ่มเพื่อนก่อนเริ่ม</h2>
+      <p class="desc" id="gate-body">กดปุ่ม "เพิ่มเพื่อน" ด้านบน แล้วกลับมากดปุ่มด้านล่างเพื่อเริ่มเล่น</p>
+      <p class="desc" style="opacity:.45;font-size:13px;margin-top:8px">เราจะส่งผลลัพธ์ให้ทั้งคุณและคู่หูทางแชท</p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" style="background:#06C755" onclick="checkFriendAndContinue()">เพิ่มเพื่อนแล้ว เริ่มเลย</button>
+      <div style="text-align:center;font-size:13px;opacity:.5;margin-top:4px" id="gate-checking" hidden>
+        <span class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>กำลังตรวจสอบ...
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="screen" id="s-error">
+    <div class="screen-body">
+      <div class="err-icon">!</div>
+      <h2 style="font-size:26px" id="err-title"></h2>
+      <p class="desc" id="err-body"></p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-outline" onclick="closeWindow()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════ CONFIG
+const LIFF_ID = '2011037337-KlqFK4LM';
+const API_BASE = location.origin;
+
+// Campaign ID from URL path: /quiz/mbti_demo or /quiz/buddy_demo
+// Falls back to 'buddy_demo' for root path
+const pathParts = location.pathname.split('/').filter(Boolean);
+const CAMPAIGN_ID = (pathParts[0] === 'quiz' && pathParts[1]) ? pathParts[1] : 'buddy_demo';
+
+// ═══════════════════════════════════════ STATE
+let idToken = null;
+let config = null;   // public config from backend
+let pairId = null;
+let inviteToken = null;
+let answers = [];
+let qi = 0;
+let isDemo = false;
+let resultData = null;
+let pendingInviteToken = null; // saved when B needs friend gate first
+let sessionId = null; // solo mode session
+let isSoloMode = false;
+
+// ═══════════════════════════════════════ API
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (idToken) opts.headers['Authorization'] = 'Bearer ' + idToken;
+  if (body) opts.body = JSON.stringify(body);
+
+  const res = await fetch(API_BASE + path, opts);
+  const data = await res.json();
+
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || 'Request failed');
+    err.code = data?.error?.code;
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// ═══════════════════════════════════════ SCREENS
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+}
+
+function showError(title, body) {
+  document.getElementById('err-title').textContent = title;
+  document.getElementById('err-body').textContent = body;
+  show('error');
+}
+
+// ═══════════════════════════════════════ INIT
+function dlog(msg) {
+  console.log('[LIFF]', msg);
+  const el = document.getElementById('debug-log');
+  if (el) el.textContent += msg + '\n';
+}
+
+async function init() {
+  try {
+    dlog('1. liff.init...');
+    await liff.init({ liffId: LIFF_ID });
+    dlog('2. init OK · logged=' + liff.isLoggedIn());
+
+    if (!liff.isLoggedIn()) {
+      dlog('3. redirecting to login...');
+      liff.login({ redirectUri: location.href });
+      return;
+    }
+
+    idToken = liff.getIDToken();
+    dlog('3. token OK');
+    dlog('4. CAMPAIGN_ID=' + CAMPAIGN_ID);
+
+    // Check URL params
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const viewPairId = params.get('pairId');
+
+    if (token) {
+      // B opens via invite link
+      await handleInvite(token);
+    } else if (viewPairId) {
+      // A returns via push notification
+      await handleViewResult(viewPairId);
+    } else {
+      // A opens fresh
+      await handleIntro();
+    }
+  } catch (err) {
+    dlog('ERROR: ' + err.message);
+    console.error('Init error:', err);
+    if (err.message === 'LIFF init timeout' || (typeof liff !== 'undefined' && !liff.isInClient())) {
+      // Opened outside LINE — show friendly message
+      showError(
+        'เปิดใน LINE เท่านั้น',
+        'กดลิงก์นี้จาก LINE app เพื่อเริ่มเล่น\nhttps://liff.line.me/' + LIFF_ID
+      );
+    } else {
+      showError(
+        'เปิดไม่สำเร็จ',
+        err.message || 'ลองปิดแล้วเปิดใหม่อีกครั้ง'
+      );
+    }
+  }
+}
+
+// ═══════════════════════════════════════ FLOWS
+
+async function handleIntro() {
+  dlog('5. loading campaign...');
+  config = await api('GET', '/api/campaign/' + CAMPAIGN_ID);
+  dlog('6. config loaded: ' + config?.id);
+  applyTheme(config);
+  renderIntro();
+  show('intro');
+  console.log('[LIFF] intro shown');
+}
+
+async function handleInvite(token) {
+  // B opens via invite link — check friendship first
+  try {
+    const friendship = await liff.getFriendship();
+    if (!friendship.friendFlag) {
+      // Not a friend yet — show friend gate, save token for after
+      pendingInviteToken = token;
+      show('friend-gate');
+      return;
+    }
+  } catch (e) {
+    // getFriendship failed — proceed anyway (might be external browser)
+    console.warn('getFriendship failed:', e);
+  }
+
+  await doJoin(token);
+}
+
+async function doJoin(token) {
+  try {
+    const result = await api('POST', '/api/quiz/join', { token });
+    pairId = result.pairId;
+    config = result.config;
+    applyTheme(config);
+    renderInvited();
+    show('invited');
+  } catch (err) {
+    if (err.status === 410) {
+      const isExpired = err.message.includes('expired');
+      showError(
+        isExpired ? 'คำเชิญหมดอายุแล้ว' : 'คำเชิญนี้ถูกใช้ไปแล้ว',
+        isExpired ? 'ลองขอให้เพื่อนส่งใหม่อีกครั้ง' : 'แต่ละคำเชิญตอบได้คนเดียว ขอให้เพื่อนส่งใบใหม่ได้เลย'
+      );
+    } else if (err.status === 400) {
+      showError('จับคู่กับตัวเองไม่ได้', 'ส่งให้เพื่อนสักคนแล้วรอเขาตอบนะ');
+    } else {
+      showError('เปิดไม่สำเร็จ', err.message || 'ลองปิดแล้วเปิดใหม่อีกครั้ง');
+    }
+  }
+}
+
+async function checkFriendAndContinue() {
+  document.getElementById('gate-checking').hidden = false;
+
+  try {
+    const f = await liff.getFriendship();
+    if (f.friendFlag) {
+      document.getElementById('gate-checking').hidden = true;
+      if (pendingInviteToken) {
+        await doJoin(pendingInviteToken);
+        pendingInviteToken = null;
+      }
+    } else {
+      document.getElementById('gate-checking').hidden = true;
+      document.getElementById('gate-body').textContent =
+        'ยังไม่ได้เพิ่มเพื่อน — กดปุ่ม "เพิ่มเพื่อน" ที่แถบด้านบนก่อนนะ';
+    }
+  } catch (e) {
+    // If getFriendship fails, let them through
+    document.getElementById('gate-checking').hidden = true;
+    if (pendingInviteToken) {
+      await doJoin(pendingInviteToken);
+      pendingInviteToken = null;
+    }
+  }
+}
+
+async function handleViewResult(id) {
+  try {
+    const pair = await api('GET', '/api/pair/' + id);
+    if (pair.status === 'completed') {
+      // Need config for axis labels
+      config = await api('GET', '/api/campaign/' + CAMPAIGN_ID);
+      applyTheme(config);
+      resultData = pair;
+      renderResult(pair);
+      show('result');
+    } else if (pair.status === 'waiting') {
+      config = await api('GET', '/api/campaign/' + CAMPAIGN_ID);
+      applyTheme(config);
+      pairId = id;
+      renderWaiting();
+      show('waiting');
+    } else {
+      showError('คำเชิญหมดอายุแล้ว', 'ลองขอให้เพื่อนส่งใหม่อีกครั้ง');
+    }
+  } catch (err) {
+    showError('เปิดไม่สำเร็จ', err.message);
+  }
+}
+
+// ═══════════════════════════════════════ THEME
+function applyTheme(cfg) {
+  if (!cfg?.brand) return;
+  const r = document.documentElement;
+  r.style.setProperty('--primary', cfg.brand.primary);
+  r.style.setProperty('--surface', cfg.brand.surface);
+  r.style.setProperty('--on', cfg.brand.on_surface);
+}
+
+// ═══════════════════════════════════════ RENDER
+
+function renderIntro() {
+  isSoloMode = config?.mode === 'solo';
+  document.getElementById('intro-title').textContent = config.copy?.intro_title || 'คู่หูสายไหน';
+  document.getElementById('intro-body').textContent = config.copy?.intro_body || '';
+  document.getElementById('intro-cta').textContent = config.copy?.intro_cta || 'เริ่มตอบ';
+
+  // Hide demo button in solo mode (no pairing needed)
+  const demoBtn = document.getElementById('intro-demo');
+  if (isSoloMode) {
+    demoBtn.style.display = 'none';
+  } else {
+    demoBtn.style.display = '';
+    demoBtn.textContent = config.copy?.demo_cta || 'ลองกับคู่หูตัวอย่าง';
+  }
+}
+
+function renderInvited() {
+  const title = config.copy?.invited_title || 'เพื่อนชวนคุณมาตอบ';
+  document.getElementById('invited-title').textContent = title;
+  document.getElementById('invited-body').textContent = config.copy?.invited_body || '';
+  document.getElementById('invited-cta').textContent = config.copy?.invited_cta || 'ตอบเลย';
+  document.getElementById('invited-avatar').textContent = '👤';
+}
+
+function renderWaiting() {
+  document.getElementById('wait-title').textContent = config.copy?.waiting_title || 'รอคู่หูตอบอยู่';
+  document.getElementById('wait-body').textContent = config.copy?.waiting_body || '';
+}
+
+// ═══════════════════════════════════════ QUIZ
+
+async function startQuiz(demo) {
+  try {
+    isDemo = demo;
+    isSoloMode = config?.mode === 'solo';
+
+    if (isSoloMode) {
+      // Solo mode — no pair, no invite
+      const result = await api('POST', '/api/solo/start', { campaignId: CAMPAIGN_ID });
+      sessionId = result.sessionId;
+      config = result.config;
+    } else {
+      // Pair mode
+      const result = await api('POST', '/api/quiz/start', { campaignId: CAMPAIGN_ID, demo });
+      pairId = result.pairId;
+      inviteToken = result.inviteToken;
+      config = result.config;
+    }
+
+    answers = [];
+    qi = 0;
+    renderQuestion();
+    show('question');
+  } catch (err) {
+    if (err.status === 409) {
+      showError('วันนี้ครบโควตาแล้ว', 'พรุ่งนี้กลับมาชวนคู่หูคนใหม่ได้อีก');
+    } else {
+      showError('เปิดไม่สำเร็จ', err.message);
+    }
+  }
+}
+
+function startAnswering() {
+  // B starts answering after seeing invited screen
+  answers = [];
+  qi = 0;
+  renderQuestion();
+  show('question');
+}
+
+function renderQuestion() {
+  const q = config.questions[qi];
+  const total = config.questions.length;
+
+  document.getElementById('q-counter').textContent =
+    (config.copy?.question_counter || 'ข้อ {current} จาก {total}')
+      .replace('{current}', qi + 1).replace('{total}', total);
+
+  document.getElementById('q-progress').style.width = ((qi) / total * 100) + '%';
+
+  const dotsEl = document.getElementById('q-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('span');
+    d.className = 'q-dot' + (i < qi ? ' done' : '');
+    dotsEl.appendChild(d);
+  }
+
+  document.getElementById('q-text').textContent = q.text;
+
+  const optEl = document.getElementById('q-options');
+  optEl.innerHTML = '';
+  for (const o of q.options) {
+    const btn = document.createElement('button');
+    btn.className = 'q-option';
+    btn.textContent = o.label;
+    btn.onclick = () => pickOption(q.id, o.id, btn);
+    optEl.appendChild(btn);
+  }
+
+  document.getElementById('q-submitting').classList.remove('show');
+
+  const body = document.getElementById('q-body');
+  body.classList.remove('fade-enter');
+  void body.offsetWidth;
+  body.classList.add('fade-enter');
+}
+
+function pickOption(qId, oId, btn) {
+  btn.classList.add('selected');
+  document.querySelectorAll('.q-option').forEach(b => {
+    if (b !== btn) b.style.pointerEvents = 'none';
+  });
+
+  answers.push({ questionId: qId, optionId: oId });
+
+  setTimeout(async () => {
+    if (qi < config.questions.length - 1) {
+      qi++;
+      renderQuestion();
+    } else {
+      // Last question — submit
+      document.getElementById('q-submitting').classList.add('show');
+      document.getElementById('q-progress').style.width = '100%';
+
+      try {
+        if (isSoloMode) {
+          // Solo — submit and get result immediately
+          const result = await api('POST', '/api/solo/answer', { sessionId, answers });
+          resultData = result;
+          renderResult(result);
+          show('result');
+        } else {
+          // Pair mode
+          const result = await api('POST', '/api/quiz/answer', { pairId, answers });
+
+          if (result.status === 'completed') {
+            resultData = result;
+            renderResult(result);
+            show('result');
+          } else {
+            if (isDemo) {
+              showError('เปิดไม่สำเร็จ', 'ลองใหม่อีกครั้ง');
+            } else {
+              renderShare();
+              show('share');
+            }
+          }
+        }
+      } catch (err) {
+        showError('ส่งคำตอบไม่สำเร็จ', err.message);
+      }
+    }
+  }, 400);
+}
+
+// ═══════════════════════════════════════ SHARE
+
+function renderShare() {
+  document.getElementById('share-title').textContent = config.copy?.share_title || 'ส่งให้คู่หูตอบ';
+  document.getElementById('share-body').textContent = config.copy?.share_body || '';
+  document.getElementById('share-cta').textContent = config.copy?.share_cta || 'เลือกเพื่อนแล้วส่ง';
+
+  // Flex preview
+  const profile = liff.getProfile ? null : null; // profile loaded async
+  const name = liff.getDecodedIDToken()?.name || 'เพื่อน';
+  document.getElementById('flex-title').textContent = (name + ' ชวนคุณตอบควิซคู่หู');
+  document.getElementById('flex-body').textContent = 'ตอบ 5 ข้อ แล้วดูว่าเราสองคนทำงานด้วยกันแล้วเป็นคู่แบบไหน';
+  document.getElementById('flex-cta').textContent = 'ตอบควิซ';
+}
+
+async function doShare() {
+  const name = liff.getDecodedIDToken()?.name || 'เพื่อน';
+  const liffUrl = 'https://liff.line.me/' + LIFF_ID + '?token=' + inviteToken;
+
+  try {
+    await liff.shareTargetPicker([
+      {
+        type: 'flex',
+        altText: name + ' ชวนคุณตอบควิซคู่หู',
+        contents: {
+          type: 'bubble',
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              { type: 'text', text: name + ' ชวนคุณตอบควิซคู่หู', weight: 'bold', size: 'lg' },
+              { type: 'text', text: 'ตอบ 5 ข้อ แล้วดูว่าเราสองคนทำงานด้วยกันแล้วเป็นคู่แบบไหน', wrap: true, margin: 'md', size: 'sm', color: '#888888' }
+            ]
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'button',
+                action: { type: 'uri', label: 'ตอบควิซ', uri: liffUrl },
+                style: 'primary',
+                color: config.brand?.primary || '#FF3D8B'
+              }
+            ]
+          }
+        }
+      }
+    ]);
+
+    // Log share event
+    api('POST', '/api/quiz/share', { pairId, campaignId: CAMPAIGN_ID }).catch(() => {});
+
+    renderWaiting();
+    show('waiting');
+  } catch (err) {
+    // User cancelled — stay on share screen
+    console.log('Share cancelled');
+  }
+}
+
+// ═══════════════════════════════════════ RESULT
+
+function renderResult(data) {
+  document.getElementById('res-eyebrow').textContent =
+    isSoloMode
+      ? (config.copy?.result_eyebrow || 'คุณคือ')
+      : (config.copy?.result_eyebrow || 'คุณสองคนคือ');
+  document.getElementById('res-title').textContent = data.result.title;
+  document.getElementById('res-body').textContent = data.result.body;
+  document.getElementById('res-share').textContent = config.copy?.result_share_cta || 'อวดผลให้คนอื่น';
+  document.getElementById('res-again').textContent =
+    isSoloMode
+      ? (config.copy?.result_again_cta || 'ลองทำอีกครั้ง')
+      : (config.copy?.result_again_cta || 'ชวนอีกคน');
+
+  if (data.result.image_url) {
+    document.getElementById('res-image').style.backgroundImage = 'url(' + data.result.image_url + ')';
+    document.getElementById('res-image').style.backgroundSize = 'cover';
+    document.getElementById('res-image').textContent = '';
+  }
+
+  // Tags
+  const tagsEl = document.getElementById('res-tags');
+  if (isSoloMode && data.typeCode) {
+    // Solo: show type code + each pole
+    let html = '<span class="axis-tag" style="font-weight:700;font-size:15px">' + data.typeCode + '</span>';
+    if (data.poles) {
+      for (const axis of config.axes || []) {
+        const pole = data.poles[axis.id];
+        if (pole) html += '<span class="axis-tag">' + pole + '</span>';
+      }
+    }
+    tagsEl.innerHTML = html;
+  } else {
+    // Pair: show axis labels
+    const axMe = config.axes?.find(a => a.id === data.axisMe);
+    const axBuddy = config.axes?.find(a => a.id === data.axisBuddy);
+    tagsEl.innerHTML =
+      (axMe ? '<span class="axis-tag">คุณ · ' + axMe.label + '</span>' : '') +
+      (axBuddy ? '<span class="axis-tag">คู่หู · ' + axBuddy.label + '</span>' : '');
+  }
+
+  // Trigger: send message as user → webhook catches → reply with rich card (FREE)
+  sendResultTrigger();
+}
+
+async function sendResultTrigger() {
+  if (!liff.isInClient()) return;
+
+  // Check if chat trigger is enabled in config
+  const enabled = config?.copy?.chat_trigger_enabled;
+  if (enabled === 'false' || enabled === false) return;
+
+  const id = isSoloMode ? sessionId : pairId;
+  if (!id) return;
+
+  const triggerText = config?.copy?.chat_trigger_text || '✨ ฉันเล่นควิซเสร็จแล้ว ดูผลลัพธ์ให้หน่อย!';
+
+  try {
+    await liff.sendMessages([
+      { type: 'text', text: triggerText + '\n#ref:' + id }
+    ]);
+  } catch (e) {
+    console.warn('sendMessages failed:', e);
+  }
+}
+
+async function shareResult() {
+  if (!resultData) return;
+  try {
+    await liff.shareTargetPicker([
+      {
+        type: 'flex',
+        altText: 'ผลควิซคู่หู: ' + resultData.result.title,
+        contents: {
+          type: 'bubble',
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              { type: 'text', text: config.copy?.result_eyebrow || 'คุณสองคนคือ', size: 'xs', color: '#888888' },
+              { type: 'text', text: resultData.result.title, weight: 'bold', size: 'xl', margin: 'sm' },
+              { type: 'text', text: resultData.result.body, wrap: true, margin: 'md', size: 'sm', color: '#666666' }
+            ]
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'button',
+                action: { type: 'uri', label: 'ลองเล่นบ้าง', uri: 'https://liff.line.me/' + LIFF_ID },
+                style: 'primary',
+                color: config.brand?.primary || '#FF3D8B'
+              }
+            ]
+          }
+        }
+      }
+    ]);
+  } catch (err) {
+    console.log('Share result cancelled');
+  }
+}
+
+function playAgain() {
+  answers = [];
+  qi = 0;
+  pairId = null;
+  inviteToken = null;
+  resultData = null;
+  isDemo = false;
+  renderIntro();
+  show('intro');
+}
+
+function closeWindow() {
+  if (liff.isInClient()) {
+    liff.closeWindow();
+  } else {
+    window.close();
+  }
+}
+
+// ═══════════════════════════════════════ START
+if (typeof liff === 'undefined') {
+  // SDK ยังไม่โหลด — รอ
+  window.addEventListener('load', () => {
+    if (typeof liff !== 'undefined') {
+      init();
+    } else {
+      document.querySelector('.loading-text').textContent = 'โหลด LIFF SDK ไม่สำเร็จ — ลองปิดแล้วเปิดใหม่';
+    }
+  });
+} else {
+  init();
+}
+</script>
+</body>
+</html>

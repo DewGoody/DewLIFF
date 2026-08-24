@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "campaign": {
+    "key": "apocalypse_duo",
+    "name": "โลกแตกพรุ่งนี้ เรารอดกี่วัน",
+    "mode": "pair"
+  },
+  "archetypes": [
+    { "id": "mu",    "order": 1, "name": "สายมู" },
+    { "id": "prep",  "order": 2, "name": "สายเตรียมพร้อม" },
+    { "id": "live",  "order": 3, "name": "สายไลฟ์สด" },
+    { "id": "chill", "order": 4, "name": "สายปลง" },
+    { "id": "line",  "order": 5, "name": "สายไลน์กลุ่ม" }
+  ],
+  "questions": [
+    {
+      "id": "q1", "order": 1,
+      "text": "ข่าวโลกแตกเด้งขึ้นมาตอนตีสาม คุณทำอะไรก่อน",
+      "options": [
+        { "id": "q1_mu",    "label": "ลุกไปจุดธูปก่อน",           "weights": { "mu": 3, "line": 1 } },
+        { "id": "q1_prep",  "label": "เปิดกระเป๋าเช็คของ",         "weights": { "prep": 3, "chill": 1 } },
+        { "id": "q1_live",  "label": "เปิดกล้อง อัดไว้ก่อน",       "weights": { "live": 3, "line": 1 } },
+        { "id": "q1_chill", "label": "อ่านจบแล้วนอนต่อ",           "weights": { "chill": 3, "mu": 1 } },
+        { "id": "q1_line",  "label": "ส่งต่อในกลุ่มครอบครัว",       "weights": { "line": 3, "live": 1 } }
+      ]
+    },
+    {
+      "id": "q2", "order": 2,
+      "text": "หยิบติดตัวไปได้อย่างเดียว",
+      "options": [
+        { "id": "q2_mu",    "label": "พระเครื่ององค์ที่แม่ให้",     "weights": { "mu": 3, "chill": 1 } },
+        { "id": "q2_prep",  "label": "ไฟฉายกับมีดพับ",              "weights": { "prep": 3, "live": 1 } },
+        { "id": "q2_live",  "label": "พาวเวอร์แบงก์",               "weights": { "live": 3, "prep": 1 } },
+        { "id": "q2_chill", "label": "หมอนใบเดิม",                  "weights": { "chill": 3, "line": 1 } },
+        { "id": "q2_line",  "label": "มือถือ ต้องอัปเดตกลุ่ม",       "weights": { "line": 3, "mu": 1 } }
+      ]
+    },
+    {
+      "id": "q3", "order": 3,
+      "text": "เจอทางแยกสองทาง ไม่มีป้ายบอก",
+      "options": [
+        { "id": "q3_mu",    "label": "เสี่ยงทายด้วยเหรียญ",         "weights": { "mu": 3, "chill": 1 } },
+        { "id": "q3_prep",  "label": "ดูรอยเท้ากับทิศแดด",           "weights": { "prep": 3, "mu": 1 } },
+        { "id": "q3_live",  "label": "ถ่ายไว้ทั้งสองทางก่อน",        "weights": { "live": 3, "prep": 1 } },
+        { "id": "q3_chill", "label": "เดินตามเพื่อนไป",              "weights": { "chill": 3, "line": 1 } },
+        { "id": "q3_line",  "label": "ในกลุ่มเคยบอกว่าให้ไปซ้าย",    "weights": { "line": 3, "live": 1 } }
+      ]
+    },
+    {
+      "id": "q4", "order": 4,
+      "text": "อาหารเหลือมื้อสุดท้าย",
+      "options": [
+        { "id": "q4_mu",    "label": "แบ่งไว้ไหว้ก่อนหน่อย",         "weights": { "mu": 3, "prep": 1 } },
+        { "id": "q4_prep",  "label": "แบ่ง 7 ส่วน กินวันละส่วน",     "weights": { "prep": 3, "chill": 1 } },
+        { "id": "q4_live",  "label": "จัดจานถ่ายรูปก่อน",            "weights": { "live": 3, "mu": 1 } },
+        { "id": "q4_chill", "label": "กินให้หมดเลย",                  "weights": { "chill": 3, "live": 1 } },
+        { "id": "q4_line",  "label": "ถ่ายส่งกลุ่มถามว่ากินได้ไหม",   "weights": { "line": 3, "prep": 1 } }
+      ]
+    },
+    {
+      "id": "q5", "order": 5,
+      "text": "เจอคนแปลกหน้าเดินเข้ามา",
+      "options": [
+        { "id": "q5_mu",    "label": "ดูหน้าก่อนว่าถูกโฉลกไหม",      "weights": { "mu": 3, "live": 1 } },
+        { "id": "q5_prep",  "label": "ถามชื่อ เช็คของในมือ",          "weights": { "prep": 3, "line": 1 } },
+        { "id": "q5_live",  "label": "ขอถ่ายรูปคู่ไว้ก่อน",           "weights": { "live": 3, "chill": 1 } },
+        { "id": "q5_chill", "label": "พยักหน้าทักแล้วนั่งต่อ",         "weights": { "chill": 3, "prep": 1 } },
+        { "id": "q5_line",  "label": "ถามว่าอยู่กลุ่มไหน",            "weights": { "line": 3, "mu": 1 } }
+      ]
+    },
+    {
+      "id": "q6", "order": 6,
+      "text": "คืนสุดท้ายก่อนมีคนมาช่วย",
+      "options": [
+        { "id": "q6_mu",    "label": "สวดมนต์ให้ครบบท",              "weights": { "mu": 3, "chill": 1 } },
+        { "id": "q6_prep",  "label": "จัดของให้พร้อมออกเดินทาง",      "weights": { "prep": 3, "mu": 1 } },
+        { "id": "q6_live",  "label": "ไลฟ์ปิดท้ายสักรอบ",             "weights": { "live": 3, "line": 1 } },
+        { "id": "q6_chill", "label": "นอน",                           "weights": { "chill": 3, "live": 1 } },
+        { "id": "q6_line",  "label": "พิมพ์ขอบคุณทุกคนในกลุ่ม",       "weights": { "line": 3, "prep": 1 } }
+      ]
+    }
+  ],
+  "results": [
+    { "pair_key": "chill|prep",  "rank": 1,  "survival_display": "1 ปี 2 เดือน",  "reason": "คนนึงทำทุกอย่าง อีกคนไม่บ่นสักคำ ตลอดทั้งปีไม่มีใครทะเลาะกันเลย" },
+    { "pair_key": "mu|prep",     "rank": 2,  "survival_display": "8 เดือน",       "reason": "คนนึงเตรียมของ คนนึงเตรียมใจ ไปได้ไกลมาก เสียแค่ทุกการตัดสินใจต้องรอเช็คดวงก่อน" },
+    { "pair_key": "live|prep",   "rank": 3,  "survival_display": "6 เดือน",       "reason": "คนนึงหาของ คนนึงหากล้อง แต่บันทึกไว้ครบทุกวัน อย่างน้อยโลกจะได้รู้ว่าเกิดอะไรขึ้น" },
+    { "pair_key": "chill|chill", "rank": 4,  "survival_display": "6 เดือน",       "reason": "ไม่หาอะไรกิน ไม่หาที่หลบ ไม่ทะเลาะ นอนอยู่เฉยๆ จนมีคนมาเจอพอดี รอดแบบไม่ได้ตั้งใจ" },
+    { "pair_key": "chill|mu",    "rank": 5,  "survival_display": "3 สัปดาห์",     "reason": "ไม่มีใครทำอะไรเลย แต่ก็ไม่มีใครทำอะไรผิดเหมือนกัน" },
+    { "pair_key": "line|prep",   "rank": 6,  "survival_display": "11 วัน",        "reason": "เตรียมของมาครบ แล้วโดนเกลี้ยกล่อมให้ทิ้งหมดเพราะอ่านมาว่ามีสารตกค้าง" },
+    { "pair_key": "chill|live",  "rank": 7,  "survival_display": "9 วัน",         "reason": "คนนึงถ่าย คนนึงไม่สนกล้องเลย ได้คอนเทนต์ดีที่สุดในบรรดาทุกคู่ แต่ก็แค่นั้น" },
+    { "pair_key": "live|mu",     "rank": 8,  "survival_display": "5 วัน",         "reason": "ไลฟ์พิธีขอฝน คนดู 12 คน ฝนไม่ตก แต่ยอดวิวขึ้น" },
+    { "pair_key": "chill|line",  "rank": 9,  "survival_display": "5 วัน",         "reason": "คนนึงส่งวิธีเอาตัวรอดมาให้ 47 วิธี อีกคนไม่ได้อ่านสักอัน" },
+    { "pair_key": "prep|prep",   "rank": 10, "survival_display": "4 วัน",         "reason": "กระเป๋าสองใบหนักรวม 40 กิโล เดินไม่ไหวทั้งคู่ นั่งอยู่ข้างกระเป๋าที่มีทุกอย่าง" },
+    { "pair_key": "mu|mu",       "rank": 11, "survival_display": "2 วัน",         "reason": "เสียเวลาวันครึ่งไปกับการหาฤกษ์ออกเดินทาง ฤกษ์ดีที่สุดคือวันที่น้ำหมดพอดี" },
+    { "pair_key": "line|live",   "rank": 12, "survival_display": "40 ชั่วโมง",    "reason": "ทำคลิปสอนวิธีเอาตัวรอดจากข้อมูลที่ผิดทั้งหมด มีคนทำตาม 200 คน" },
+    { "pair_key": "line|mu",     "rank": 13, "survival_display": "30 ชั่วโมง",    "reason": "เชื่อว่าน้ำต้มใบไม้แก้ได้ทุกอย่าง ใบไม้นั้นไม่ควรต้ม" },
+    { "pair_key": "live|live",   "rank": 14, "survival_display": "19 ชั่วโมง",    "reason": "แย่งกันเป็นคนถ่าย ไม่มีใครยอมเป็นคนหาน้ำ แบตหมดพร้อมกันตอนเที่ยงคืน" },
+    { "pair_key": "line|line",   "rank": 15, "survival_display": "12 ชั่วโมง",    "reason": "ส่งข้อมูลผิดให้กันไปมาจนมั่นใจว่าถูก แล้วเดินไปทางตรงข้ามกับทางออกพอดี" }
+  ]
+}

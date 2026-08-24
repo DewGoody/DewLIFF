@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>คู่หูสายไหน — LIFF Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#FF3D8B;
+  --surface:#1B1430;
+  --on:#FFF3E4;
+  --line:rgba(255,243,228,.18);
+  --dim:rgba(255,243,228,.16);
+  --radius:12px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans Thai',sans-serif;background:#111}
+
+/* Phone frame for desktop preview */
+.frame{
+  width:375px;height:812px;
+  margin:20px auto;
+  border:1px solid #333;
+  border-radius:34px;
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+  background:var(--surface);color:var(--on);
+}
+@media(max-width:420px){
+  .frame{width:100%;height:100vh;margin:0;border:0;border-radius:0}
+}
+
+/* Status bar */
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 6px;font-size:11px;letter-spacing:.04em;opacity:.75}
+.liff-bar{display:flex;align-items:center;gap:10px;padding:8px 20px 12px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.6}
+.liff-bar .close{font-size:16px;cursor:pointer}
+
+/* Progress */
+.progress-track{height:3px;background:var(--dim)}
+.progress-fill{height:100%;background:var(--primary);transition:width .4s ease}
+
+/* Screens */
+.screen{display:none;flex:1;flex-direction:column}
+.screen.active{display:flex}
+
+/* Shared */
+.screen-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 28px}
+.screen-footer{padding:0 24px 34px;display:flex;flex-direction:column;gap:12px}
+.home-indicator{height:5px;width:120px;border-radius:99px;background:var(--on);opacity:.25;margin:12px auto 0}
+
+h2{font-weight:700;letter-spacing:-.02em;line-height:1.2}
+p.desc{font-size:15px;line-height:1.6;opacity:.72;max-width:280px;margin:14px auto 0}
+
+.btn-primary{
+  width:100%;padding:17px;border:0;border-radius:var(--radius);
+  background:var(--primary);color:#fff;
+  font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;
+  transition:opacity .15s;
+}
+.btn-primary:active{opacity:.85}
+.btn-outline{
+  width:100%;padding:15px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:transparent;color:var(--on);opacity:.8;
+  font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;
+}
+.btn-result{
+  width:100%;padding:17px;border:0;border-radius:var(--radius);
+  background:#fff;color:var(--primary);
+  font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;
+}
+.btn-result-outline{
+  width:100%;padding:15px;
+  border:1px solid rgba(255,255,255,.42);border-radius:var(--radius);
+  background:transparent;color:#fff;
+  font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;
+}
+
+/* Intro */
+.logo-box{
+  width:64px;height:64px;
+  border:1px solid var(--line);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--dim);font-size:20px;margin-bottom:28px;
+}
+
+/* Question */
+.q-header{padding:22px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.q-counter{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.5}
+.q-dots{display:flex;gap:5px}
+.q-dot{width:6px;height:6px;border-radius:99px;background:var(--dim);transition:background .3s}
+.q-dot.done{background:var(--primary)}
+.q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px}
+.q-text{font-size:26px;font-weight:700;letter-spacing:-.015em;line-height:1.4;text-align:left;margin:0 0 30px}
+.q-options{display:flex;flex-direction:column;gap:10px}
+.q-option{
+  text-align:left;padding:18px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:transparent;color:var(--on);
+  font-family:inherit;font-size:15px;font-weight:500;cursor:pointer;
+  transition:all .2s;
+}
+.q-option:active,.q-option.selected{
+  border-color:var(--primary);background:var(--primary);color:#fff;font-weight:600;
+}
+.q-submitting{
+  display:none;align-items:center;gap:9px;margin-top:26px;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.55;
+}
+.q-submitting.show{display:flex}
+.spinner{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:99px;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Share */
+.share-icon{
+  width:56px;height:56px;border-radius:14px;
+  background:var(--primary);
+  display:flex;align-items:center;justify-content:center;margin-bottom:24px;
+}
+.flex-preview{
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  background:var(--dim);margin-top:26px;
+}
+.flex-preview-header{padding:8px 14px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.5}
+.flex-preview-body{padding:16px}
+.flex-preview-body h4{font-size:15px;font-weight:600;margin:0 0 6px}
+.flex-preview-body p{font-size:13px;opacity:.68;margin:0}
+.flex-preview-cta{margin-top:14px;padding:11px;text-align:center;border-radius:var(--radius);background:var(--primary);color:#fff;font-size:14px;font-weight:600}
+
+/* Waiting */
+@keyframes ringPulse{0%{transform:scale(.85);opacity:.55}70%{transform:scale(1.35);opacity:0}100%{opacity:0}}
+@keyframes dotPulse{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+.ring-container{position:relative;width:96px;height:96px;margin-bottom:30px}
+.ring{position:absolute;inset:0;border-radius:99px;background:var(--primary)}
+.ring-1{animation:ringPulse 2.4s ease-out infinite}
+.ring-2{animation:ringPulse 2.4s ease-out infinite .8s}
+.ring-core{position:relative;width:52px;height:52px;border-radius:99px;background:var(--primary);opacity:.16;margin:22px auto}
+.wait-dots{display:flex;gap:6px;margin-top:24px}
+.wait-dot{width:7px;height:7px;border-radius:99px;background:var(--primary)}
+.wait-dot:nth-child(1){animation:dotPulse 1.4s ease-in-out infinite}
+.wait-dot:nth-child(2){animation:dotPulse 1.4s ease-in-out infinite .2s}
+.wait-dot:nth-child(3){animation:dotPulse 1.4s ease-in-out infinite .4s}
+
+/* Result */
+.result-screen{background:var(--primary) !important;color:#fff !important}
+.result-screen .liff-bar{border-color:rgba(255,255,255,.22)}
+.result-screen .close,.result-screen .status-bar{opacity:.8}
+.result-image{
+  height:186px;border:1px solid rgba(255,255,255,.3);border-radius:14px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;letter-spacing:.08em;opacity:.7;margin-bottom:24px;width:100%;
+}
+.result-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;text-align:left;width:100%}
+.result-title{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin:8px 0 0;text-align:left;width:100%}
+.result-body{font-size:15px;line-height:1.6;opacity:.85;margin:14px 0 0;text-align:left;width:100%}
+.axis-tags{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;width:100%}
+.axis-tag{padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.42);font-size:13px;font-weight:500}
+
+/* Error */
+.err-icon{
+  width:52px;height:52px;border-radius:99px;
+  border:1px solid var(--line);background:var(--dim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;opacity:.6;margin-bottom:22px;
+}
+
+/* Fade transition */
+.fade-enter{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div class="frame" id="app">
+  <div class="status-bar"><span>9:41</span><span>LTE ▮</span></div>
+  <div class="liff-bar"><span class="close" onclick="handleClose()">✕</span><span>quiz.krob.app</span></div>
+
+  <!-- ═══ INTRO ═══ -->
+  <div class="screen active" id="s-intro">
+    <div class="screen-body">
+      <div class="logo-box">🎯</div>
+      <h2 style="font-size:34px" id="intro-title"></h2>
+      <p class="desc" id="intro-body"></p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" id="intro-cta" onclick="startQuiz(false)"></button>
+      <button class="btn-outline" id="intro-demo" onclick="startQuiz(true)"></button>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <!-- ═══ QUESTION ═══ -->
+  <div class="screen" id="s-question">
+    <div class="progress-track"><div class="progress-fill" id="q-progress"></div></div>
+    <div class="q-header">
+      <span class="q-counter" id="q-counter"></span>
+      <div class="q-dots" id="q-dots"></div>
+    </div>
+    <div class="q-body fade-enter" id="q-body">
+      <h2 class="q-text" id="q-text"></h2>
+      <div class="q-options" id="q-options"></div>
+      <div class="q-submitting" id="q-submitting"><span class="spinner"></span><span>กำลังส่งคำตอบ</span></div>
+    </div>
+    <div class="screen-footer"><div class="home-indicator"></div></div>
+  </div>
+
+  <!-- ═══ SHARE ═══ -->
+  <div class="screen" id="s-share">
+    <div class="screen-body" style="align-items:flex-start;text-align:left">
+      <div class="share-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+      </div>
+      <h2 style="font-size:30px" id="share-title"></h2>
+      <p style="margin:12px 0 0;font-size:15px;line-height:1.6;opacity:.72;max-width:290px" id="share-body"></p>
+      <div class="flex-preview">
+        <div class="flex-preview-header">Flex message preview</div>
+        <div class="flex-preview-body">
+          <h4 id="flex-title"></h4>
+          <p id="flex-body"></p>
+          <div class="flex-preview-cta" id="flex-cta"></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-primary" id="share-cta" onclick="doShare()"></button>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <!-- ═══ WAITING ═══ -->
+  <div class="screen" id="s-waiting">
+    <div class="screen-body">
+      <div class="ring-container">
+        <span class="ring ring-1"></span>
+        <span class="ring ring-2"></span>
+        <div class="ring-core"></div>
+      </div>
+      <h2 style="font-size:28px" id="wait-title"></h2>
+      <p class="desc" id="wait-body"></p>
+      <div class="wait-dots"><span class="wait-dot"></span><span class="wait-dot"></span><span class="wait-dot"></span></div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-outline" id="wait-cta" onclick="simulateBuddy()"></button>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <!-- ═══ RESULT ═══ -->
+  <div class="screen result-screen" id="s-result">
+    <div class="screen-body" style="align-items:flex-start;justify-content:center;padding:0 26px">
+      <div class="result-image">RESULT.IMAGE</div>
+      <div class="result-eyebrow" id="res-eyebrow"></div>
+      <h2 class="result-title" id="res-title"></h2>
+      <p class="result-body" id="res-body"></p>
+      <div class="axis-tags" id="res-tags"></div>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-result" id="res-share" onclick="shareResult()"></button>
+      <button class="btn-result-outline" id="res-again" onclick="playAgain()"></button>
+      <div style="height:5px;width:120px;border-radius:99px;background:#fff;opacity:.4;margin:10px auto 0"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ERROR ═══ -->
+  <div class="screen" id="s-error">
+    <div class="screen-body">
+      <div class="err-icon">!</div>
+      <h2 style="font-size:26px" id="err-title"></h2>
+      <p class="desc" id="err-body"></p>
+    </div>
+    <div class="screen-footer">
+      <button class="btn-outline" onclick="handleClose()">ปิดหน้าต่าง</button>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════ CONFIG (from buddy-demo.json)
+const CFG = {
+  brand: { name: "ลานกิจกรรม", primary: "#FF3D8B", surface: "#1B1430", on_surface: "#FFF3E4" },
+  copy: {
+    intro_title: "คู่หูสายไหน",
+    intro_body: "ตอบ 5 ข้อ แล้วส่งให้เพื่อนร่วมงานตอบ จะได้รู้ว่าทำงานด้วยกันแล้วเป็นคู่แบบไหน",
+    intro_cta: "เริ่มตอบ",
+    demo_cta: "ลองกับคู่หูตัวอย่าง",
+    question_counter: "ข้อ {current} จาก {total}",
+    share_title: "ส่งให้คู่หูตอบ",
+    share_body: "อีกคนตอบเสร็จเมื่อไหร่ เราจะส่งผลไปให้ทั้งคู่",
+    share_cta: "เลือกเพื่อนแล้วส่ง",
+    waiting_title: "รอคู่หูตอบอยู่",
+    waiting_body: "ปิดหน้านี้ได้เลย พอเขาตอบเสร็จเราจะส่งข้อความไปบอก",
+    waiting_close: "ปิดหน้าต่าง",
+    result_eyebrow: "คุณสองคนคือ",
+    result_share_cta: "อวดผลให้คนอื่น",
+    result_again_cta: "ชวนอีกคน",
+  },
+  axes: [
+    { id: "energy", label: "สายลุย" },
+    { id: "calm", label: "สายนิ่ง" },
+    { id: "precision", label: "สายละเอียด" }
+  ],
+  questions: [
+    { id: "q_morning", text: "เช้าวันจันทร์ สิ่งแรกที่คุณทำคือ", options: [
+      { id: "o_dive", label: "เปิดงานที่ค้างแล้วลุยต่อทันที", scores: { energy: 2 } },
+      { id: "o_coffee", label: "หากาแฟ นั่งตั้งหลักก่อน", scores: { calm: 2 } },
+      { id: "o_plan", label: "ไล่ดูตารางทั้งสัปดาห์ก่อน", scores: { precision: 2 } }
+    ]},
+    { id: "q_problem", text: "เจอปัญหาที่ยังไม่เคยเจอ คุณมักจะ", options: [
+      { id: "o_try", label: "ลองแก้ไปก่อน ผิดค่อยว่ากัน", scores: { energy: 2 } },
+      { id: "o_ask", label: "ถามคนที่น่าจะเคยเจอ", scores: { calm: 2 } },
+      { id: "o_research", label: "หาข้อมูลให้ครบก่อนลงมือ", scores: { precision: 2 } }
+    ]},
+    { id: "q_deadline", text: "เหลือเวลาอีกวันเดียวก่อนส่งงาน", options: [
+      { id: "o_sprint", label: "อัดรวดเดียวให้จบคืนนี้", scores: { energy: 2 } },
+      { id: "o_negotiate", label: "คุยขอเลื่อนหรือลดขอบเขต", scores: { calm: 2 } },
+      { id: "o_checklist", label: "ไล่เช็กลิสต์ว่าอะไรขาดบ้าง", scores: { precision: 2 } }
+    ]},
+    { id: "q_meeting", text: "ในที่ประชุม คุณมักเป็นคนที่", options: [
+      { id: "o_lead", label: "เสนอไอเดียก่อนใคร", scores: { energy: 2 } },
+      { id: "o_listen", label: "ฟังให้ครบแล้วค่อยพูด", scores: { calm: 2 } },
+      { id: "o_detail", label: "ถามรายละเอียดที่คนอื่นข้าม", scores: { precision: 2 } }
+    ]},
+    { id: "q_value", text: "ในการทำงาน คุณให้ค่ากับอะไรมากที่สุด", options: [
+      { id: "o_speed", label: "ได้ของออกมาไว", scores: { energy: 2 } },
+      { id: "o_harmony", label: "ทีมทำงานด้วยกันแล้วสบายใจ", scores: { calm: 2 } },
+      { id: "o_quality", label: "ของที่ออกมาไม่มีที่ติ", scores: { precision: 2 } }
+    ]}
+  ],
+  results: [
+    { code: "fire_fire", pair: ["energy","energy"], title: "คู่หูสายไฟลุก", body: "สองคนนี้เจอกันเมื่อไหร่งานเดินทันที ไอเดียมาไวและลงมือเร็วพอกัน ข้อควรระวังคือไม่มีใครคอยเบรก" },
+    { code: "calm_calm", pair: ["calm","calm"], title: "คู่หูสายนิ่งคูณสอง", body: "ทำงานด้วยกันแล้วไม่มีใครกดดันใคร บรรยากาศดีที่สุดในทีม แต่ถ้าไม่มีเส้นตายจากข้างนอก งานอาจยืดกว่าที่ควร" },
+    { code: "precise_precise", pair: ["precision","precision"], title: "คู่หูสายละเอียดยิบ", body: "งานที่ออกจากมือสองคนนี้แทบไม่ต้องตรวจซ้ำ จุดที่ต้องระวังคือใช้เวลากับรายละเอียดจนลืมว่าของต้องออกเมื่อไหร่" },
+    { code: "fire_calm", pair: ["energy","calm"], title: "คู่หูสายคันเร่งกับเบรก", body: "คนหนึ่งดันให้ไปข้างหน้า อีกคนคอยดูว่าไปเร็วเกินไปไหม เป็นคู่ที่สมดุลที่สุดถ้าเคารพจังหวะกัน" },
+    { code: "fire_precise", pair: ["energy","precision"], title: "คู่หูสายลุยแบบมีแผน", body: "ไอเดียกล้าบวกกับการวางแผนที่รัดกุม เป็นคู่ที่ทำของยาก ๆ ให้สำเร็จได้จริง" },
+    { code: "calm_precise", pair: ["calm","precision"], title: "คู่หูสายนิ่งลึก", body: "ทำงานเงียบ ๆ แต่ผลงานแน่น เป็นคู่ที่คนอื่นวางใจได้เสมอ" },
+    { code: "balanced", title: "คู่หูสายกลาง ๆ", body: "ไม่มีใครสุดทางไหนเป็นพิเศษ ปรับตัวเข้ากับงานได้หลายแบบ" }
+  ],
+  fallback_result: "balanced",
+  messages: {
+    invite: { slots: { title: "ปุ๊กกี้ ชวนคุณตอบควิซคู่หู", body: "ตอบ 5 ข้อ แล้วดูว่าเราสองคนทำงานด้วยกันแล้วเป็นคู่แบบไหน", cta: "ตอบควิซ" } }
+  }
+};
+
+// ═══════════════════════════════════════ ENGINE (from buddyQuiz.ts)
+function scoreAnswers(answers) {
+  const t = {}; CFG.axes.forEach(a => t[a.id] = 0);
+  for (const ans of answers) {
+    const q = CFG.questions.find(x => x.id === ans.questionId);
+    if (!q) continue;
+    const o = q.options.find(x => x.id === ans.optionId);
+    if (!o) continue;
+    for (const [axis, pts] of Object.entries(o.scores)) t[axis] = (t[axis]||0) + pts;
+  }
+  return t;
+}
+function dominantAxis(scores) {
+  let best = CFG.axes[0].id;
+  for (const a of CFG.axes) if ((scores[a.id]||0) > (scores[best]||0)) best = a.id;
+  return best;
+}
+function matchesPair(rule, axA, axB) {
+  if (!rule.pair) return true;
+  const [x,y] = rule.pair;
+  return (axA===x && axB===y) || (axA===y && axB===x);
+}
+function resolvePair(answersA, answersB) {
+  const sA = scoreAnswers(answersA), sB = scoreAnswers(answersB);
+  const axA = dominantAxis(sA), axB = dominantAxis(sB);
+  const hit = CFG.results.find(r => matchesPair(r, axA, axB));
+  const fb = CFG.results.find(r => r.code === CFG.fallback_result);
+  return { result: hit || fb, axisA: axA, axisB: axB, scoresA: sA, scoresB: sB };
+}
+
+// ═══════════════════════════════════════ STATE
+let state = { qi: 0, answers: [], demo: false };
+
+// ═══════════════════════════════════════ SCREENS
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+}
+
+function init() {
+  // Apply theme
+  const r = document.documentElement;
+  r.style.setProperty('--primary', CFG.brand.primary);
+  r.style.setProperty('--surface', CFG.brand.surface);
+  r.style.setProperty('--on', CFG.brand.on_surface);
+
+  // Intro
+  document.getElementById('intro-title').textContent = CFG.copy.intro_title;
+  document.getElementById('intro-body').textContent = CFG.copy.intro_body;
+  document.getElementById('intro-cta').textContent = CFG.copy.intro_cta;
+  document.getElementById('intro-demo').textContent = CFG.copy.demo_cta;
+
+  // Share
+  document.getElementById('share-title').textContent = CFG.copy.share_title;
+  document.getElementById('share-body').textContent = CFG.copy.share_body;
+  document.getElementById('share-cta').textContent = CFG.copy.share_cta;
+  document.getElementById('flex-title').textContent = CFG.messages.invite.slots.title;
+  document.getElementById('flex-body').textContent = CFG.messages.invite.slots.body;
+  document.getElementById('flex-cta').textContent = CFG.messages.invite.slots.cta;
+
+  // Waiting
+  document.getElementById('wait-title').textContent = CFG.copy.waiting_title;
+  document.getElementById('wait-body').textContent = CFG.copy.waiting_body;
+  document.getElementById('wait-cta').textContent = 'จำลองให้คู่หูตอบ';
+
+  // Result buttons
+  document.getElementById('res-share').textContent = CFG.copy.result_share_cta;
+  document.getElementById('res-again').textContent = CFG.copy.result_again_cta;
+
+  show('intro');
+}
+
+function startQuiz(demo) {
+  state = { qi: 0, answers: [], demo };
+  renderQuestion();
+  show('question');
+}
+
+function renderQuestion() {
+  const q = CFG.questions[state.qi];
+  const total = CFG.questions.length;
+
+  // Counter
+  document.getElementById('q-counter').textContent =
+    CFG.copy.question_counter.replace('{current}', state.qi + 1).replace('{total}', total);
+
+  // Progress
+  document.getElementById('q-progress').style.width = ((state.qi) / total * 100) + '%';
+
+  // Dots
+  const dotsEl = document.getElementById('q-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('span');
+    d.className = 'q-dot' + (i < state.qi ? ' done' : '');
+    dotsEl.appendChild(d);
+  }
+
+  // Question text
+  document.getElementById('q-text').textContent = q.text;
+
+  // Options
+  const optEl = document.getElementById('q-options');
+  optEl.innerHTML = '';
+  for (const o of q.options) {
+    const btn = document.createElement('button');
+    btn.className = 'q-option';
+    btn.textContent = o.label;
+    btn.onclick = () => pickOption(q.id, o.id, btn);
+    optEl.appendChild(btn);
+  }
+
+  // Hide submitting
+  document.getElementById('q-submitting').classList.remove('show');
+
+  // Animate
+  const body = document.getElementById('q-body');
+  body.classList.remove('fade-enter');
+  void body.offsetWidth;
+  body.classList.add('fade-enter');
+}
+
+function pickOption(qId, oId, btn) {
+  // Highlight
+  btn.classList.add('selected');
+  document.querySelectorAll('.q-option').forEach(b => { if (b !== btn) b.style.pointerEvents = 'none'; });
+
+  state.answers.push({ questionId: qId, optionId: oId });
+
+  setTimeout(() => {
+    if (state.qi < CFG.questions.length - 1) {
+      state.qi++;
+      renderQuestion();
+    } else {
+      // Last question — show submitting then transition
+      document.getElementById('q-submitting').classList.add('show');
+      document.getElementById('q-progress').style.width = '100%';
+      setTimeout(() => {
+        if (state.demo) {
+          finishWithDemoBuddy();
+        } else {
+          show('share');
+        }
+      }, 800);
+    }
+  }, 400);
+}
+
+function doShare() {
+  // Simulate shareTargetPicker
+  show('waiting');
+}
+
+function simulateBuddy() {
+  finishWithDemoBuddy();
+}
+
+function finishWithDemoBuddy() {
+  // Demo buddy picks option index 1 for every question
+  const buddyAnswers = CFG.questions.map(q => ({
+    questionId: q.id,
+    optionId: q.options[Math.min(1, q.options.length - 1)].id
+  }));
+
+  const outcome = resolvePair(state.answers, buddyAnswers);
+  showResult(outcome);
+}
+
+function showResult(outcome) {
+  document.getElementById('res-eyebrow').textContent = CFG.copy.result_eyebrow;
+  document.getElementById('res-title').textContent = outcome.result.title;
+  document.getElementById('res-body').textContent = outcome.result.body;
+
+  const axLabelA = CFG.axes.find(a => a.id === outcome.axisA)?.label || outcome.axisA;
+  const axLabelB = CFG.axes.find(a => a.id === outcome.axisB)?.label || outcome.axisB;
+
+  document.getElementById('res-tags').innerHTML =
+    `<span class="axis-tag">คุณ · ${axLabelA}</span>` +
+    `<span class="axis-tag">คู่หู · ${axLabelB}</span>`;
+
+  show('result');
+}
+
+function shareResult() {
+  alert('shareTargetPicker() — ส่งผลลัพธ์ให้เพื่อน\n(ใน LIFF จริงจะเปิด LINE share picker)');
+}
+
+function playAgain() {
+  show('intro');
+}
+
+function handleClose() {
+  alert('liff.closeWindow() — ปิด LIFF\n(ใน LINE จริงจะปิดหน้าต่าง browser)');
+}
+
+// ═══════════════════════════════════════ INIT
+init();
+</script>
+</body>
+</html>

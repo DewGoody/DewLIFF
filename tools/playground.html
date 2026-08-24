@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buddy Quiz — Config Playground</title>
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--bg:#EFEFEC;--surface:#fff;--text:#111;--dim:#9B9B98;--line:#E5E5E3;--radius:8px;--accent:#E63B2E;--accent-dim:rgba(230,59,46,.08)}
+body{font-family:-apple-system,'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
+h2{font-size:16px;font-weight:700;margin:0 0 12px}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin:0 0 8px}
+
+.shell{max-width:1200px;margin:0 auto;padding:24px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.header-actions{display:flex;gap:8px}
+
+.tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.tab{padding:10px 20px;border:0;background:var(--surface);cursor:pointer;font-size:13px;font-weight:500;border-right:1px solid var(--line);font-family:inherit}
+.tab:last-child{border-right:0}
+.tab.active{background:var(--text);color:#fff}
+
+.panel{display:none}
+.panel.active{display:block}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+
+.row{display:flex;gap:12px;margin-bottom:10px;align-items:start;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)}
+.field input,.field textarea,.field select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;background:var(--surface)}
+.field textarea{resize:vertical;min-height:60px}
+.field input:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.field-sm{max-width:100px;flex:0 0 100px}
+
+.btn{padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.9;background:var(--accent)}
+.btn-danger{color:#c00;border-color:#fcc}
+.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+.badge{display:inline-block;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.02em}
+.badge-axis{background:var(--accent-dim);color:var(--accent)}
+
+.score-grid{display:grid;gap:6px}
+.score-row{display:flex;align-items:center;gap:8px}
+.score-row label{font-size:12px;min-width:80px;color:var(--dim)}
+.score-row input{width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:13px;text-align:center;font-family:monospace}
+
+.option-item{border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:8px}
+.option-item:last-child{margin-bottom:0}
+
+/* Simulator */
+.sim-phone{width:375px;border:1px solid var(--text);border-radius:28px;overflow:hidden;background:var(--surface)}
+.sim-bar{padding:10px 20px 8px;font-size:11px;color:var(--dim);display:flex;justify-content:space-between}
+.sim-body{padding:20px 24px;min-height:500px}
+
+.sim-option{display:block;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:transparent;cursor:pointer;font-size:14px;font-family:inherit;margin-bottom:8px;transition:all .15s}
+.sim-option:hover{border-color:var(--accent);background:var(--accent-dim)}
+.sim-option.selected{border-color:var(--accent);background:var(--accent);color:#fff}
+
+.sim-result{padding:24px;border-radius:12px;text-align:center}
+.sim-result h2{font-size:28px;margin-bottom:8px}
+.sim-result p{opacity:.8;line-height:1.6}
+
+.axis-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.axis-bar label{font-size:12px;min-width:70px;text-align:right}
+.axis-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.axis-bar-fill{height:100%;border-radius:99px;transition:width .3s}
+.axis-bar-val{font-size:12px;font-family:monospace;min-width:24px}
+
+.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pair-col h3{margin-bottom:12px}
+
+.result-match{padding:16px;border-radius:var(--radius);margin-top:16px;text-align:center}
+.result-match h2{font-size:22px;margin-bottom:6px}
+
+.json-area{width:100%;min-height:400px;font-family:'SF Mono',monospace;font-size:12px;line-height:1.5;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:#FAFAF9;resize:vertical}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;background:#111;color:#fff;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;transition:opacity .3s;opacity:0;pointer-events:none}
+.toast.show{opacity:1}
+
+.validation-ok{color:#16a34a;font-weight:600}
+.validation-err{color:#c00;font-weight:600}
+.err-list{margin-top:8px;font-size:12px;color:#c00;line-height:1.6}
+
+.empty{padding:40px;text-align:center;color:var(--dim);border:2px dashed var(--line);border-radius:var(--radius)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="header">
+    <div>
+      <h1>Buddy Quiz — Config Playground</h1>
+      <p style="color:var(--dim);font-size:13px;margin-top:4px">แก้ config → จำลองการตอบ → preview ผลลัพธ์ → export JSON</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="importJSON()">📂 Import JSON</button>
+      <button class="btn btn-primary" onclick="exportJSON()">💾 Export JSON</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('brand')">Brand & Copy</button>
+    <button class="tab" onclick="switchTab('axes')">Axes</button>
+    <button class="tab" onclick="switchTab('questions')">Questions</button>
+    <button class="tab" onclick="switchTab('results')">Results</button>
+    <button class="tab" onclick="switchTab('rules')">Rules</button>
+    <button class="tab" onclick="switchTab('simulator')">🎮 Simulator</button>
+    <button class="tab" onclick="switchTab('pair')">🔗 Pair Preview</button>
+    <button class="tab" onclick="switchTab('json')">{ } JSON</button>
+  </div>
+
+  <!-- ───────── BRAND ───────── -->
+  <div id="panel-brand" class="panel active">
+    <div class="card">
+      <h2>Brand</h2>
+      <div class="row">
+        <div class="field"><label>Campaign ID</label><input id="cfg-id" oninput="u()"></div>
+        <div class="field field-sm"><label>Version</label><input id="cfg-version" type="number" min="1" oninput="u()"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Brand Name</label><input id="brand-name" oninput="u()"></div>
+        <div class="field field-sm"><label>Primary</label><input id="brand-primary" type="color" oninput="u()"></div>
+        <div class="field field-sm"><label>Surface</label><input id="brand-surface" type="color" oninput="u()"></div>
+        <div class="field field-sm"><label>On Surface</label><input id="brand-on" type="color" oninput="u()"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Logo URL (optional)</label><input id="brand-logo" oninput="u()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Copy (ข้อความทั้งหมด)</h2>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:14px">ข้อความทุกตัวที่ user เห็น — ห้ามอยู่ในโค้ด ต้องอยู่ที่นี่</p>
+      <div id="copy-fields"></div>
+    </div>
+  </div>
+
+  <!-- ───────── AXES ───────── -->
+  <div id="panel-axes" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>Personality Axes (แกนบุคลิก)</h2>
+        <button class="btn btn-sm" onclick="addAxis()">+ เพิ่ม Axis</button>
+      </div>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:14px">แต่ละข้อมีตัวเลือกที่ให้คะแนนแกนเหล่านี้ ผลลัพธ์ดูจากแกนที่คะแนนสูงสุด</p>
+      <div id="axes-list"></div>
+    </div>
+  </div>
+
+  <!-- ───────── QUESTIONS ───────── -->
+  <div id="panel-questions" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>Questions (คำถาม)</h2>
+        <button class="btn btn-sm" onclick="addQuestion()">+ เพิ่มคำถาม</button>
+      </div>
+      <div id="questions-list"></div>
+    </div>
+  </div>
+
+  <!-- ───────── RESULTS ───────── -->
+  <div id="panel-results" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>Results (ผลลัพธ์)</h2>
+        <button class="btn btn-sm" onclick="addResult()">+ เพิ่มผลลัพธ์</button>
+      </div>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:14px">ไล่จากบนลงล่าง ตัวแรกที่ match ชนะ — ตัวสุดท้ายควรเป็น catch-all (ไม่ต้องใส่ pair)</p>
+      <div id="results-list"></div>
+      <div class="row" style="margin-top:14px">
+        <div class="field" style="max-width:200px">
+          <label>Fallback Result</label>
+          <select id="fallback-result" onchange="u()"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── RULES ───────── -->
+  <div id="panel-rules" class="panel">
+    <div class="card">
+      <h2>Rules (กฎ)</h2>
+      <div class="row">
+        <div class="field"><label>Invite TTL (ชั่วโมง)</label><input id="rule-ttl" type="number" min="1" max="168" oninput="u()"></div>
+        <div class="field"><label>Max Pairs / User / Day</label><input id="rule-max" type="number" min="1" max="50" oninput="u()"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Require Friend</label><select id="rule-friend" onchange="u()"><option value="true">ต้อง add friend</option><option value="false">ไม่ต้อง</option></select></div>
+        <div class="field"><label>Allow Self Pair</label><select id="rule-self" onchange="u()"><option value="false">ไม่ได้</option><option value="true">ได้</option></select></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── SIMULATOR ───────── -->
+  <div id="panel-simulator" class="panel">
+    <h2 style="margin-bottom:16px">🎮 จำลองการตอบ — ดูคะแนนสด</h2>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:start">
+      <div class="sim-phone" id="sim-phone"></div>
+      <div style="flex:1;min-width:280px">
+        <div class="card">
+          <h3>คะแนนแต่ละแกน (สด)</h3>
+          <div id="sim-scores"></div>
+        </div>
+        <div class="card">
+          <h3>แกนเด่น</h3>
+          <div id="sim-dominant" style="font-size:20px;font-weight:700">—</div>
+        </div>
+        <div class="card">
+          <h3>คำตอบที่เลือก</h3>
+          <div id="sim-answers" style="font-size:12px;font-family:monospace;color:var(--dim)">ยังไม่ได้ตอบ</div>
+        </div>
+        <button class="btn" onclick="resetSim()">🔄 เริ่มใหม่</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── PAIR PREVIEW ───────── -->
+  <div id="panel-pair" class="panel">
+    <h2 style="margin-bottom:16px">🔗 จำลองจับคู่ — เลือกแกนเด่นของ A กับ B แล้วดูผล</h2>
+    <div class="card">
+      <div class="pair-grid">
+        <div class="pair-col">
+          <h3>ผู้เล่น A</h3>
+          <select id="pair-a" onchange="previewPair()" style="padding:8px;font-size:14px;border:1px solid var(--line);border-radius:6px;width:100%"></select>
+        </div>
+        <div class="pair-col">
+          <h3>ผู้เล่น B</h3>
+          <select id="pair-b" onchange="previewPair()" style="padding:8px;font-size:14px;border:1px solid var(--line);border-radius:6px;width:100%"></select>
+        </div>
+      </div>
+      <div id="pair-result"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>ตาราง match ทั้งหมด</h3>
+      <div id="pair-matrix"></div>
+    </div>
+  </div>
+
+  <!-- ───────── JSON ───────── -->
+  <div id="panel-json" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>Raw JSON</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="validateJSON()">✓ Validate</button>
+          <button class="btn btn-sm" onclick="copyJSON()">📋 Copy</button>
+        </div>
+      </div>
+      <div id="json-validation" style="margin-bottom:10px"></div>
+      <textarea class="json-area" id="json-area" spellcheck="false"></textarea>
+      <button class="btn" style="margin-top:10px" onclick="applyJSON()">Apply JSON → ← โหลดจาก JSON ด้านบนเข้า form</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="file-input" accept=".json" style="display:none" onchange="handleFile(event)">
+
+<script>
+// ═══════════════════════════════════════════════ STATE
+let cfg = null;
+let simState = { qi: 0, answers: [] };
+
+// ═══════════════════════════════════════════════ DEFAULT CONFIG
+const DEFAULT = {
+  id: "buddy_demo", type: "buddy_quiz", version: 1,
+  brand: { name: "ลานกิจกรรม", primary: "#FF3D8B", surface: "#1B1430", on_surface: "#FFF3E4" },
+  copy: {
+    intro_title: "คู่หูสายไหน",
+    intro_body: "ตอบ 5 ข้อ แล้วส่งให้เพื่อนร่วมงานตอบ จะได้รู้ว่าทำงานด้วยกันแล้วเป็นคู่แบบไหน",
+    intro_cta: "เริ่มตอบ",
+    question_counter: "ข้อ {current} จาก {total}",
+    share_title: "ส่งให้คู่หูตอบ",
+    share_body: "อีกคนตอบเสร็จเมื่อไหร่ เราจะส่งผลไปให้ทั้งคู่",
+    share_cta: "เลือกเพื่อนแล้วส่ง",
+    demo_cta: "ลองกับคู่หูตัวอย่าง",
+    waiting_title: "รอคู่หูตอบอยู่",
+    waiting_body: "ปิดหน้านี้ได้เลย พอเขาตอบเสร็จเราจะส่งข้อความไปบอก",
+    waiting_close: "ปิดหน้าต่าง",
+    invited_title: "{inviter} ชวนคุณมาตอบ",
+    invited_body: "ตอบ 5 ข้อ แล้วดูว่าคุณสองคนเป็นคู่หูแบบไหน",
+    invited_cta: "ตอบเลย",
+    friend_gate_title: "เพิ่มเพื่อนก่อนดูผล",
+    friend_gate_body: "เราจะส่งผลลัพธ์ให้ทางแชท เลยต้องเป็นเพื่อนกันก่อน",
+    result_eyebrow: "คุณสองคนคือ",
+    result_share_cta: "อวดผลให้คนอื่น",
+    result_again_cta: "ชวนอีกคน",
+    expired_title: "คำเชิญหมดอายุแล้ว",
+    expired_body: "ลองขอให้เพื่อนส่งใหม่อีกครั้ง",
+    used_title: "คำเชิญนี้ถูกใช้ไปแล้ว",
+    used_body: "แต่ละคำเชิญตอบได้คนเดียว ขอให้เพื่อนส่งใบใหม่ได้เลย",
+    self_pair_title: "จับคู่กับตัวเองไม่ได้",
+    self_pair_body: "ส่งให้เพื่อนสักคนแล้วรอเขาตอบนะ",
+    limit_title: "วันนี้ครบโควตาแล้ว",
+    limit_body: "พรุ่งนี้กลับมาชวนคู่หูคนใหม่ได้อีก",
+    error_title: "เปิดไม่สำเร็จ",
+    error_body: "ลองปิดแล้วเปิดใหม่อีกครั้ง"
+  },
+  axes: [
+    { id: "energy", label: "สายลุย" },
+    { id: "calm", label: "สายนิ่ง" },
+    { id: "precision", label: "สายละเอียด" }
+  ],
+  questions: [
+    { id: "q_morning", text: "เช้าวันจันทร์ สิ่งแรกที่คุณทำคือ", options: [
+      { id: "o_dive", label: "เปิดงานที่ค้างแล้วลุยต่อทันที", scores: { energy: 2 } },
+      { id: "o_coffee", label: "หากาแฟ นั่งตั้งหลักก่อน", scores: { calm: 2 } },
+      { id: "o_plan", label: "ไล่ดูตารางทั้งสัปดาห์ก่อน", scores: { precision: 2 } }
+    ]},
+    { id: "q_problem", text: "เจอปัญหาที่ยังไม่เคยเจอ คุณมักจะ", options: [
+      { id: "o_try", label: "ลองแก้ไปก่อน ผิดค่อยว่ากัน", scores: { energy: 2 } },
+      { id: "o_ask", label: "ถามคนที่น่าจะเคยเจอ", scores: { calm: 2 } },
+      { id: "o_research", label: "หาข้อมูลให้ครบก่อนลงมือ", scores: { precision: 2 } }
+    ]},
+    { id: "q_deadline", text: "เหลือเวลาอีกวันเดียวก่อนส่งงาน", options: [
+      { id: "o_sprint", label: "อัดรวดเดียวให้จบคืนนี้", scores: { energy: 2 } },
+      { id: "o_negotiate", label: "คุยขอเลื่อนหรือลดขอบเขต", scores: { calm: 2 } },
+      { id: "o_checklist", label: "ไล่เช็กลิสต์ว่าอะไรขาดบ้าง", scores: { precision: 2 } }
+    ]},
+    { id: "q_meeting", text: "ในที่ประชุม คุณมักเป็นคนที่", options: [
+      { id: "o_lead", label: "เสนอไอเดียก่อนใคร", scores: { energy: 2 } },
+      { id: "o_listen", label: "ฟังให้ครบแล้วค่อยพูด", scores: { calm: 2 } },
+      { id: "o_detail", label: "ถามรายละเอียดที่คนอื่นข้าม", scores: { precision: 2 } }
+    ]},
+    { id: "q_value", text: "ในการทำงาน คุณให้ค่ากับอะไรมากที่สุด", options: [
+      { id: "o_speed", label: "ได้ของออกมาไว", scores: { energy: 2 } },
+      { id: "o_harmony", label: "ทีมทำงานด้วยกันแล้วสบายใจ", scores: { calm: 2 } },
+      { id: "o_quality", label: "ของที่ออกมาไม่มีที่ติ", scores: { precision: 2 } }
+    ]}
+  ],
+  results: [
+    { code: "fire_fire", pair: ["energy","energy"], title: "คู่หูสายไฟลุก", body: "สองคนนี้เจอกันเมื่อไหร่งานเดินทันที ไอเดียมาไวและลงมือเร็วพอกัน" },
+    { code: "calm_calm", pair: ["calm","calm"], title: "คู่หูสายนิ่งคูณสอง", body: "ทำงานด้วยกันแล้วไม่มีใครกดดันใคร บรรยากาศดีที่สุดในทีม" },
+    { code: "precise_precise", pair: ["precision","precision"], title: "คู่หูสายละเอียดยิบ", body: "งานที่ออกจากมือสองคนนี้แทบไม่ต้องตรวจซ้ำ" },
+    { code: "fire_calm", pair: ["energy","calm"], title: "คู่หูสายคันเร่งกับเบรก", body: "คนหนึ่งดันให้ไปข้างหน้า อีกคนคอยดูว่าไปเร็วเกินไปไหม" },
+    { code: "fire_precise", pair: ["energy","precision"], title: "คู่หูสายลุยแบบมีแผน", body: "ไอเดียกล้าบวกกับการวางแผนที่รัดกุม" },
+    { code: "calm_precise", pair: ["calm","precision"], title: "คู่หูสายนิ่งลึก", body: "ทำงานเงียบ ๆ แต่ผลงานแน่น" },
+    { code: "balanced", title: "คู่หูสายกลาง ๆ", body: "ไม่มีใครสุดทางไหนเป็นพิเศษ ปรับตัวเข้ากับงานได้หลายแบบ" }
+  ],
+  fallback_result: "balanced",
+  rules: { invite_ttl_hours: 48, require_friend: true, max_pairs_per_user_per_day: 5, allow_self_pair: false },
+  messages: {
+    invite: { template: "invite_v1", slots: { title: "{inviter} ชวนคุณตอบควิซคู่หู", body: "ตอบ 5 ข้อ แล้วดูว่าเราสองคนทำงานด้วยกันแล้วเป็นคู่แบบไหน", cta: "ตอบควิซ" } },
+    partner_done: { template: "notify_v1", slots: { title: "คู่หูตอบแล้ว", body: "{partner} ตอบครบแล้ว มาดูกันว่าเราเป็นคู่หูสายไหน", cta: "ดูผลลัพธ์" } },
+    welcome: { template: "notify_v1", slots: { title: "ยินดีต้อนรับ", body: "ลองตอบควิซคู่หู แล้วชวนเพื่อนร่วมงานมาตอบด้วยกัน", cta: "เริ่มเลย" } }
+  }
+};
+
+// ═══════════════════════════════════════════════ ENGINE (ported)
+function scoreAnswers(config, answers) {
+  const totals = {};
+  config.axes.forEach(a => totals[a.id] = 0);
+  for (const ans of answers) {
+    const q = config.questions.find(x => x.id === ans.questionId);
+    if (!q) continue;
+    const o = q.options.find(x => x.id === ans.optionId);
+    if (!o) continue;
+    for (const [axis, pts] of Object.entries(o.scores || {})) {
+      totals[axis] = (totals[axis] || 0) + pts;
+    }
+  }
+  return totals;
+}
+
+function dominantAxis(config, scores) {
+  let best = config.axes[0]?.id;
+  for (const axis of config.axes) {
+    if ((scores[axis.id] || 0) > (scores[best] || 0)) best = axis.id;
+  }
+  return best;
+}
+
+function matchesPair(rule, axisA, axisB) {
+  if (!rule.pair) return true;
+  const [x, y] = rule.pair;
+  return (axisA === x && axisB === y) || (axisA === y && axisB === x);
+}
+
+function resolveResult(config, axisA, axisB) {
+  const hit = config.results.find(r => matchesPair(r, axisA, axisB));
+  if (hit) return { result: hit, usedFallback: false };
+  const fb = config.results.find(r => r.code === config.fallback_result);
+  return { result: fb || config.results[config.results.length - 1], usedFallback: true };
+}
+
+// ═══════════════════════════════════════════════ TABS
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const panels = ['brand','axes','questions','results','rules','simulator','pair','json'];
+    t.classList.toggle('active', panels[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'simulator') renderSim();
+  if (name === 'pair') renderPairPreview();
+  if (name === 'json') updateJSON();
+}
+
+// ═══════════════════════════════════════════════ RENDER FORMS
+function renderAll() {
+  // Brand
+  document.getElementById('cfg-id').value = cfg.id;
+  document.getElementById('cfg-version').value = cfg.version;
+  document.getElementById('brand-name').value = cfg.brand.name;
+  document.getElementById('brand-primary').value = cfg.brand.primary;
+  document.getElementById('brand-surface').value = cfg.brand.surface;
+  document.getElementById('brand-on').value = cfg.brand.on_surface;
+  document.getElementById('brand-logo').value = cfg.brand.logo_url || '';
+
+  // Copy
+  const copyDiv = document.getElementById('copy-fields');
+  copyDiv.innerHTML = '';
+  for (const [key, val] of Object.entries(cfg.copy)) {
+    copyDiv.innerHTML += `<div class="row"><div class="field"><label>${key}</label><input value="${esc(val)}" oninput="cfg.copy['${key}']=this.value;u()"></div></div>`;
+  }
+
+  renderAxes();
+  renderQuestions();
+  renderResults();
+
+  // Rules
+  document.getElementById('rule-ttl').value = cfg.rules.invite_ttl_hours;
+  document.getElementById('rule-max').value = cfg.rules.max_pairs_per_user_per_day;
+  document.getElementById('rule-friend').value = String(cfg.rules.require_friend);
+  document.getElementById('rule-self').value = String(cfg.rules.allow_self_pair);
+}
+
+function renderAxes() {
+  const el = document.getElementById('axes-list');
+  if (!cfg.axes.length) { el.innerHTML = '<div class="empty">ยังไม่มี axis — กด + เพิ่ม Axis</div>'; return; }
+  el.innerHTML = cfg.axes.map((a, i) => `
+    <div class="card" style="padding:14px">
+      <div class="row">
+        <div class="field field-sm"><label>ID</label><input value="${esc(a.id)}" oninput="cfg.axes[${i}].id=this.value;u()"></div>
+        <div class="field"><label>Label</label><input value="${esc(a.label)}" oninput="cfg.axes[${i}].label=this.value;u()"></div>
+        <button class="btn btn-danger btn-sm" onclick="cfg.axes.splice(${i},1);renderAxes();u()" style="align-self:end">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderQuestions() {
+  const el = document.getElementById('questions-list');
+  if (!cfg.questions.length) { el.innerHTML = '<div class="empty">ยังไม่มีคำถาม — กด + เพิ่มคำถาม</div>'; return; }
+  el.innerHTML = cfg.questions.map((q, qi) => `
+    <div class="card">
+      <div class="card-header">
+        <span style="font-weight:700">ข้อ ${qi + 1}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="addOption(${qi})">+ ตัวเลือก</button>
+          <button class="btn btn-danger btn-sm" onclick="cfg.questions.splice(${qi},1);renderQuestions();u()">ลบข้อ</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field field-sm"><label>ID</label><input value="${esc(q.id)}" oninput="cfg.questions[${qi}].id=this.value;u()"></div>
+        <div class="field"><label>คำถาม</label><input value="${esc(q.text)}" oninput="cfg.questions[${qi}].text=this.value;u()"></div>
+      </div>
+      <h3 style="margin-top:14px">ตัวเลือก (${q.options.length})</h3>
+      ${q.options.map((o, oi) => `
+        <div class="option-item">
+          <div class="row">
+            <div class="field field-sm"><label>ID</label><input value="${esc(o.id)}" oninput="cfg.questions[${qi}].options[${oi}].id=this.value;u()"></div>
+            <div class="field"><label>ข้อความ</label><input value="${esc(o.label)}" oninput="cfg.questions[${qi}].options[${oi}].label=this.value;u()"></div>
+            <button class="btn btn-danger btn-sm" onclick="cfg.questions[${qi}].options.splice(${oi},1);renderQuestions();u()" style="align-self:end">✕</button>
+          </div>
+          <div style="margin-top:8px">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)">Scores</label>
+            <div class="score-grid" style="margin-top:4px">
+              ${cfg.axes.map(ax => `
+                <div class="score-row">
+                  <label>${ax.id}</label>
+                  <input type="number" min="-5" max="5" value="${o.scores?.[ax.id] || 0}" oninput="setScore(${qi},${oi},'${ax.id}',+this.value)">
+                  <span class="badge badge-axis">${ax.label}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderResults() {
+  const el = document.getElementById('results-list');
+  if (!cfg.results.length) { el.innerHTML = '<div class="empty">ยังไม่มีผลลัพธ์ — กด + เพิ่มผลลัพธ์</div>'; return; }
+  el.innerHTML = cfg.results.map((r, ri) => `
+    <div class="card">
+      <div class="card-header">
+        <span style="font-weight:700">${r.code}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${ri > 0 ? `<button class="btn btn-sm" onclick="moveResult(${ri},-1)">↑</button>` : ''}
+          ${ri < cfg.results.length-1 ? `<button class="btn btn-sm" onclick="moveResult(${ri},1)">↓</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="cfg.results.splice(${ri},1);renderResults();u()">ลบ</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field field-sm"><label>Code</label><input value="${esc(r.code)}" oninput="cfg.results[${ri}].code=this.value;u()"></div>
+        <div class="field"><label>Title</label><input value="${esc(r.title)}" oninput="cfg.results[${ri}].title=this.value;u()"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Body</label><textarea oninput="cfg.results[${ri}].body=this.value;u()">${esc(r.body)}</textarea></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Image URL (optional)</label><input value="${esc(r.image_url||'')}" oninput="cfg.results[${ri}].image_url=this.value||undefined;u()"></div>
+      </div>
+      <div class="row">
+        <div class="field field-sm">
+          <label>Pair: Axis 1</label>
+          <select onchange="setPairAxis(${ri},0,this.value)">
+            <option value="">— ไม่ระบุ —</option>
+            ${cfg.axes.map(a => `<option value="${a.id}" ${r.pair?.[0]===a.id?'selected':''}>${a.label} (${a.id})</option>`).join('')}
+          </select>
+        </div>
+        <div class="field field-sm">
+          <label>Pair: Axis 2</label>
+          <select onchange="setPairAxis(${ri},1,this.value)">
+            <option value="">— ไม่ระบุ —</option>
+            ${cfg.axes.map(a => `<option value="${a.id}" ${r.pair?.[1]===a.id?'selected':''}>${a.label} (${a.id})</option>`).join('')}
+          </select>
+        </div>
+        <div style="align-self:end;font-size:12px;color:var(--dim);padding-bottom:10px">
+          ${r.pair ? `match: ${r.pair[0]} + ${r.pair[1]}` : '⚡ catch-all (match ทุกกรณี)'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Fallback select
+  const fb = document.getElementById('fallback-result');
+  fb.innerHTML = cfg.results.map(r => `<option value="${r.code}" ${r.code===cfg.fallback_result?'selected':''}>${r.code} — ${r.title}</option>`).join('');
+}
+
+// ═══════════════════════════════════════════════ SIMULATOR
+function renderSim() {
+  const phone = document.getElementById('sim-phone');
+  const q = cfg.questions[simState.qi];
+  if (!q) {
+    // Show results
+    const scores = scoreAnswers(cfg, simState.answers);
+    const dom = dominantAxis(cfg, scores);
+    const axLabel = cfg.axes.find(a => a.id === dom)?.label || dom;
+    phone.innerHTML = `
+      <div class="sim-bar"><span>9:41</span><span>Simulator</span></div>
+      <div class="sim-body" style="text-align:center;padding-top:60px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:8px">ตอบครบ!</div>
+        <h2 style="font-size:28px;font-weight:700;margin-bottom:4px">แกนเด่น: ${axLabel}</h2>
+        <p style="color:var(--dim);margin-bottom:24px">${dom} = ${scores[dom] || 0} คะแนน</p>
+        <button class="btn btn-primary" onclick="resetSim()">เริ่มใหม่</button>
+      </div>`;
+    updateSimScores();
+    return;
+  }
+
+  phone.innerHTML = `
+    <div class="sim-bar"><span>9:41</span><span>ข้อ ${simState.qi+1}/${cfg.questions.length}</span></div>
+    <div style="height:3px;background:var(--line)"><div style="width:${((simState.qi)/cfg.questions.length)*100}%;height:100%;background:var(--accent);transition:width .3s"></div></div>
+    <div class="sim-body">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:6px">ข้อ ${simState.qi+1} จาก ${cfg.questions.length}</p>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;line-height:1.4">${esc(q.text)}</h2>
+      ${q.options.map((o, oi) => `
+        <button class="sim-option" onclick="simAnswer(${simState.qi},${oi})">
+          ${esc(o.label)}
+          <span style="display:block;font-size:11px;color:var(--dim);margin-top:4px;font-family:monospace">
+            ${Object.entries(o.scores||{}).filter(([,v])=>v!==0).map(([k,v])=>`${k}: ${v>0?'+':''}${v}`).join(', ') || 'no score'}
+          </span>
+        </button>
+      `).join('')}
+    </div>`;
+  updateSimScores();
+}
+
+function simAnswer(qi, oi) {
+  const q = cfg.questions[qi];
+  const o = q.options[oi];
+  simState.answers.push({ questionId: q.id, optionId: o.id });
+  simState.qi++;
+  renderSim();
+}
+
+function resetSim() {
+  simState = { qi: 0, answers: [] };
+  renderSim();
+}
+
+function updateSimScores() {
+  const scores = scoreAnswers(cfg, simState.answers);
+  const dom = simState.answers.length > 0 ? dominantAxis(cfg, scores) : null;
+  const maxScore = Math.max(1, ...Object.values(scores).map(Math.abs));
+
+  document.getElementById('sim-scores').innerHTML = cfg.axes.map(a => {
+    const v = scores[a.id] || 0;
+    const pct = Math.max(0, (v / (maxScore * 1.2)) * 100);
+    return `<div class="axis-bar">
+      <label>${a.label}</label>
+      <div class="axis-bar-track"><div class="axis-bar-fill" style="width:${pct}%;background:${a.id===dom?'var(--accent)':'var(--dim)'}"></div></div>
+      <span class="axis-bar-val">${v}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sim-dominant').textContent = dom ? `${cfg.axes.find(a=>a.id===dom)?.label || dom} (${dom})` : '—';
+  document.getElementById('sim-answers').innerHTML = simState.answers.length
+    ? simState.answers.map(a => `${a.questionId} → ${a.optionId}`).join('<br>')
+    : 'ยังไม่ได้ตอบ';
+}
+
+// ═══════════════════════════════════════════════ PAIR PREVIEW
+function renderPairPreview() {
+  const opts = cfg.axes.map(a => `<option value="${a.id}">${a.label} (${a.id})</option>`).join('');
+  document.getElementById('pair-a').innerHTML = opts;
+  document.getElementById('pair-b').innerHTML = opts;
+  if (cfg.axes.length >= 2) document.getElementById('pair-b').selectedIndex = 1;
+  previewPair();
+  renderMatrix();
+}
+
+function previewPair() {
+  const axA = document.getElementById('pair-a').value;
+  const axB = document.getElementById('pair-b').value;
+  if (!axA || !axB) return;
+  const { result, usedFallback } = resolveResult(cfg, axA, axB);
+  if (!result) { document.getElementById('pair-result').innerHTML = '<p style="color:#c00">ไม่พบผลลัพธ์ที่ match!</p>'; return; }
+
+  const labelA = cfg.axes.find(a=>a.id===axA)?.label || axA;
+  const labelB = cfg.axes.find(a=>a.id===axB)?.label || axB;
+
+  document.getElementById('pair-result').innerHTML = `
+    <div class="result-match" style="background:${cfg.brand.primary};color:#fff">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:4px">
+        ${labelA} + ${labelB} ${usedFallback ? '→ fallback' : ''}
+      </div>
+      <h2>${esc(result.title)}</h2>
+      <p style="margin-top:8px;opacity:.9;line-height:1.5">${esc(result.body)}</p>
+      <div style="margin-top:10px;font-size:11px;font-family:monospace;opacity:.7">code: ${result.code}</div>
+    </div>`;
+}
+
+function renderMatrix() {
+  if (cfg.axes.length < 2) { document.getElementById('pair-matrix').innerHTML = '<p style="color:var(--dim)">ต้องมีอย่างน้อย 2 axes</p>'; return; }
+  let html = '<table style="border-collapse:collapse;width:100%;font-size:12px">';
+  html += '<tr><td style="padding:6px;border:1px solid var(--line);background:var(--bg)"></td>';
+  cfg.axes.forEach(a => html += `<td style="padding:6px;border:1px solid var(--line);background:var(--bg);font-weight:600;text-align:center">${a.label}</td>`);
+  html += '</tr>';
+  for (const axA of cfg.axes) {
+    html += `<tr><td style="padding:6px;border:1px solid var(--line);background:var(--bg);font-weight:600">${axA.label}</td>`;
+    for (const axB of cfg.axes) {
+      const { result, usedFallback } = resolveResult(cfg, axA.id, axB.id);
+      const bg = usedFallback ? '#FEF3CD' : '#D4EDDA';
+      html += `<td style="padding:6px;border:1px solid var(--line);background:${bg};text-align:center;cursor:default" title="${result?.code || '?'}">${result?.title || '?'}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  html += '<p style="font-size:11px;color:var(--dim);margin-top:6px">🟢 match ตรง &nbsp; 🟡 ใช้ fallback</p>';
+  document.getElementById('pair-matrix').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════ ACTIONS
+function addAxis() {
+  const n = cfg.axes.length + 1;
+  cfg.axes.push({ id: `axis_${n}`, label: `แกน ${n}` });
+  renderAxes(); u();
+}
+
+function addQuestion() {
+  const n = cfg.questions.length + 1;
+  cfg.questions.push({
+    id: `q_${n}`,
+    text: `คำถามข้อ ${n}`,
+    options: [
+      { id: `q${n}_a`, label: 'ตัวเลือก A', scores: {} },
+      { id: `q${n}_b`, label: 'ตัวเลือก B', scores: {} },
+    ]
+  });
+  renderQuestions(); u();
+}
+
+function addOption(qi) {
+  const q = cfg.questions[qi];
+  const n = q.options.length + 1;
+  q.options.push({ id: `${q.id}_${String.fromCharCode(96+n)}`, label: `ตัวเลือก ${n}`, scores: {} });
+  renderQuestions(); u();
+}
+
+function addResult() {
+  const n = cfg.results.length + 1;
+  cfg.results.push({ code: `result_${n}`, title: `ผลลัพธ์ ${n}`, body: '' });
+  renderResults(); u();
+}
+
+function moveResult(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= cfg.results.length) return;
+  [cfg.results[i], cfg.results[j]] = [cfg.results[j], cfg.results[i]];
+  renderResults(); u();
+}
+
+function setScore(qi, oi, axis, val) {
+  if (!cfg.questions[qi].options[oi].scores) cfg.questions[qi].options[oi].scores = {};
+  if (val === 0) delete cfg.questions[qi].options[oi].scores[axis];
+  else cfg.questions[qi].options[oi].scores[axis] = val;
+  u();
+}
+
+function setPairAxis(ri, idx, val) {
+  if (!val) {
+    if (cfg.results[ri].pair) {
+      cfg.results[ri].pair[idx] = '';
+      if (!cfg.results[ri].pair[0] && !cfg.results[ri].pair[1]) delete cfg.results[ri].pair;
+    }
+  } else {
+    if (!cfg.results[ri].pair) cfg.results[ri].pair = ['', ''];
+    cfg.results[ri].pair[idx] = val;
+  }
+  renderResults(); u();
+}
+
+// ═══════════════════════════════════════════════ SYNC
+function u() {
+  // Read form → cfg
+  cfg.id = document.getElementById('cfg-id').value;
+  cfg.version = +document.getElementById('cfg-version').value || 1;
+  cfg.brand.name = document.getElementById('brand-name').value;
+  cfg.brand.primary = document.getElementById('brand-primary').value;
+  cfg.brand.surface = document.getElementById('brand-surface').value;
+  cfg.brand.on_surface = document.getElementById('brand-on').value;
+  const logo = document.getElementById('brand-logo').value;
+  if (logo) cfg.brand.logo_url = logo; else delete cfg.brand.logo_url;
+  cfg.rules.invite_ttl_hours = +document.getElementById('rule-ttl').value || 48;
+  cfg.rules.max_pairs_per_user_per_day = +document.getElementById('rule-max').value || 5;
+  cfg.rules.require_friend = document.getElementById('rule-friend').value === 'true';
+  cfg.rules.allow_self_pair = document.getElementById('rule-self').value === 'true';
+  cfg.fallback_result = document.getElementById('fallback-result').value;
+  document.documentElement.style.setProperty('--accent', cfg.brand.primary);
+}
+
+function updateJSON() {
+  document.getElementById('json-area').value = JSON.stringify(cfg, null, 2);
+}
+
+function applyJSON() {
+  try {
+    cfg = JSON.parse(document.getElementById('json-area').value);
+    renderAll();
+    toast('JSON applied');
+  } catch (e) { toast('JSON parse error: ' + e.message, true); }
+}
+
+// ═══════════════════════════════════════════════ VALIDATE
+function validateJSON() {
+  const el = document.getElementById('json-validation');
+  const errs = [];
+
+  // Basic checks
+  if (!cfg.id) errs.push('id is empty');
+  if (cfg.axes.length < 2) errs.push('ต้องมีอย่างน้อย 2 axes');
+  if (cfg.axes.length > 6) errs.push('axes เกิน 6');
+  if (cfg.questions.length < 3) errs.push('ต้องมีอย่างน้อย 3 คำถาม');
+  if (cfg.questions.length > 8) errs.push('คำถามเกิน 8 ข้อ');
+  if (cfg.results.length < 2) errs.push('ต้องมีอย่างน้อย 2 ผลลัพธ์');
+
+  const axisIds = new Set(cfg.axes.map(a => a.id));
+
+  // Dup question ids
+  const qIds = cfg.questions.map(q => q.id);
+  const dupQ = qIds.filter((v, i) => qIds.indexOf(v) !== i);
+  dupQ.forEach(d => errs.push(`question id ซ้ำ: ${d}`));
+
+  // Check options
+  cfg.questions.forEach((q, qi) => {
+    if (q.options.length < 2) errs.push(`ข้อ ${qi+1}: ต้องมีอย่างน้อย 2 ตัวเลือก`);
+    if (q.options.length > 4) errs.push(`ข้อ ${qi+1}: ตัวเลือกเกิน 4`);
+    const oIds = q.options.map(o => o.id);
+    const dupO = oIds.filter((v, i) => oIds.indexOf(v) !== i);
+    dupO.forEach(d => errs.push(`ข้อ ${qi+1}: option id ซ้ำ: ${d}`));
+    q.options.forEach((o, oi) => {
+      Object.keys(o.scores || {}).forEach(axis => {
+        if (!axisIds.has(axis)) errs.push(`ข้อ ${qi+1} ตัวเลือก ${oi+1}: axis "${axis}" ไม่มีอยู่`);
+      });
+    });
+  });
+
+  // Check results
+  cfg.results.forEach((r, ri) => {
+    (r.pair || []).forEach(axis => {
+      if (axis && !axisIds.has(axis)) errs.push(`ผลลัพธ์ ${ri+1}: axis "${axis}" ไม่มีอยู่`);
+    });
+  });
+
+  // Fallback
+  if (!cfg.results.some(r => r.code === cfg.fallback_result)) {
+    errs.push(`fallback_result "${cfg.fallback_result}" ไม่ตรงกับ result ไหนเลย`);
+  }
+
+  // Messages
+  if (!cfg.messages?.invite) errs.push('ขาด messages.invite');
+  if (!cfg.messages?.partner_done) errs.push('ขาด messages.partner_done');
+
+  if (errs.length === 0) {
+    el.innerHTML = '<span class="validation-ok">✓ Valid — พร้อมใช้งาน</span>';
+  } else {
+    el.innerHTML = `<span class="validation-err">✕ พบ ${errs.length} ปัญหา</span><div class="err-list">${errs.map(e=>'• '+e).join('<br>')}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════ IMPORT / EXPORT
+function exportJSON() {
+  u();
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${cfg.id}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported ' + cfg.id + '.json');
+}
+
+function importJSON() {
+  document.getElementById('file-input').click();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      cfg = JSON.parse(ev.target.result);
+      renderAll();
+      toast('Imported ' + file.name);
+    } catch (err) { toast('Parse error: ' + err.message, true); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function copyJSON() {
+  u();
+  navigator.clipboard.writeText(JSON.stringify(cfg, null, 2));
+  toast('Copied to clipboard');
+}
+
+// ═══════════════════════════════════════════════ UTILS
+function esc(s) { return String(s||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+function toast(msg, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isErr ? '#c00' : '#111';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════════════ INIT
+cfg = JSON.parse(JSON.stringify(DEFAULT));
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#D95F2B;
+  --surface:#0C0B0A;
+  --on:#EDE7DF;
+  --line:rgba(237,231,223,.14);
+  --dim:rgba(237,231,223,.08);
+  --radius:2px
+}
+html,body,#root{height:100%;overflow:hidden}
+body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--surface);color:var(--on)}
+.app{width:100%;height:100vh;display:flex;flex-direction:column;overflow-y:auto}
+.screen{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden}
+/* crosshatch texture */
+.tex{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(56deg,rgba(237,231,223,.055) 0 1px,transparent 1px 7px),repeating-linear-gradient(-38deg,rgba(237,231,223,.045) 0 1px,transparent 1px 9px)}
+/* buttons */
+.btn-primary{width:100%;padding:17px;border:0;border-radius:var(--radius);background:var(--primary);color:#12100E;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.02em}
+.btn-primary:active{filter:brightness(1.12)}
+.btn-primary:disabled{opacity:.5}
+.btn-outline{width:100%;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:transparent;color:rgba(237,231,223,.6);font-family:inherit;font-size:13px;font-weight:400;cursor:pointer}
+/* animations */
+@keyframes duoSpin{to{transform:rotate(360deg)}}
+@keyframes duoPulse{0%,100%{opacity:.25}50%{opacity:.8}}
+@keyframes duoRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes duoFlicker{0%,100%{opacity:.9}45%{opacity:.55}55%{opacity:1}}
+@keyframes duoFly{0%{transform:translate(-30px,10px) rotate(-8deg)}100%{transform:translate(30px,-10px) rotate(-8deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-enter{animation:duoRise .45s ease both}

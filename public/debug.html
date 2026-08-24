@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIFF Debug</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body style="font-family:sans-serif;padding:20px;background:#1B1430;color:#FFF3E4">
+<h2>LIFF Debug</h2>
+<div id="log" style="white-space:pre-wrap;font-size:14px;line-height:1.8"></div>
+<script>
+const L = document.getElementById('log');
+function log(msg) { L.textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n'; }
+
+log('page loaded');
+log('liff exists: ' + (typeof liff !== 'undefined'));
+log('URL: ' + location.href);
+
+async function start() {
+  try {
+    log('calling liff.init()...');
+    await liff.init({ liffId: '2011037337-KlqFK4LM' });
+    log('init OK!');
+    log('isInClient: ' + liff.isInClient());
+    log('isLoggedIn: ' + liff.isLoggedIn());
+    log('OS: ' + liff.getOS());
+    log('language: ' + liff.getLanguage());
+
+    if (liff.isLoggedIn()) {
+      const token = liff.getIDToken();
+      log('idToken: ' + (token ? token.substring(0, 20) + '...' : 'null'));
+
+      const profile = await liff.getProfile();
+      log('profile: ' + profile.displayName);
+
+      // Try API call
+      log('calling API...');
+      const res = await fetch('/api/campaign/buddy_demo', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      log('API status: ' + res.status);
+      if (res.ok) {
+        const data = await res.json();
+        log('campaign: ' + data.id + ' v' + data.version);
+        log('questions: ' + data.questions?.length);
+      } else {
+        const err = await res.text();
+        log('API error: ' + err);
+      }
+    } else {
+      log('not logged in — calling liff.login()...');
+      liff.login({ redirectUri: location.href });
+    }
+  } catch (e) {
+    log('ERROR: ' + e.message);
+    log('stack: ' + e.stack);
+  }
+}
+
+if (typeof liff !== 'undefined') {
+  start();
+} else {
+  log('waiting for liff SDK...');
+  window.addEventListener('load', () => {
+    if (typeof liff !== 'undefined') start();
+    else log('LIFF SDK failed to load!');
+  });
+}
+</script>
+</body>
+</html>
