@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { verifyIdToken } from '../services/line.js';
 import { UnauthorizedError } from '../errors/index.js';
 import { db } from '../db/client.js';
+import { env } from '../env.js';
 
 export const auth: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
@@ -12,6 +13,18 @@ export const auth: RequestHandler = async (req, _res, next) => {
   }
 
   const idToken = header.slice(7);
+
+  try {
+    const payload = idToken.split('.')[1];
+    const claims = payload ? JSON.parse(Buffer.from(payload, 'base64').toString('utf8')) : null;
+    console.error(
+      '[auth debug] token aud:', claims?.aud,
+      'exp:', claims?.exp, 'now:', Math.floor(Date.now() / 1000),
+      'expected LINE_CHANNEL_ID:', env().LINE_CHANNEL_ID,
+    );
+  } catch (e) {
+    console.error('[auth debug] could not decode token payload:', e);
+  }
 
   try {
     const profile = await verifyIdToken(idToken);
