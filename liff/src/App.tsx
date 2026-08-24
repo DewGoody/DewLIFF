@@ -13,7 +13,7 @@ import ErrorScreen from './screens/ErrorScreen';
 import FriendGate from './screens/FriendGate';
 import type { PairPopup } from './screens/Summary';
 
-const LIFF_ID = '2011037337-KlqFK4LM';
+const LIFF_ID = '2011192503-E4zprfoA';
 const IS_PREVIEW = new URLSearchParams(window.location.search).get('preview') === '1';
 
 type Screen = 'loading' | 'intro' | 'invited' | 'question' | 'share' | 'summary' | 'pair-result' | 'error' | 'friend-gate' | 'matching' | 'rewards' | 'group';
