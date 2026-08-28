@@ -12,6 +12,7 @@ import { pushMessage } from './line.js';
 import { getProfile } from './line.js';
 import { writeResultToLineKit } from './lineKitClient.js';
 import { logEvent } from './events.js';
+import { getAppBaseUrl } from '../env.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 import type { Answer } from '../config/schema.js';
 
@@ -550,7 +551,10 @@ function liffPairUrl(liffBase: string, campaignId: string, pairId: string): stri
   return `${liffBase}?campaignId=${campaignId}&pairId=${pairId}`;
 }
 
-const OG_BASE = 'https://laan-kijjakam.vercel.app/api/og';
+// DewLIFF is its own separate Vercel deployment from KimLIFF's — never hardcode
+// KimLIFF's own domain here. getAppBaseUrl() self-configures to whichever domain
+// this project is actually deployed to (see src/env.ts).
+const OG_BASE = `${getAppBaseUrl()}/api/og`;
 
 function buildMatchResultCard(
   cfg: Parameters<typeof toPublicConfig>[0],

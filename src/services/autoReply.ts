@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
 import { replyMessage } from './line.js';
-import { env } from '../env.js';
+import { env, getAppBaseUrl } from '../env.js';
 import type { LineMessage } from './line.js';
 
 /**
@@ -151,12 +151,93 @@ function buildReply(rule: CachedRule): LineMessage | null {
   }
 }
 
+// DewLIFF is its own separate Vercel deployment from KimLIFF's — never hardcode
+// KimLIFF's own domain here. getAppBaseUrl() self-configures (see src/env.ts).
+const DEMO_URL = `${getAppBaseUrl()}/demo`;
+
+function buildDemoCard(): LineMessage {
+  return {
+    type: 'flex',
+    altText: 'ดู Demo LINE Quiz 3 ระดับ — Solo / Duo / Team',
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      body: {
+        type: 'box', layout: 'vertical', paddingAll: '16px', spacing: 'md',
+        backgroundColor: '#FFFDF6',
+        contents: [
+          {
+            type: 'box', layout: 'horizontal', spacing: 'sm', alignItems: 'center',
+            contents: [
+              { type: 'text', text: 'B2B DEMO', size: 'xxs', weight: 'bold', color: '#E8354F', flex: 0 },
+              { type: 'text', text: '· 3 TIERS', size: 'xxs', color: '#8A857B', flex: 0, margin: 'sm' },
+            ],
+          },
+          { type: 'text', text: 'ระบบ LINE Quiz', weight: 'bold', size: 'xl', color: '#1C1A17', wrap: true },
+          { type: 'text', text: 'ที่ผู้ใช้อยากแชร์ต่อเอง', size: 'sm', color: '#6E6A62', wrap: true },
+          { type: 'separator', margin: 'sm', color: 'rgba(28,26,23,.12)' },
+          {
+            type: 'box', layout: 'vertical', spacing: 'sm',
+            contents: [
+              {
+                type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center',
+                contents: [
+                  { type: 'box', layout: 'vertical', flex: 0, width: '36px', height: '36px', backgroundColor: '#F5E14B', cornerRadius: '8px', justifyContent: 'center', alignItems: 'center', contents: [{ type: 'text', text: '01', size: 'xxs', weight: 'bold', align: 'center', color: '#1C1A17' }] },
+                  { type: 'box', layout: 'vertical', flex: 1, contents: [
+                    { type: 'text', text: 'Solo Quiz', weight: 'bold', size: 'sm', color: '#1C1A17' },
+                    { type: 'text', text: 'รู้จักตัวเอง · แชร์ผล · organic reach', size: 'xxs', color: '#8A857B', wrap: true },
+                  ]},
+                ],
+              },
+              {
+                type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center',
+                contents: [
+                  { type: 'box', layout: 'vertical', flex: 0, width: '36px', height: '36px', backgroundColor: '#F5E14B', cornerRadius: '8px', justifyContent: 'center', alignItems: 'center', contents: [{ type: 'text', text: '02', size: 'xxs', weight: 'bold', align: 'center', color: '#1C1A17' }] },
+                  { type: 'box', layout: 'vertical', flex: 1, contents: [
+                    { type: 'text', text: 'Duo Quiz', weight: 'bold', size: 'sm', color: '#1C1A17' },
+                    { type: 'text', text: 'จับคู่เพื่อน · viral loop · ผลที่แชร์ได้', size: 'xxs', color: '#8A857B', wrap: true },
+                  ]},
+                ],
+              },
+              {
+                type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center',
+                contents: [
+                  { type: 'box', layout: 'vertical', flex: 0, width: '36px', height: '36px', backgroundColor: '#F5E14B', cornerRadius: '8px', justifyContent: 'center', alignItems: 'center', contents: [{ type: 'text', text: '03', size: 'xxs', weight: 'bold', align: 'center', color: '#1C1A17' }] },
+                  { type: 'box', layout: 'vertical', flex: 1, contents: [
+                    { type: 'text', text: 'Team Quiz', weight: 'bold', size: 'sm', color: '#1C1A17' },
+                    { type: 'text', text: 'สร้างทีม · retention · community moment', size: 'xxs', color: '#8A857B', wrap: true },
+                  ]},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box', layout: 'vertical', paddingAll: '12px', backgroundColor: '#FFFDF6',
+        contents: [{
+          type: 'button',
+          action: { type: 'uri', label: 'ดู Demo ทั้ง 3 ระดับ →', uri: DEMO_URL },
+          style: 'primary', color: '#E8354F', height: 'sm',
+        }],
+      },
+    },
+  } as LineMessage;
+}
+
 /**
  * Handle incoming text message — match keywords from DB and reply.
  * Uses replyToken (FREE).
  */
 export async function handleTextMessage(replyToken: string, text: string): Promise<boolean> {
   const normalised = text.trim().toLowerCase();
+
+  // Hardcoded "demo" keyword — always available without DB entry
+  if (normalised === 'demo' || normalised.startsWith('demo ')) {
+    await replyMessage(replyToken, [buildDemoCard()]);
+    return true;
+  }
+
   const rules = await getRules();
 
   for (const rule of rules) {
