@@ -9,12 +9,21 @@ export function configToEditorState(cfg: CampaignConfig & { archetypes?: { id: s
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map((a) => ({ id: a.id, label: a.name }));
 
-  const axes: EditorAxis[] = rawAxes.map((a, i) => ({
-    id: a.id,
-    label: a.label,
-    color: PALETTE[i % PALETTE.length],
-    poles: (a as { poles?: string[] }).poles,
-  }));
+  const axes: EditorAxis[] = rawAxes.map((a, i) => {
+    const ax = a as EditorAxis & { poles?: string[] };
+    return {
+      id: ax.id,
+      label: ax.label,
+      color: PALETTE[i % PALETTE.length],
+      ...(ax.label_en   ? { label_en:   ax.label_en   } : {}),
+      ...(ax.body       ? { body:        ax.body       } : {}),
+      ...(ax.short      ? { short:       ax.short      } : {}),
+      ...(ax.image_url  ? { image_url:   ax.image_url  } : {}),
+      ...(ax.order      ? { order:       ax.order      } : {}),
+      ...(ax.poles      ? { poles:       ax.poles      } : {}),
+      ...(ax.group_weight !== undefined ? { group_weight: ax.group_weight } : {}),
+    };
+  });
 
   const questions: EditorQuestion[] = (cfg.questions || []).map((q) => ({
     id: q.id,
@@ -81,6 +90,7 @@ export function configToEditorState(cfg: CampaignConfig & { archetypes?: { id: s
     },
     mode: cfg.mode || 'pair',
     rewards: cfg.rewards ? { ...cfg.rewards } : undefined,
+    group: cfg.group ? { ...cfg.group } : undefined,
   };
 }
 
@@ -127,12 +137,23 @@ export function editorStateToConfig(state: EditorState, campaignId: string, vers
     version,
     brand: { ...state.brand },
     copy: { ...state.copy },
-    axes: state.axes.map((a) => ({ id: a.id, label: a.label, ...(a.poles ? { poles: a.poles } : {}) })),
+    axes: state.axes.map((a) => ({
+      id: a.id,
+      label: a.label,
+      ...(a.label_en  ? { label_en:  a.label_en  } : {}),
+      ...(a.body      ? { body:      a.body      } : {}),
+      ...(a.short     ? { short:     a.short     } : {}),
+      ...(a.image_url ? { image_url: a.image_url } : {}),
+      ...(a.order     ? { order:     a.order     } : {}),
+      ...(a.poles     ? { poles:     a.poles     } : {}),
+      ...(a.group_weight !== undefined ? { group_weight: a.group_weight } : {}),
+    })),
     questions,
     results: resultsArray,
     fallback_result: 'balanced',
     rules: { ...state.rules },
     ...(state.rewards ? { rewards: state.rewards } : {}),
+    ...(state.group ? { group: state.group } : {}),
     messages: {
       invite: {
         template: 'invite_v1',

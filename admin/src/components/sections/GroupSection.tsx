@@ -181,13 +181,19 @@ function ArchetypeCard({ arch, index, axes, pools, poolsLoading, totalArchetypes
 
       {/* Body */}
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {/* ชื่อ + คำอธิบาย */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 12 }}>
+        {/* ชื่อ + ข้อความหลัก + คำอธิบาย */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr', gap: 12 }}>
           <div>
-            <div style={MONO}>ชื่อ</div>
+            <div style={MONO}>ชื่อผล</div>
             <input value={arch.title} onChange={e => set({ title: e.target.value })}
               placeholder="เช่น ทีมบุกเบิก"
               style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', border: '1px solid #E5E5E3', borderRadius: 9, fontSize: 14, fontWeight: 600, outline: 'none' }} />
+          </div>
+          <div>
+            <div style={MONO}>ข้อความหลัก</div>
+            <input value={arch.primary_text ?? ''} onChange={e => set({ primary_text: e.target.value || undefined })}
+              placeholder="เช่น รอดได้ 40 วัน"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', border: '1px solid #E5E5E3', borderRadius: 9, fontSize: 13.5, fontWeight: 600, color: '#E63B2E', outline: 'none' }} />
           </div>
           <div>
             <div style={MONO}>คำอธิบาย</div>
@@ -347,10 +353,11 @@ function CoveragePanel({ archetypes, minMembers }: { archetypes: GroupArchetype[
 /* ── Copy Panel ────────────────────────────────────────────────────────── */
 function CopyPanel({ copy, onChange }: { copy: Record<string, string>; onChange: (k: string, v: string) => void }) {
   const rows = [
-    { k: 'group_cta', label: 'group_cta', effect: 'ปุ่มใน Summary screen', placeholder: 'ดูผลกลุ่ม 👥' },
-    { k: 'group_invite_hint', label: 'group_invite_hint', effect: 'hint ใต้ลิงก์ชวน', placeholder: 'ชวนให้ครบ {target} คน' },
-    { k: 'group_waiting', label: 'group_waiting', effect: 'ระหว่างรอคนเข้า', placeholder: 'รออีก {remaining} คน' },
-    { k: 'group_reward_cta', label: 'group_reward_cta', effect: 'ปุ่มรับรางวัล', placeholder: 'รับรางวัลเลย' },
+    { k: 'group_cta',          label: 'group_cta',          effect: 'ปุ่มใน Summary screen',        placeholder: 'ดูผลกลุ่ม 👥' },
+    { k: 'group_invite_title', label: 'group_invite_title', effect: 'title ใน flex message ชวน',   placeholder: 'ชวนเพื่อนมาดูผลกลุ่ม' },
+    { k: 'group_invite_cta',   label: 'group_invite_cta',   effect: 'ปุ่ม CTA ในหน้า Group',       placeholder: 'ชวนเพื่อนเข้ากลุ่ม' },
+    { k: 'group_waiting',      label: 'group_waiting',      effect: 'ระหว่างรอคนเข้า (min member)', placeholder: 'ต้องมีอย่างน้อย {n} คน' },
+    { k: 'group_claim_cta',    label: 'group_claim_cta',    effect: 'ปุ่มรับรางวัล',               placeholder: 'รับรางวัลเลย 🎁' },
   ];
 
   return (

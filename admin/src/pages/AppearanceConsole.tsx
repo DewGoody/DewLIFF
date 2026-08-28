@@ -43,8 +43,9 @@ const KV_SLOTS = [
   { key: 'kv-question', slug: 'KV_QUESTION', spec: '1170×1300', use: 'texture พื้นหลังคำถาม (opacity 22%)' },
   { key: 'kv-matching', slug: 'KV_MATCHING', spec: '800×800',   use: 'หน้าจับคู่' },
   { key: 'kv-share',    slug: 'KV_SHARE',    spec: '1170×700',  use: 'header ก่อนปุ่มชวนเพื่อน' },
-  { key: 'kv-summary',  slug: 'KV_SUMMARY',  spec: '1170×560',  use: 'header สรุป' },
-  { key: 'kv-pair',     slug: 'KV_PAIR',     spec: '1170×1600', use: 'PairResult เต็มจอ' },
+  { key: 'kv-summary',  slug: 'KV_SUMMARY',  spec: '1170×560',  use: 'header สรุป (Summary / PAIR LOG)' },
+  { key: 'kv-pair',     slug: 'KV_PAIR',     spec: '1170×1600', use: 'PairResult — ใช้ result.image_url แทน' },
+  { key: 'kv-group',    slug: 'KV_GROUP',    spec: '1170×560',  use: 'header หน้า Group / Team Result' },
   { key: 'kv-error',    slug: 'KV_ERROR',    spec: '600×600',   use: 'ไอคอน error' },
 ];
 

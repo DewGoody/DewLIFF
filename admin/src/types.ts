@@ -8,13 +8,18 @@ export interface GroupCondition {
   is_balanced?: boolean;
   dominant_threshold?: number;
   min_members_with_axis?: number;
+  max_distinct?: number;
 }
 
 export interface GroupArchetype {
   code: string;
   title: string;
+  /** Pre-set main display text shown on group result screen (e.g. "รอดได้ 40 วัน") */
+  primary_text?: string;
   body: string;
   image_url?: string;
+  /** Small symbol/icon shown in F-08 unlock push */
+  symbol_url?: string;
   min_group_size: number;
   max_group_size?: number;
   condition?: GroupCondition;
@@ -175,6 +180,11 @@ export interface CampaignMeta {
 export interface EditorAxis {
   id: string;
   label: string;
+  label_en?: string;
+  body?: string;
+  short?: string;
+  image_url?: string;
+  order?: string;
   color: string;
   poles?: string[];
   group_weight?: number;
