@@ -63,12 +63,23 @@ export async function saveUserAnswers(
 
   logEvent({ userId, type: 'quiz_done', campaignId, meta: { mode: 'save_answers' } });
 
-  // Compute A's own archetype so LIFF can show it on the share screen
+  // Compute new axis scores (needed both for return value and cascade updates)
   const scores = scoreAnswers(cfg, answers);
   const myAxis = dominantAxis(cfg, scores);
   const myAxisDef = cfg.axes.find((a) => a.id === myAxis);
 
-  const liffBase = process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`;
+  // ── Cascade: update group_members rows for this user (fire-and-forget) ──────
+  // One person = one result — new answers must propagate to every group they're in.
+  cascadeGroupMemberUpdate(userId, campaignId, myAxis, scores).catch((e) =>
+    console.warn('[saveAnswers] group cascade failed:', e),
+  );
+
+  // ── Cascade: recompute all completed pairs involving this user (fire-and-forget) ─
+  cascadePairResultUpdate(userId, campaignId, answers, cfg).catch((e) =>
+    console.warn('[saveAnswers] pair cascade failed:', e),
+  );
+
+  const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
   const inviterUrl = `${liffBase}?inviterId=${userId}&campaignId=${campaignId}`;
 
   return {
@@ -77,6 +88,108 @@ export async function saveUserAnswers(
     myArchetype: myAxis,
     myArchetypeLabel: myAxisDef?.label || myAxis,
   };
+}
+
+// ── Cascade helpers (called fire-and-forget from saveUserAnswers) ─────────────
+
+/** Update axis_scores + top_axis in every group_members row for this user × campaign. */
+async function cascadeGroupMemberUpdate(
+  userId: string,
+  campaignId: string,
+  topAxis: string,
+  axisScores: Record<string, number>,
+): Promise<void> {
+  // Find all group_ids this user belongs to
+  const { data: memberships } = await db()
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId);
+
+  if (!memberships?.length) return;
+
+  const groupIds = memberships.map((m) => m.group_id as string);
+
+  // Filter to groups belonging to this campaign
+  const { data: groups } = await db()
+    .from('groups')
+    .select('id')
+    .in('id', groupIds)
+    .eq('campaign_id', campaignId);
+
+  const relevantGroupIds = (groups ?? []).map((g) => g.id as string);
+  if (!relevantGroupIds.length) return;
+
+  // Update using user_id + group_id directly (avoids relying on row id column)
+  const { error } = await db()
+    .from('group_members')
+    .update({ top_axis: topAxis, axis_scores: axisScores })
+    .eq('user_id', userId)
+    .in('group_id', relevantGroupIds);
+
+  if (error) console.warn('[cascadeGroupMemberUpdate] failed:', error.message);
+}
+
+/** Recompute result_code + scores for all completed pairs involving this user. */
+async function cascadePairResultUpdate(
+  userId: string,
+  campaignId: string,
+  newAnswers: Answer[],
+  cfg: Awaited<ReturnType<typeof getConfig>>,
+): Promise<void> {
+  // Fetch all completed pairs where this user is A or B
+  const { data: pairs } = await db()
+    .from('pairs')
+    .select('id, a_user, b_user')
+    .eq('campaign_id', campaignId)
+    .eq('status', 'completed')
+    .or(`a_user.eq.${userId},b_user.eq.${userId}`);
+
+  if (!pairs?.length) return;
+
+  // Collect unique partner ids
+  const partnerIds = [...new Set(
+    (pairs as Array<{ id: string; a_user: string; b_user: string }>)
+      .map((p) => p.a_user === userId ? p.b_user : p.a_user),
+  )];
+
+  // Fetch all partners' current answers in one query per partner
+  const partnerAnswerMap = new Map<string, Answer[]>();
+  await Promise.all(partnerIds.map(async (partnerId) => {
+    const { data: rows } = await db()
+      .from('user_quiz_answers')
+      .select('question_id, option_id')
+      .eq('user_id', partnerId)
+      .eq('campaign_id', campaignId);
+    if (rows?.length) {
+      partnerAnswerMap.set(partnerId, rows.map((r) => ({ questionId: r.question_id, optionId: r.option_id })));
+    }
+  }));
+
+  // Recompute each pair
+  await Promise.all(
+    (pairs as Array<{ id: string; a_user: string; b_user: string }>).map(async (pair) => {
+      const partnerId = pair.a_user === userId ? pair.b_user : pair.a_user;
+      const partnerAnswers = partnerAnswerMap.get(partnerId);
+      if (!partnerAnswers) return; // partner hasn't answered — skip
+
+      // Keep A=inviter, B=invitee convention regardless of who retook
+      const aAnswers = pair.a_user === userId ? newAnswers : partnerAnswers;
+      const bAnswers = pair.a_user === userId ? partnerAnswers : newAnswers;
+
+      try {
+        const outcome = resolvePair(cfg, aAnswers, bAnswers);
+        await db()
+          .from('pairs')
+          .update({
+            result_code: outcome.result.code,
+            scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
+          })
+          .eq('id', pair.id);
+      } catch (e) {
+        console.warn(`[saveAnswers] pair ${pair.id} recompute failed:`, e);
+      }
+    }),
+  );
 }
 
 // ── Get inviter profile ─────────────────────────────────────────────
@@ -178,6 +291,7 @@ export async function matchAndCompute(
   inviterId: string,
   campaignId: string,
   bAnswers?: Answer[],
+  opts?: { fromGroup?: boolean },
 ): Promise<MatchResult> {
   if (bUserId === inviterId) throw new BadRequestError('ไม่สามารถจับคู่กับตัวเองได้');
 
@@ -219,17 +333,16 @@ export async function matchAndCompute(
     bAnswers = bRows.map((r) => ({ questionId: r.question_id, optionId: r.option_id }));
   }
 
-  // Check for existing pair between A+B to avoid duplicates
-  const { data: existingPair } = await db()
+  // Check for existing pair between A+B (any status, either role order) to avoid duplicates.
+  // Also covers group-join re-entries: same person clicks group link again → already paired → skip.
+  const { data: existingPairs } = await db()
     .from('pairs')
     .select('id, status, result_code, scores')
     .eq('campaign_id', campaignId)
-    .eq('a_user', inviterId)
-    .eq('b_user', bUserId)
-    .eq('status', 'completed')
+    .or(`and(a_user.eq.${inviterId},b_user.eq.${bUserId}),and(a_user.eq.${bUserId},b_user.eq.${inviterId})`)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  const existingPair = existingPairs?.[0] ?? null;
 
   if (existingPair) {
     // Return existing result instead of creating a duplicate pair
@@ -261,6 +374,9 @@ export async function matchAndCompute(
   if (bProfile) {
     await db().from('users').update({ display_name: bProfile.displayName }).eq('line_user_id', bUserId).then(() => {});
   }
+  // Resolve B's display name: prefer LINE profile, then users table, then fallback
+  const { data: bUserRow } = await db().from('users').select('display_name').eq('line_user_id', bUserId).maybeSingle();
+  const bDisplayName = bProfile?.displayName || (bUserRow?.display_name !== bUserId ? bUserRow?.display_name : undefined) || 'คู่หู';
 
   // Create pair record
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -314,23 +430,16 @@ export async function matchAndCompute(
 
   logEvent({ userId: bUserId, type: 'pair_done', pairId: pair.id, campaignId, meta: { result_code: outcome.result.code } });
 
-  const liffBase = process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`;
+  const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
 
   // Push to B: result card
   const bAxisMe = outcome.axisB;
   const bAxisBuddy = outcome.axisA;
   const aProfile = await getInviterProfile(inviterId).catch(() => ({ displayName: 'เพื่อน' }));
-  const bName = bProfile?.displayName || 'คู่หู';
+  const bName = bDisplayName;
 
-  const resultCard = buildMatchResultCard(cfg, campaignId, outcome.result, {
-    pairId: pair.id,
-    axisMe: bAxisMe,
-    axisBuddy: bAxisBuddy,
-    buddyName: aProfile.displayName,
-    liffBase,
-  });
-  // Push to A: partner answered notification with result
-  const pushToA = buildPartnerAnsweredCard(cfg, campaignId, outcome.result, {
+  // F-04 for A: kilo notification that partner answered
+  const partnerAnsweredCard = buildPartnerAnsweredCard(cfg, campaignId, outcome.result, {
     pairId: pair.id,
     partnerName: bName,
     axisMe: outcome.axisA,
@@ -339,7 +448,7 @@ export async function matchAndCompute(
   });
 
   // Also tell LineKit both players' results — server-to-server, doesn't touch
-  // KimLIFF's own DB write or trust model, and must never break the pushes below.
+  // KimLIFF's own DB write or trust model, and must never break the push/response below.
   const lineKitPayloadBase = {
     source: 'buddy_quiz_match',
     campaignId,
@@ -348,12 +457,7 @@ export async function matchAndCompute(
     resultTitle: outcome.result.title,
     scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
   };
-  // Await everything below before returning — on Vercel, work left running after the
-  // response is sent can be frozen mid-flight, so pushes and the LineKit write-back
-  // (which never throws on its own) all have to finish inside this function call.
-  const [pushBResult, pushAResult] = await Promise.allSettled([
-    pushMessage(bUserId, resultCard),
-    pushMessage(inviterId, pushToA),
+  const lineKitWrites: Promise<void>[] = [
     writeResultToLineKit(bUserId, {
       ...lineKitPayloadBase,
       axisMe: bAxisMe,
@@ -364,14 +468,28 @@ export async function matchAndCompute(
       axisMe: outcome.axisA,
       axisBuddy: outcome.axisB,
     }, pair.id).catch((e) => console.error('LineKit write-back failed (A):', e)),
-  ]);
+  ];
 
-  if (pushBResult.status === 'rejected') console.error('Push to B failed:', pushBResult.reason);
-  const pushSentToInviter = pushAResult.status === 'fulfilled';
-  if (pushSentToInviter) {
-    logEvent({ userId: inviterId, type: 'push_sent', pairId: pair.id, campaignId });
+  // B sees result immediately in LIFF — no push needed for B.
+  // A gets F-04 notification — UNLESS this match came from a group join flow,
+  // in which case A already received a group-update push (no need to double-notify).
+  // Await everything below before returning — on Vercel, work left running after the
+  // response is sent can be frozen mid-flight, so the push (when sent) and the LineKit
+  // write-backs (which never throw on their own) all have to finish inside this call.
+  let pushSentToInviter = false;
+  if (!opts?.fromGroup) {
+    const [pushAResult] = await Promise.allSettled([
+      pushMessage(inviterId, partnerAnsweredCard),
+      ...lineKitWrites,
+    ]);
+    pushSentToInviter = pushAResult.status === 'fulfilled';
+    if (pushSentToInviter) {
+      logEvent({ userId: inviterId, type: 'push_sent', pairId: pair.id, campaignId });
+    } else {
+      console.error('Push to A failed:', (pushAResult as PromiseRejectedResult).reason);
+    }
   } else {
-    console.error('Push to A failed:', pushAResult.reason);
+    await Promise.allSettled(lineKitWrites);
   }
 
   // If push to A failed (not a follower), provide a share URL B can use to notify A manually
@@ -395,49 +513,111 @@ export async function matchAndCompute(
 
 // ── Message builders ────────────────────────────────────────────────
 
+const AXIS_CARD_FALLBACK: Record<string, string> = {
+  chill: 'https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-01-chiller-v2.png',
+  mu:    'https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-02-mystic-v2.png',
+  live:  'https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-03-influencer-v2.png',
+  prep:  'https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-04-prepper-v2.png',
+  line:  'https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-05-analyst-v2.png',
+};
+
+function getAxisCardUrl(
+  axisId: string,
+  axes: Array<{ id: string; image_url?: string }>,
+): string {
+  return axes.find(a => a.id === axisId)?.image_url || AXIS_CARD_FALLBACK[axisId] || AXIS_CARD_FALLBACK['prep'];
+}
+
+function buildAxisPairBox(
+  cardUrlMe: string, nameMe: string, labelMe: string,
+  cardUrlBuddy: string, nameBuddy: string, labelBuddy: string,
+): Record<string, unknown> {
+  const memberBox = (cardUrl: string, name: string, label: string) => ({
+    type: 'box', layout: 'vertical', alignItems: 'center', flex: 1,
+    contents: [
+      { type: 'image', url: cardUrl, size: 'sm', aspectRatio: '9:13', aspectMode: 'fit' },
+      { type: 'text', text: name, size: 'xxs', align: 'center', color: '#888888', margin: 'xs' },
+      { type: 'text', text: label, size: 'xs', align: 'center', weight: 'bold', wrap: true },
+    ],
+  });
+  return {
+    type: 'box', layout: 'horizontal', margin: 'lg', spacing: 'md',
+    contents: [memberBox(cardUrlMe, nameMe, labelMe), memberBox(cardUrlBuddy, nameBuddy, labelBuddy)],
+  };
+}
+
 function liffPairUrl(liffBase: string, campaignId: string, pairId: string): string {
   return `${liffBase}?campaignId=${campaignId}&pairId=${pairId}`;
 }
 
+const OG_BASE = 'https://laan-kijjakam.vercel.app/api/og';
+
 function buildMatchResultCard(
   cfg: Parameters<typeof toPublicConfig>[0],
   campaignId: string,
-  result: { title: string; body: string; image_url?: string; code: string },
+  result: { title: string; body: string; image_url?: string; code: string; rank?: number },
   opts: { pairId: string; axisMe: string; axisBuddy: string; buddyName: string; liffBase: string },
 ) {
-  const primary = cfg.brand.primary || '#E63B2E';
-  const eyebrow = cfg.copy?.['result_eyebrow'] || 'คุณสองคนคือ';
+  const primary = cfg.brand.primary || '#E8354F';
+  const eyebrow = cfg.copy?.['result_eyebrow'] || 'ผลลัพท์คู่';
   const axMeLabel = cfg.axes.find((a) => a.id === opts.axisMe)?.label || opts.axisMe;
   const axBuddyLabel = cfg.axes.find((a) => a.id === opts.axisBuddy)?.label || opts.axisBuddy;
+  const cardMeUrl = getAxisCardUrl(opts.axisMe, cfg.axes);
+  const cardBuddyUrl = getAxisCardUrl(opts.axisBuddy, cfg.axes);
 
-  const bodyContents: Record<string, unknown>[] = [];
-  if (result.image_url) {
-    bodyContents.push({ type: 'image', url: result.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' });
-  }
-  bodyContents.push({ type: 'text', text: eyebrow, size: 'xs', color: '#888888', ...(result.image_url ? { margin: 'md' } : {}) });
-  bodyContents.push({ type: 'text', text: result.title, weight: 'bold', size: 'xl', color: primary, margin: 'sm' });
-  if (result.body) {
-    bodyContents.push({ type: 'text', text: result.body, wrap: true, margin: 'md', size: 'sm', color: '#666666' });
-  }
-  bodyContents.push({
-    type: 'box', layout: 'horizontal', margin: 'lg', spacing: 'sm',
-    contents: [
-      { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: `คุณ · ${axMeLabel}`, size: 'xs', color: primary, align: 'center' }], paddingAll: '6px', borderWidth: '1px', borderColor: primary, cornerRadius: '99px' },
-      { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: `${opts.buddyName} · ${axBuddyLabel}`, size: 'xs', color: primary, align: 'center' }], paddingAll: '6px', borderWidth: '1px', borderColor: primary, cornerRadius: '99px' },
-    ],
-  });
+  // Hero: PNG of 2 axis cards tilted ±8° on yellow bg (cards only, no text)
+  const heroUrl = `${OG_BASE}?${new URLSearchParams({ type: 'pair', cardMeUrl, cardBuddyUrl })}`;
 
   return [
     {
       type: 'flex',
-      altText: `${eyebrow} ${result.title}`,
+      altText: `${eyebrow}: ${result.title}`.slice(0, 400),
       contents: {
         type: 'bubble',
-        body: { type: 'box', layout: 'vertical', contents: bodyContents },
+        size: 'mega',
+        hero: { type: 'image', url: heroUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' },
+        body: {
+          type: 'box', layout: 'vertical', paddingAll: '16px', spacing: 'sm',
+          contents: [
+            // Survival title + subtitle inline
+            {
+              type: 'box', layout: 'horizontal', alignItems: 'baseline', spacing: 'sm',
+              contents: [
+                { type: 'text', text: result.title, weight: 'bold', size: 'xxl', color: primary, flex: 0 },
+                { type: 'text', text: cfg.copy?.['result_subtitle'] || 'คือเวลาที่คู่นี้รอด', size: 'xxs', color: '#888888', wrap: true, flex: 1 },
+              ],
+            },
+            // Axis pair boxes: buddy (gray bg) | me (yellow bg)
+            {
+              type: 'box', layout: 'horizontal', margin: 'sm', spacing: 'sm',
+              contents: [
+                {
+                  type: 'box', layout: 'vertical', flex: 1, paddingAll: '10px',
+                  backgroundColor: 'rgba(28,26,23,.07)', cornerRadius: '8px',
+                  contents: [
+                    { type: 'text', text: opts.buddyName, size: 'xxs', color: '#888888' },
+                    { type: 'text', text: axBuddyLabel, weight: 'bold', size: 'sm', color: '#1C1A17', wrap: true, margin: 'xs' },
+                  ],
+                },
+                {
+                  type: 'box', layout: 'vertical', flex: 1, paddingAll: '10px',
+                  backgroundColor: '#F5E14B', cornerRadius: '8px',
+                  contents: [
+                    { type: 'text', text: cfg.copy?.['me'] || 'คุณ', size: 'xxs', color: '#888888' },
+                    { type: 'text', text: axMeLabel, weight: 'bold', size: 'sm', color: '#1C1A17', wrap: true, margin: 'xs' },
+                  ],
+                },
+              ],
+            },
+            // Body text
+            ...(result.body ? [{ type: 'text' as const, text: result.body, size: 'sm' as const, color: '#555555', wrap: true, margin: 'sm' as const }] : []),
+          ],
+        },
         footer: {
           type: 'box', layout: 'vertical', spacing: 'sm',
           contents: [
-            { type: 'button', action: { type: 'uri', label: 'ดูผลลัพธ์', uri: liffPairUrl(opts.liffBase, campaignId, opts.pairId) }, style: 'primary', color: primary },
+            { type: 'button', action: { type: 'uri', label: cfg.copy?.['result_cta'] || 'ดูผลคู่แบบเต็ม', uri: liffPairUrl(opts.liffBase, campaignId, opts.pairId) }, style: 'primary', color: primary },
+            { type: 'button', action: { type: 'uri', label: cfg.copy?.['result_cta2'] || 'ชวนคนต่อไป', uri: `${opts.liffBase}?campaignId=${campaignId}&view=share` }, style: 'secondary' },
           ],
         },
       },
@@ -448,14 +628,13 @@ function buildMatchResultCard(
 function buildPartnerAnsweredCard(
   cfg: Parameters<typeof toPublicConfig>[0],
   campaignId: string,
-  result: { title: string; body: string; code: string },
+  _result: { title: string; body: string; code: string },
   opts: { pairId: string; partnerName: string; axisMe: string; axisBuddy: string; liffBase: string },
 ) {
-  const primary = cfg.brand.primary || '#E63B2E';
-  const axMeLabel = cfg.axes.find((a) => a.id === opts.axisMe)?.label || opts.axisMe;
+  const primary = cfg.brand.primary || '#E8354F';
   const axBuddyLabel = cfg.axes.find((a) => a.id === opts.axisBuddy)?.label || opts.axisBuddy;
-  const title = `${opts.partnerName} ตอบแล้ว! ดูผลกัน`;
-  const altText = `${opts.partnerName} ตอบแล้ว ผลลัพท์ของคุณกับ ${opts.partnerName} คือ "${result.title}"`;
+  const buddyCardUrl = getAxisCardUrl(opts.axisBuddy, cfg.axes);
+  const altText = `${opts.partnerName} ตอบจบแล้ว — ดูผลคู่ + จัดทีม`;
 
   return [
     {
@@ -463,26 +642,36 @@ function buildPartnerAnsweredCard(
       altText,
       contents: {
         type: 'bubble',
+        size: 'kilo',
         body: {
-          type: 'box', layout: 'vertical',
+          type: 'box', layout: 'horizontal', paddingAll: '14px', spacing: 'md', alignItems: 'center',
           contents: [
-            { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true },
-            { type: 'text', text: `ผลลัพท์ของคุณกับ ${opts.partnerName}`, size: 'xs', color: '#888888', margin: 'md' },
-            { type: 'text', text: result.title, weight: 'bold', size: 'xl', color: primary, margin: 'sm' },
-            { type: 'text', text: result.body, wrap: true, margin: 'md', size: 'sm', color: '#666666' },
+            // Left: partner's axis card image
             {
-              type: 'box', layout: 'horizontal', margin: 'lg', spacing: 'sm',
+              type: 'box', layout: 'vertical', flex: 0, width: '68px',
               contents: [
-                { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: `คุณ · ${axMeLabel}`, size: 'xs', color: primary, align: 'center' }], paddingAll: '6px', borderWidth: '1px', borderColor: primary, cornerRadius: '99px' },
-                { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: `${opts.partnerName} · ${axBuddyLabel}`, size: 'xs', color: primary, align: 'center' }], paddingAll: '6px', borderWidth: '1px', borderColor: primary, cornerRadius: '99px' },
+                { type: 'image', url: buddyCardUrl, size: 'full', aspectRatio: '3:4', aspectMode: 'fit' },
+              ],
+            },
+            // Right: badge + name + axis sub
+            {
+              type: 'box', layout: 'vertical', flex: 1, spacing: 'xs',
+              contents: [
+                {
+                  type: 'box', layout: 'vertical', paddingAll: '3px', backgroundColor: '#F5E14B',
+                  cornerRadius: '4px', width: '120px',
+                  contents: [{ type: 'text', text: cfg.copy?.['F04_badge'] || 'เพื่อนใหม่ในรายชื่อ', size: 'xxs', weight: 'bold', color: '#1C1A17', align: 'center' }],
+                },
+                { type: 'text', text: `${opts.partnerName} ตอบจบแล้ว`, weight: 'bold', size: 'sm', color: '#1C1A17', wrap: true, margin: 'xs' },
+                { type: 'text', text: `${axBuddyLabel} · ${cfg.copy?.['F04_sub_suffix'] || 'หยิบเข้าทีมได้เลย'}`, size: 'xxs', color: '#888888', margin: 'xs' },
               ],
             },
           ],
         },
         footer: {
-          type: 'box', layout: 'vertical',
+          type: 'box', layout: 'vertical', paddingAll: '12px',
           contents: [
-            { type: 'button', action: { type: 'uri', label: 'ดูผลลัพท์', uri: liffPairUrl(opts.liffBase, campaignId, opts.pairId) }, style: 'primary', color: primary },
+            { type: 'button', action: { type: 'uri', label: cfg.copy?.['F04_cta'] || 'ดูผลคู่ + จัดทีม', uri: liffPairUrl(opts.liffBase, campaignId, opts.pairId) }, style: 'primary', color: primary, height: 'sm' },
           ],
         },
       },
@@ -499,6 +688,8 @@ export interface PairSummaryEntry {
   status: 'waiting' | 'completed' | 'expired';
   resultTitle?: string;
   partnerAxisLabel?: string;
+  completedAt?: string;
+  completedAtIso?: string;
 }
 
 export interface MySummaryResult {
@@ -537,7 +728,7 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
   const myAxisId = dominantAxis(cfg, scores);
   const myAxisDef = cfg.axes.find((a) => a.id === myAxisId);
 
-  const liffBase = process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`;
+  const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
 
   // Compute archStats from config results
   const myResultsRanked = cfg.results
@@ -553,10 +744,17 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
     worstSurvival: worstResult.title,
   } : undefined;
 
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const fmtDate = (iso: string | null): string | undefined => {
+    if (!iso) return undefined;
+    const d = new Date(iso);
+    return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  };
+
   // Pairs as inviter (A)
   const { data: pairsAsA } = await db()
     .from('pairs')
-    .select('id, status, b_user, result_code, scores')
+    .select('id, status, b_user, result_code, scores, completed_at')
     .eq('a_user', userId)
     .eq('campaign_id', campaignId)
     .order('created_at', { ascending: false });
@@ -564,7 +762,7 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
   // Pairs as invitee (B)
   const { data: pairsAsB } = await db()
     .from('pairs')
-    .select('id, status, a_user, result_code, scores')
+    .select('id, status, a_user, result_code, scores, completed_at')
     .eq('b_user', userId)
     .eq('campaign_id', campaignId)
     .order('created_at', { ascending: false });
@@ -608,6 +806,8 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
       status: toStatus(p.status),
       resultTitle: resultTitleOf(p.result_code),
       partnerAxisLabel: getPartnerAxisLabel(p, 'a'),
+      completedAt: fmtDate(p.completed_at),
+      completedAtIso: p.completed_at || undefined,
     })),
     ...(pairsAsB || []).map((p) => ({
       pairId: p.id,
@@ -616,6 +816,8 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
       status: toStatus(p.status),
       resultTitle: resultTitleOf(p.result_code),
       partnerAxisLabel: getPartnerAxisLabel(p, 'b'),
+      completedAt: fmtDate(p.completed_at),
+      completedAtIso: p.completed_at || undefined,
     })),
   ];
 
@@ -646,4 +848,30 @@ export async function setDisplayName(userId: string, displayName: string): Promi
   await db()
     .from('users')
     .upsert({ line_user_id: userId, display_name: displayName }, { onConflict: 'line_user_id' });
+}
+
+// ── My unlocked group archetype symbols ─────────────────────────────
+
+export async function getMySymbols(userId: string, campaignId: string): Promise<string[]> {
+  const { data: memberships } = await db()
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId);
+
+  if (!memberships?.length) return [];
+
+  const groupIds = memberships.map((m) => m.group_id as string);
+
+  const { data: groups } = await db()
+    .from('groups')
+    .select('locked_archetype_code')
+    .in('id', groupIds)
+    .eq('campaign_id', campaignId)
+    .not('locked_archetype_code', 'is', null);
+
+  const codes = (groups ?? [])
+    .map((g) => g.locked_archetype_code as string)
+    .filter(Boolean);
+
+  return [...new Set(codes)];
 }

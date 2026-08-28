@@ -293,6 +293,43 @@ export type PairView =
       axisBuddy: string;
     };
 
+/**
+ * Find and return the pair between the calling user and a specific partner.
+ * Returns null if no completed pair exists.
+ */
+export async function getPairWithPartner(userId: string, partnerId: string, campaignId: string): Promise<{ pairId: string } & PairView | null> {
+  const { data: pairs } = await db()
+    .from('pairs')
+    .select('id, campaign_id, config_version, a_user, b_user, status, result_code, scores')
+    .eq('campaign_id', campaignId)
+    .or(`and(a_user.eq.${userId},b_user.eq.${partnerId}),and(a_user.eq.${partnerId},b_user.eq.${userId})`)
+    .eq('status', 'completed')
+    .limit(1);
+
+  if (!pairs?.length) return null;
+  const pair = pairs[0] as Record<string, unknown>;
+
+  const cfg = await getConfig(pair.campaign_id as string, pair.config_version as number);
+  const resultRule = cfg.results.find((r) => r.code === pair.result_code);
+  if (!resultRule) return null;
+
+  const scores = pair.scores as { a: Record<string, number>; b: Record<string, number> };
+  const { dominantAxis } = await import('../engine/buddyQuiz.js');
+  const axisA = dominantAxis(cfg, scores.a);
+  const axisB = dominantAxis(cfg, scores.b);
+
+  const labelOf = (id: string) => cfg.axes.find((a) => a.id === id)?.label || id;
+  const isA = (pair.a_user as string) === userId;
+
+  return {
+    pairId: pair.id as string,
+    status: 'completed',
+    result: toPublicResult(resultRule),
+    axisMe: isA ? labelOf(axisA) : labelOf(axisB),
+    axisBuddy: isA ? labelOf(axisB) : labelOf(axisA),
+  };
+}
+
 export async function getPairStatus(userId: string, pairId: string): Promise<PairView> {
   const { data: pair, error } = await db()
     .from('pairs')
