@@ -1,6 +1,6 @@
 interface Props {
   config: {
-    copy?: { waiting_title?: string; waiting_body?: string };
+    copy?: { waiting_title?: string; waiting_body?: string; waiting_close?: string };
   };
 }
 
@@ -34,7 +34,7 @@ export default function Waiting({ config }: Props) {
       </div>
       <div className="screen-footer">
         <button className="btn-outline" onClick={handleClose}>
-          ปิดหน้าต่าง
+          {copy.waiting_close || 'ปิดหน้าต่าง'}
         </button>
       </div>
     </div>

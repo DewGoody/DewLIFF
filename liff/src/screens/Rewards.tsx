@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../api';
+import { ARCH } from '../data';
 
 interface RewardClaim {
   id: string;
@@ -24,6 +26,12 @@ interface RewardsConfig {
   milestones?: RewardMilestone[];
 }
 
+interface GroupArchetype {
+  code: string;
+  title: string;
+  image_url?: string;
+}
+
 interface Props {
   pairsDone: number;
   rewardsConfig?: RewardsConfig;
@@ -31,248 +39,234 @@ interface Props {
   onClaim: (milestoneKey: string) => Promise<void>;
   onBack: () => void;
   campaignId: string;
-  pairs?: Array<{ partnerName: string; status: string }>;
+  pairs?: Array<{ partnerName: string; status: string; completedAtIso?: string }>;
+  groupArchetypes?: GroupArchetype[];
 }
 
-export default function Rewards({ pairsDone, rewardsConfig, claims, onClaim, onBack, pairs = [] }: Props) {
-  const primary = '#D95F2B';
+export default function Rewards({ pairsDone, rewardsConfig, claims, onClaim, onBack, campaignId, pairs = [], groupArchetypes = [] }: Props) {
   const pointsPerPair = rewardsConfig?.points_per_pair ?? 50;
   const points = pairsDone * pointsPerPair;
   const milestones = rewardsConfig?.milestones ?? [];
-  const completedPairs = pairs.filter((p) => p.status === 'completed');
+  const completedPairs = pairs.filter(p => p.status === 'completed');
 
   const [claiming, setClaiming] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unlockedSymbols, setUnlockedSymbols] = useState<string[]>([]);
 
-  const getClaimForMilestone = (key: string): RewardClaim | undefined => {
-    return claims.find((c) => c.milestone_key === key);
-  };
+  useEffect(() => {
+    api<{ unlockedSymbols: string[] }>('GET', `/api/quiz/my-symbols?campaignId=${campaignId}`)
+      .then((d) => setUnlockedSymbols(d.unlockedSymbols))
+      .catch(() => {});
+  }, [campaignId]);
 
-  const getCode = (claim: RewardClaim): string | null => {
-    return claim.code ?? claim.meta?.code ?? null;
-  };
+  const totalSymbols = groupArchetypes.length;
+  const unlockedCount = unlockedSymbols.length;
+  const collectorUnlocked = totalSymbols > 0 && unlockedCount >= totalSymbols;
 
-  const getPoolType = (claim: RewardClaim): string => {
-    return claim.pool_type ?? claim.meta?.pool_type ?? 'single_code';
-  };
+  const getClaim = (key: string) => claims.find(c => c.milestone_key === key);
+  const getCode = (c: RewardClaim) => c.code ?? c.meta?.code ?? null;
+  const getPoolType = (c: RewardClaim) => c.pool_type ?? c.meta?.pool_type ?? 'single_code';
 
   const handleClaim = async (key: string) => {
     if (claiming) return;
     setClaiming(key);
     setError(null);
-    try {
-      await onClaim(key);
-    } catch (e) {
-      setError((e as Error).message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
-    } finally {
-      setClaiming(null);
-    }
+    try { await onClaim(key); }
+    catch (e) { setError((e as Error).message || 'เกิดข้อผิดพลาด'); }
+    finally { setClaiming(null); }
   };
 
   const handleCopy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(key);
-      setTimeout(() => setCopied(null), 2000);
-    }).catch(() => {/* non-critical */});
+    navigator.clipboard.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 2000); }).catch(() => {});
   };
 
-  // Fallback: if no rewardsConfig milestones, show legacy hardcoded card
-  const showLegacy = !rewardsConfig || !rewardsConfig.enabled || milestones.length === 0;
+  const showLegacy = !rewardsConfig?.enabled || milestones.length === 0;
   const unlocked = pairsDone >= 3;
+  // Use live card for coupon decoration
+  const couponCard = ARCH.live?.card;
 
   return (
-    <div className="screen fade-enter" style={{ background: '#0C0B0A', overflowY: 'auto' }}>
-      <div className="tex" style={{ opacity: .4 }} />
-
-      {/* Header */}
-      <div style={{ position: 'relative', padding: '28px 24px 0', flexShrink: 0 }}>
-        <div style={{ font: "500 9.5px 'IBM Plex Mono',monospace", letterSpacing: '.2em', color: 'rgba(237,231,223,.38)' }}>SURVIVOR REWARDS</div>
-        <div style={{ fontFamily: 'Anton,sans-serif', fontSize: 38, letterSpacing: '.04em', color: '#EDE7DF', marginTop: 6, lineHeight: 1 }}>
-          <span style={{ color: primary }}>{points.toLocaleString('en-US')}</span>
-          <span style={{ fontSize: 16, letterSpacing: '.12em', marginLeft: 8, verticalAlign: 'middle', color: 'rgba(237,231,223,.55)' }}>แต้มสะสม</span>
+    <div className="screen fade-enter" style={{ background:'#F7F1E3', overflowY:'auto' }}>
+      <div style={{ padding:'20px 20px 28px' }}>
+        {/* Header */}
+        <div style={{ fontFamily:'Bangers,cursive', fontSize:15, letterSpacing:'.1em', color:'#E8354F' }}>SURVIVOR REWARDS</div>
+        <div style={{ display:'flex', alignItems:'flex-end', gap:9, marginTop:6 }}>
+          <div style={{ font:"700 42px/1 'Bai Jamjuree',sans-serif" }}>{points.toLocaleString('en-US')}</div>
+          <div style={{ font:"600 12.5px 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.5)', paddingBottom:5 }}>แต้มสะสม</div>
         </div>
-        <div style={{ font: "300 12px/1.7 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.45)', marginTop: 8 }}>
-          +{pointsPerPair} แต้มทุกครั้งที่มีเพื่อนตอบครบและจับคู่กับคุณสำเร็จ
-        </div>
-      </div>
 
-      <div style={{ position: 'relative', flex: 1, padding: '22px 24px 34px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        {/* Error banner */}
         {error && (
-          <div style={{ background: 'rgba(230,59,46,.12)', border: '1px solid rgba(230,59,46,.4)', padding: '10px 14px', font: "300 12px 'IBM Plex Sans Thai',sans-serif", color: '#EDE7DF' }}>
-            {error}
-          </div>
+          <div style={{ marginTop:10, background:'rgba(232,53,79,.1)', border:'1.5px solid #E8354F', borderRadius:8, padding:'9px 12px', font:"500 12px 'Bai Jamjuree',sans-serif", color:'#E8354F' }}>{error}</div>
         )}
 
-        {/* Dynamic milestones from config */}
-        {!showLegacy && milestones.map((m) => {
-          const claim = getClaimForMilestone(m.key);
+        {/* Dynamic milestones */}
+        {!showLegacy && milestones.map(m => {
+          const claim = getClaim(m.key);
           const progress = Math.min(pairsDone, m.trigger_pairs);
           const met = pairsDone >= m.trigger_pairs;
           const isClaiming = claiming === m.key;
           const claimed = !!claim;
-
-          const poolType = claim ? getPoolType(claim) : null;
           const code = claim ? getCode(claim) : null;
+          const poolType = claim ? getPoolType(claim) : null;
 
           return (
-            <div
-              key={m.key}
-              style={{
-                background: claimed ? 'rgba(217,95,43,.08)' : met ? 'rgba(237,231,223,.04)' : '#15120F',
-                border: claimed ? `1px solid rgba(217,95,43,.5)` : met ? '1px solid rgba(237,231,223,.2)' : '1px dashed rgba(237,231,223,.12)',
-                padding: 18,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {m.icon && <span style={{ fontSize: 20 }}>{m.icon}</span>}
-                    <div style={{ font: "600 13px 'IBM Plex Sans Thai',sans-serif", color: claimed ? primary : '#EDE7DF' }}>{m.label}</div>
-                  </div>
-                </div>
-                <div style={{ font: "400 10px 'IBM Plex Mono',monospace", color: primary, whiteSpace: 'nowrap', marginLeft: 8 }}>{pairsDone}/{m.trigger_pairs}</div>
+            <div key={m.key} style={{ marginTop:20, background:'#FFFDF6', border:'2.5px solid #1C1A17', borderRadius:16, padding:16, boxShadow:'4px 5px 0 #1C1A17' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ font:"700 13.5px 'Bai Jamjuree',sans-serif" }}>{m.icon ? `${m.icon} ` : ''}{m.label}</span>
+                <span style={{ fontFamily:'Bangers,cursive', fontSize:17, color:'#E8354F' }}>{pairsDone}/{m.trigger_pairs}</span>
               </div>
-
-              {/* Progress bar */}
-              <div style={{ height: 6, borderRadius: 1, background: 'rgba(237,231,223,.1)', marginBottom: 10, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${(progress / m.trigger_pairs) * 100}%`, background: claimed ? primary : met ? 'rgba(237,231,223,.5)' : 'rgba(217,95,43,.5)', transition: 'width .4s' }} />
+              <div style={{ display:'flex', gap:6, marginTop:11 }}>
+                {Array.from({ length: m.trigger_pairs }).map((_, i) => (
+                  <div key={i} style={{ flex:1, height:8, borderRadius:4, background: i < pairsDone ? '#E8354F' : 'rgba(28,26,23,.12)', transition:'background .3s' }} />
+                ))}
               </div>
-
-              {/* State: not met */}
               {!met && !claimed && (
-                <div style={{ font: "300 11px 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.38)' }}>
-                  อีก {m.trigger_pairs - pairsDone} คู่ถึงจะได้รางวัลนี้
-                </div>
+                <div style={{ font:"500 11.5px/1.6 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.55)', marginTop:10 }}>อีก {m.trigger_pairs - pairsDone} คู่</div>
               )}
-
-              {/* State: met, not claimed */}
               {met && !claimed && (
                 <button
                   onClick={() => handleClaim(m.key)}
-                  disabled={isClaiming}
-                  style={{ width: '100%', marginTop: 4, padding: '12px 0', background: isClaiming ? 'rgba(217,95,43,.3)' : primary, border: 'none', color: '#fff', fontFamily: 'Anton,sans-serif', fontSize: 14, letterSpacing: '.16em', cursor: isClaiming ? 'default' : 'pointer', borderRadius: 1 }}
-                >
-                  {isClaiming ? 'กำลังรับ...' : 'CLAIM รางวัล'}
-                </button>
+                  disabled={!!isClaiming}
+                  style={{ width:'100%', marginTop:10, background:isClaiming ? 'rgba(232,53,79,.5)' : '#E8354F', color:'#FFFDF6', border:'2.5px solid #1C1A17', borderRadius:10, padding:12, font:"700 15px 'Bai Jamjuree',sans-serif", cursor:'pointer', boxShadow:'3px 4px 0 #1C1A17' }}
+                >{isClaiming ? 'กำลังรับ...' : 'รับรางวัล'}</button>
               )}
-
-              {/* State: claimed — show reward details */}
               {claimed && claim && (
-                <div style={{ marginTop: 4 }}>
-                  {(poolType === 'code_pool' || poolType === 'raffle' || poolType === 'single_code') && code && (
-                    <div>
-                      <div style={{ font: "400 9.5px 'IBM Plex Mono',monospace", letterSpacing: '.14em', color: 'rgba(237,231,223,.45)', marginBottom: 8 }}>COUPON CODE</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ flex: 1, background: '#15120F', border: '1px solid rgba(237,231,223,.15)', padding: '10px 14px', fontFamily: 'Anton,sans-serif', fontSize: 22, letterSpacing: '.08em', color: primary, userSelect: 'all' }}>
-                          {code}
-                        </div>
-                        <button
-                          onClick={() => handleCopy(code, m.key)}
-                          style={{ padding: '10px 14px', background: copied === m.key ? 'rgba(22,163,74,.15)' : 'rgba(237,231,223,.06)', border: '1px solid rgba(237,231,223,.2)', color: copied === m.key ? '#16A34A' : 'rgba(237,231,223,.7)', cursor: 'pointer', borderRadius: 1, font: "400 11px 'IBM Plex Mono',monospace", letterSpacing: '.1em', whiteSpace: 'nowrap' }}
-                        >
-                          {copied === m.key ? 'คัดลอกแล้ว ✓' : 'COPY'}
-                        </button>
-                      </div>
+                <div style={{ marginTop:10 }}>
+                  {(poolType === 'code_pool' || poolType === 'single_code' || poolType === 'raffle') && code && (
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <div style={{ flex:1, background:'#F5E14B', border:'2px solid #1C1A17', borderRadius:8, padding:'10px 14px', fontFamily:'Bangers,cursive', fontSize:22, letterSpacing:'.08em' }}>{code}</div>
+                      <button onClick={() => handleCopy(code, m.key)} style={{ padding:'10px 13px', background:'#FFFDF6', border:'2px solid #1C1A17', borderRadius:8, font:"600 11px 'Bai Jamjuree',sans-serif", cursor:'pointer', whiteSpace:'nowrap' }}>{copied === m.key ? 'คัดลอก ✓' : 'คัดลอก'}</button>
                     </div>
                   )}
                   {poolType === 'voucher_link' && code && (
-                    <div>
-                      <div style={{ font: "400 9.5px 'IBM Plex Mono',monospace", letterSpacing: '.14em', color: 'rgba(237,231,223,.45)', marginBottom: 8 }}>VOUCHER LINK</div>
-                      <a
-                        href={code}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center', padding: '12px 0', background: primary, color: '#fff', textDecoration: 'none', fontFamily: 'Anton,sans-serif', fontSize: 14, letterSpacing: '.16em' }}
-                      >
-                        เปิด Voucher →
-                      </a>
-                    </div>
+                    <a href={code} target="_blank" rel="noopener noreferrer" style={{ display:'block', background:'#E8354F', color:'#FFFDF6', border:'2.5px solid #1C1A17', borderRadius:10, padding:12, textAlign:'center', textDecoration:'none', font:"700 15px 'Bai Jamjuree',sans-serif", boxShadow:'3px 4px 0 #1C1A17', marginTop:4 }}>เปิด Voucher →</a>
                   )}
-                  {poolType === 'points_bonus' && code && (
-                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                      <div style={{ fontFamily: 'Anton,sans-serif', fontSize: 36, letterSpacing: '.04em', color: primary }}>+{code}</div>
-                      <div style={{ font: "300 12px 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.5)', marginTop: 4 }}>แต้มโบนัสเพิ่ม</div>
-                    </div>
-                  )}
-                  <div style={{ font: "300 10px 'IBM Plex Mono',monospace", color: 'rgba(237,231,223,.3)', marginTop: 10 }}>
-                    รับเมื่อ {new Date(claim.issued_at).toLocaleDateString('th-TH')}
-                  </div>
+                  <div style={{ font:"400 10px 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.35)', marginTop:8 }}>รับเมื่อ {new Date(claim.issued_at).toLocaleDateString('th-TH')}</div>
                 </div>
               )}
             </div>
           );
         })}
 
-        {/* Legacy static card (when rewards config is not set or disabled) */}
+        {/* Legacy card */}
         {showLegacy && (
           <>
-            {/* Mission card */}
-            <div style={{ background: '#15120F', border: '1px solid rgba(237,231,223,.12)', padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ font: "600 13px 'IBM Plex Sans Thai',sans-serif", color: '#EDE7DF' }}>ครบ 3 คู่ = ลุ้นรางวัลใหญ่</div>
-                <div style={{ font: "400 10px 'IBM Plex Mono',monospace", color: primary }}>{pairsDone}/3</div>
+            <div style={{ marginTop:20, background:'#FFFDF6', border:'2.5px solid #1C1A17', borderRadius:16, padding:16, boxShadow:'4px 5px 0 #1C1A17' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ font:"700 13.5px 'Bai Jamjuree',sans-serif" }}>ครบ 3 คู่ = ลุ้นรางวัลใหญ่</span>
+                <span style={{ fontFamily:'Bangers,cursive', fontSize:17, color:'#E8354F' }}>{pairsDone}/3</span>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {[0, 1, 2].map((i) => (
-                  <div key={i} style={{ flex: 1, height: 6, borderRadius: 1, background: i < pairsDone ? primary : 'rgba(237,231,223,.14)', transition: 'background .3s' }} />
+              <div style={{ display:'flex', gap:6, marginTop:11 }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{ flex:1, height:8, borderRadius:4, background: i < pairsDone ? '#E8354F' : 'rgba(28,26,23,.12)', transition:'background .3s' }} />
                 ))}
               </div>
-              {pairsDone < 3 && (
-                <div style={{ font: "300 11px 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.38)', marginTop: 10 }}>
-                  อีก {3 - pairsDone} คู่ถึงจะลุ้นรางวัล
-                </div>
-              )}
-              {pairsDone >= 3 && (
-                <div style={{ font: "300 11px 'IBM Plex Sans Thai',sans-serif", color: primary, marginTop: 10 }}>
-                  ครบแล้ว! ติดตามผลรางวัลจากทีมงาน
-                </div>
-              )}
+              <div style={{ font:"500 11.5px/1.6 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.55)', marginTop:10 }}>
+                {unlocked ? 'ครบแล้ว! ติดตามผลรางวัลจากทีมงาน' : `อีก ${3 - pairsDone} คู่ถึงจะลุ้นรางวัล`}
+              </div>
             </div>
 
-            {/* Coupon card */}
-            <div style={{ background: unlocked ? 'rgba(217,95,43,.08)' : '#15120F', border: unlocked ? `1px solid rgba(217,95,43,.5)` : '1px dashed rgba(237,231,223,.2)', padding: 18, position: 'relative', overflow: 'hidden' }}>
-              {!unlocked && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,11,10,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-                  <div style={{ font: "500 10px 'IBM Plex Mono',monospace", letterSpacing: '.18em', color: 'rgba(237,231,223,.4)', border: '1px solid rgba(237,231,223,.2)', padding: '7px 14px' }}>LOCKED · ครบ 3 คู่</div>
+            <div style={{ marginTop:16, border:'2.5px dashed #1C1A17', borderRadius:16, padding:16, background: unlocked ? '#F5E14B' : 'rgba(28,26,23,.04)', display:'flex', gap:12, alignItems:'center' }}>
+              {couponCard && <img src={couponCard} alt="" style={{ width:48, height:58, flexShrink:0, objectFit:'contain' }} />}
+              <div style={{ minWidth:0, flex:1 }}>
+                <div style={{ font:"700 17px 'Bai Jamjuree',sans-serif" }}>ส่วนลด 200.-</div>
+                <div style={{ font:"400 11.5px/1.5 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.55)', marginTop:3 }}>
+                  {unlocked ? 'แสดงหน้าจอนี้แลกรับสิทธิ์ได้เลย' : 'จับคู่ให้ครบ 3 คู่เพื่อรับส่วนลด'}
                 </div>
-              )}
-              <div style={{ font: "400 9.5px 'IBM Plex Mono',monospace", letterSpacing: '.16em', color: unlocked ? primary : 'rgba(237,231,223,.35)', marginBottom: 8 }}>
-                {unlocked ? 'COUPON READY' : 'COUPON LOCKED'}
               </div>
-              <div style={{ fontFamily: 'Anton,sans-serif', fontSize: 32, color: unlocked ? '#EDE7DF' : 'rgba(237,231,223,.25)', letterSpacing: '.04em' }}>ส่วนลด 200.-</div>
-              <div style={{ font: "300 11px/1.6 'IBM Plex Sans Thai',sans-serif", color: unlocked ? 'rgba(237,231,223,.55)' : 'rgba(237,231,223,.25)', marginTop: 6 }}>
-                {unlocked ? 'แสดงหน้าจอนี้แลกรับสิทธิ์ได้เลย' : 'จับคู่ให้ครบ 3 คู่เพื่อรับส่วนลด'}
-              </div>
+              <div style={{ fontFamily:'Bangers,cursive', fontSize:15, letterSpacing:'.05em', color: unlocked ? '#E8354F' : 'rgba(28,26,23,.3)', flexShrink:0 }}>{unlocked ? 'READY' : 'LOCKED'}</div>
             </div>
           </>
         )}
 
         {/* Points log */}
         {completedPairs.length > 0 && (
-          <div style={{ background: '#15120F', border: '1px solid rgba(237,231,223,.1)' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(237,231,223,.1)', font: "500 9.5px 'IBM Plex Mono',monospace", letterSpacing: '.14em', color: 'rgba(237,231,223,.38)' }}>POINTS LOG</div>
-            {completedPairs.map((p, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < completedPairs.length - 1 ? '1px solid rgba(237,231,223,.08)' : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#241D18', border: '1px solid rgba(237,231,223,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: "600 11px 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.7)' }}>{p.partnerName[0]}</div>
-                  <div style={{ font: "400 12.5px 'IBM Plex Sans Thai',sans-serif", color: 'rgba(237,231,223,.7)' }}>{p.partnerName}</div>
+          <div style={{ marginTop:14, background:'#FFFDF6', border:'2px solid #1C1A17', borderRadius:14, padding:'13px 15px' }}>
+            <div style={{ font:"700 10px 'Bai Jamjuree',sans-serif", letterSpacing:'.12em', color:'rgba(28,26,23,.4)', marginBottom:8 }}>POINTS LOG</div>
+            {completedPairs.map((p, i) => {
+              const dateStr = p.completedAtIso
+                ? new Date(p.completedAtIso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()
+                : '';
+              return (
+                <div key={i} style={{ display:'flex', alignItems:'baseline', gap:9, padding:'6px 0', borderBottom: i < completedPairs.length - 1 ? '1px dashed rgba(28,26,23,.15)' : 'none' }}>
+                  {dateStr && <span style={{ font:"600 10px 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.4)', width:50, flexShrink:0 }}>{dateStr}</span>}
+                  <span style={{ font:"500 12.5px 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.7)', flex:1 }}>{p.partnerName}</span>
+                  <span style={{ font:"700 12px 'Bai Jamjuree',sans-serif", color:'#E8354F' }}>+{pointsPerPair} pt</span>
                 </div>
-                <div style={{ font: "600 13px 'IBM Plex Mono',monospace", color: primary }}>+{pointsPerPair} pt</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Back button */}
-        <button onClick={onBack} style={{ width: '100%', marginTop: 8, background: 'none', border: '1px solid rgba(237,231,223,.18)', color: 'rgba(237,231,223,.6)', borderRadius: 2, padding: 14, font: "400 13px 'IBM Plex Sans Thai',sans-serif", cursor: 'pointer' }}>
-          ← กลับหน้าสรุป
-        </button>
+        {/* Symbol stamps */}
+        {totalSymbols > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontFamily: 'Bangers,cursive', fontSize: 15, letterSpacing: '.1em', color: '#E8354F' }}>SYMBOL STAMPS</div>
+              <span style={{ font: "600 11px 'Bai Jamjuree',sans-serif", color: 'rgba(28,26,23,.45)' }}>{unlockedCount} / {totalSymbols}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
+              {groupArchetypes.map((arch) => {
+                const unlocked = unlockedSymbols.includes(arch.code);
+                return (
+                  <div key={arch.code} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 70, height: 70, borderRadius: '50%', border: `2px solid ${unlocked ? '#1C1A17' : 'rgba(28,26,23,.12)'}`, background: unlocked ? '#FFFDF6' : '#1C1A17', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unlocked ? (
+                        arch.image_url
+                          ? <img src={arch.image_url} alt={arch.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <div style={{ font: "700 7px 'Bai Jamjuree',sans-serif", color: '#1C1A17', textAlign: 'center', padding: '0 5px', lineHeight: 1.3 }}>{arch.title}</div>
+                      ) : (
+                        <span style={{ font: "700 14px 'Bai Jamjuree',sans-serif", color: 'rgba(255,255,255,.3)' }}>?</span>
+                      )}
+                    </div>
+                    <span style={{ font: "400 8.5px 'Bai Jamjuree',sans-serif", color: unlocked ? '#1C1A17' : 'rgba(28,26,23,.25)', textAlign: 'center', lineHeight: 1.2, maxWidth: 70 }}>
+                      {unlocked ? arch.title : '???'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 9/9 collector set */}
+            <div style={{ marginTop: 14, background: collectorUnlocked ? '#F5E14B' : '#FFFDF6', border: `2.5px solid ${collectorUnlocked ? '#1C1A17' : 'rgba(28,26,23,.2)'}`, borderRadius: 14, padding: 15, boxShadow: collectorUnlocked ? '4px 5px 0 #1C1A17' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div>
+                  <div style={{ font: "700 13.5px 'Bai Jamjuree',sans-serif", color: collectorUnlocked ? '#1C1A17' : 'rgba(28,26,23,.4)' }}>ชุด element สำหรับนักสะสม</div>
+                  <div style={{ font: "500 11px 'Bai Jamjuree',sans-serif", color: 'rgba(28,26,23,.5)', marginTop: 2 }}>ปลดล็อกเมื่อครบ {totalSymbols}/{totalSymbols}</div>
+                </div>
+                <div style={{ fontFamily: 'Bangers,cursive', fontSize: 15, letterSpacing: '.05em', color: collectorUnlocked ? '#E8354F' : 'rgba(28,26,23,.25)' }}>
+                  {collectorUnlocked ? 'READY' : 'LOCKED'}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {[
+                  { icon: '🎨', label: 'Sticker Pack PNG', sub: '5 ตัวละคร 5 สาย' },
+                  { icon: '📱', label: 'Rich Menu Template', sub: 'ติดตั้งใน LINE OA' },
+                  { icon: '🏆', label: 'Survival Certificate', sub: 'ใบรับรองผู้รอดชีวิต' },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: collectorUnlocked ? 1 : 0.45 }}>
+                    <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
+                    <div>
+                      <div style={{ font: "600 12.5px 'Bai Jamjuree',sans-serif" }}>{item.label}</div>
+                      <div style={{ font: "400 10.5px 'Bai Jamjuree',sans-serif", color: 'rgba(28,26,23,.5)' }}>{item.sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {collectorUnlocked && (
+                <div style={{ marginTop: 12, background: '#E8354F', color: '#FFFDF6', border: '2.5px solid #1C1A17', borderRadius: 10, padding: '11px', textAlign: 'center', font: "700 14px 'Bai Jamjuree',sans-serif", boxShadow: '3px 3px 0 #1C1A17' }}>
+                  รับชุด element ได้เลย →
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onBack}
+          style={{ width:'100%', marginTop:24, padding:'15px 20px', background:'#E8354F', color:'#FFFDF6', border:'2.5px solid #1C1A17', borderRadius:13, font:"700 17px/1 'Bai Jamjuree',sans-serif", cursor:'pointer', boxShadow:'4px 5px 0 #1C1A17' }}
+        >กลับหน้าสรุป</button>
       </div>
     </div>
   );
