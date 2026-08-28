@@ -57,9 +57,11 @@ export async function replyMessage(replyToken: string, messages: LineMessage[]):
     body: JSON.stringify({ replyToken, messages }),
   });
 
+  const body = await res.text();
   if (!res.ok) {
-    const body = await res.text();
-    console.error(`Reply failed: ${res.status} ${body}`);
+    console.error(`[replyMessage] failed: ${res.status} ${body}`);
+  } else {
+    console.log(`[replyMessage] ok: ${res.status} ${body}`);
   }
 }
 

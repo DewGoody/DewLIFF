@@ -4,6 +4,7 @@ import { UnauthorizedError } from '../errors/index.js';
 import { db } from '../db/client.js';
 import { env } from '../env.js';
 
+/** Requires a valid LINE ID token. Rejects with 401 if missing or invalid. */
 export const auth: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
@@ -50,4 +51,22 @@ export const auth: RequestHandler = async (req, _res, next) => {
     console.error('[auth debug] verifyIdToken failed:', err instanceof Error ? err.message : err);
     next(err instanceof UnauthorizedError ? err : new UnauthorizedError());
   }
+};
+
+/** Optional auth — sets req.userId if a valid token is present, but never rejects the request. */
+export const optionalAuth: RequestHandler = async (req, _res, next) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
+  const idToken = header.slice(7);
+  try {
+    const profile = await verifyIdToken(idToken);
+    req.userId = profile.sub;
+  } catch {
+    // Token invalid — continue without userId
+  }
+  next();
 };
