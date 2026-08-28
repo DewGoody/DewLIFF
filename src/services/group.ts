@@ -13,6 +13,9 @@ import { db } from '../db/client.js';
 import { getConfig } from '../config/loader.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 import type { GroupConfig, GroupArchetype, GroupCondition } from '../config/schema.js';
+import { scoreAnswers, dominantAxis } from '../engine/buddyQuiz.js';
+import { pushMessage } from './line.js';
+import { env } from '../env.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,6 +49,7 @@ export interface GroupView {
   result: GroupResult | null;    // null if < min_members
   canClaim: boolean;             // true if batch complete + user in batch + not yet claimed
   createdBy: string;
+  name: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -113,6 +117,12 @@ function matchesCondition(
   if (cond.is_balanced === true) {
     const isBalanced = Object.values(avgNorm).every(v => v < threshold);
     if (!isBalanced) return false;
+  }
+
+  // max_distinct check — number of distinct top axes in group
+  if (cond.max_distinct !== undefined) {
+    const distinctCount = Object.keys(axisCounts).filter(ax => (axisCounts[ax] ?? 0) > 0).length;
+    if (distinctCount > cond.max_distinct) return false;
   }
 
   return true;
@@ -240,13 +250,15 @@ export async function createGroup(
   if (!cfg.group?.enabled) throw new BadRequestError('Group feature is not enabled for this campaign');
 
   // Check user has answered
-  const { data: answers } = await db()
+  const { data: ansRows } = await db()
     .from('user_quiz_answers')
-    .select('top_axis, axis_scores')
+    .select('question_id, option_id')
     .eq('user_id', userId)
-    .eq('campaign_id', campaignId)
-    .single();
-  if (!answers) throw new BadRequestError('คุณต้องตอบควิซก่อนสร้างกลุ่ม');
+    .eq('campaign_id', campaignId);
+  if (!ansRows || ansRows.length === 0) throw new BadRequestError('คุณต้องตอบควิซก่อนสร้างกลุ่ม');
+  const userAnswers = ansRows.map(r => ({ questionId: r.question_id, optionId: r.option_id }));
+  const axisScores = scoreAnswers(cfg, userAnswers);
+  const topAxis = dominantAxis(cfg, axisScores);
 
   const g = cfg.group;
 
@@ -272,8 +284,8 @@ export async function createGroup(
   await db().from('group_members').insert({
     group_id: groupId,
     user_id: userId,
-    top_axis: (answers as Record<string, unknown>).top_axis,
-    axis_scores: (answers as Record<string, unknown>).axis_scores,
+    top_axis: topAxis,
+    axis_scores: axisScores,
     batch_no: 1,
   });
 
@@ -281,24 +293,35 @@ export async function createGroup(
 }
 
 /**
- * Join an existing group. User must have answered the quiz.
- * Handles hard_cap and rolling overflow.
+ * Join an existing group.
+ *
+ * Rules:
+ *  - Already a member → no-op (ok: true, viewOnly: false)
+ *  - Already paired with the creator (either role) → view-only: can see the group
+ *    but is NOT inserted into group_members (doesn't count toward the cap/reward).
+ *    Returns ok: true, viewOnly: true.
+ *  - Group is full (max_members reached) → throws unless view-only.
+ *  - New member joins → insert, push OA notification to creator with updated result.
  */
 export async function joinGroup(
   userId: string,
   groupId: string,
-): Promise<{ ok: boolean; message?: string }> {
+): Promise<{ ok: boolean; viewOnly?: boolean; message?: string; existingMemberIds?: string[] }> {
   const group = await getGroupOrThrow(groupId);
   const campaignId = group.campaign_id as string;
+  const creatorId = group.created_by as string;
 
-  // Check already a member
+  // Already a member → no-op
   const { data: existing } = await db()
     .from('group_members')
     .select('id')
     .eq('group_id', groupId)
     .eq('user_id', userId)
     .maybeSingle();
-  if (existing) return { ok: true, message: 'already_member' };
+  if (existing) {
+    const members = await getMembersForGroup(groupId);
+    return { ok: true, viewOnly: false, message: 'already_member', existingMemberIds: members.map(m => m.user_id).filter(id => id !== userId) };
+  }
 
   // Load config
   const { data: campaign } = await db()
@@ -309,23 +332,23 @@ export async function joinGroup(
   const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
   const gcfg = cfg.group!;
 
-  // Check user has answered
-  const { data: answers } = await db()
+  // Check user has answered the quiz
+  const { data: ansRows } = await db()
     .from('user_quiz_answers')
-    .select('top_axis, axis_scores')
+    .select('question_id, option_id')
     .eq('user_id', userId)
-    .eq('campaign_id', campaignId)
-    .single();
-  if (!answers) throw new BadRequestError('คุณต้องตอบควิซก่อนเข้าร่วมกลุ่ม');
+    .eq('campaign_id', campaignId);
+  if (!ansRows || ansRows.length === 0) throw new BadRequestError('คุณต้องตอบควิซก่อนเข้าร่วมกลุ่ม');
+  const userAnswers = ansRows.map(r => ({ questionId: r.question_id, optionId: r.option_id }));
+  const axisScores = scoreAnswers(cfg, userAnswers);
+  const topAxis = dominantAxis(cfg, axisScores);
 
   // Count current members
   const members = await getMembersForGroup(groupId);
   const total = members.length;
 
-  if (gcfg.overflow_mode === 'hard_cap') {
-    if (total >= gcfg.max_members) {
-      throw new BadRequestError('กลุ่มนี้เต็มแล้ว กรุณาสร้างกลุ่มใหม่');
-    }
+  if (gcfg.overflow_mode === 'hard_cap' && total >= gcfg.max_members) {
+    throw new BadRequestError('กลุ่มนี้เต็มแล้ว กรุณาสร้างกลุ่มใหม่');
   }
 
   // Determine batch
@@ -335,24 +358,145 @@ export async function joinGroup(
   if (gcfg.overflow_mode === 'rolling' && gcfg.batch_size) {
     const batchMembers = members.filter(m => m.batch_no === currentBatch).length;
     if (batchMembers >= gcfg.batch_size) {
-      // Current batch full → start new batch
       batchNo = currentBatch + 1;
-      await db()
-        .from('groups')
-        .update({ current_batch: batchNo })
-        .eq('id', groupId);
+      await db().from('groups').update({ current_batch: batchNo }).eq('id', groupId);
     }
   }
 
+  // Insert new member
   await db().from('group_members').insert({
     group_id: groupId,
     user_id: userId,
-    top_axis: (answers as Record<string, unknown>).top_axis,
-    axis_scores: (answers as Record<string, unknown>).axis_scores,
+    top_axis: topAxis,
+    axis_scores: axisScores,
     batch_no: batchNo,
   });
 
-  return { ok: true };
+  const allMembers = [...members, { user_id: userId, top_axis: topAxis, axis_scores: axisScores, batch_no: batchNo, id: '', creator_picked: false, reward_claimed: false, joined_at: new Date().toISOString() }];
+
+  // When group reaches max_members → push F-03 completion card to all members
+  if (allMembers.length >= gcfg.max_members) {
+    pushGroupComplete(groupId, campaignId, cfg, allMembers).catch(() => {});
+  }
+
+  return { ok: true, viewOnly: false, existingMemberIds: members.map(m => m.user_id) };
+}
+
+/** F-03: push group-complete card to ALL members when group reaches max_members */
+async function pushGroupComplete(
+  groupId: string,
+  campaignId: string,
+  cfg: Awaited<ReturnType<typeof getConfig>>,
+  members: Array<{ user_id: string; top_axis: string; axis_scores: Record<string, number>; batch_no: number; id: string; creator_picked: boolean; reward_claimed: boolean; joined_at: string }>,
+): Promise<void> {
+  const gcfg = cfg.group!;
+  const archetype = evaluateArchetype(gcfg, members);
+  const primary = cfg.brand.primary || '#E8354F';
+  const liffBase = env().LIFF_URL ?? '';
+  const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
+  const copy = (cfg as Record<string, unknown>).copy as Record<string, string> ?? {};
+
+  const altText = archetype
+    ? `ทีมครบแล้ว! ${archetype.title} — ดูผลทีมวันสิ้นโลก`
+    : 'ทีมครบแล้ว! มาดูผลทีมกันเลย';
+
+  const bodyContents: Record<string, unknown>[] = [
+    {
+      type: 'box', layout: 'vertical', paddingAll: '4px', backgroundColor: '#F5E14B',
+      cornerRadius: '4px', width: '112px',
+      contents: [{ type: 'text', text: copy.F03_badge || 'ทีมครบแล้ว!', size: 'xs', weight: 'bold', color: '#1C1A17', align: 'center' }],
+    },
+  ];
+
+  if (archetype) {
+    bodyContents.push({ type: 'text', text: archetype.title, weight: 'bold', size: 'xxl', color: primary, wrap: true, margin: 'sm' });
+    if (archetype.primary_text) {
+      bodyContents.push({ type: 'text', text: `รอดได้ ${archetype.primary_text}`, size: 'md', color: '#555555', margin: 'xs' });
+    }
+    if (archetype.body) {
+      bodyContents.push({ type: 'text', text: archetype.body, size: 'sm', color: '#666666', wrap: true, margin: 'sm' });
+    }
+  } else {
+    bodyContents.push({ type: 'text', text: copy.F03_title || 'ทีมวันสิ้นโลกของคุณพร้อมแล้ว!', weight: 'bold', size: 'xl', color: primary, wrap: true, margin: 'sm' });
+  }
+  bodyContents.push({ type: 'text', text: `${members.length} คนในทีม`, size: 'xs', color: '#888888', margin: 'md' });
+
+  const message = {
+    type: 'flex',
+    altText: altText.slice(0, 400),
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      ...(archetype?.image_url ? { hero: { type: 'image', url: archetype.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
+      body: { type: 'box', layout: 'vertical', paddingAll: '16px', spacing: 'sm', contents: bodyContents },
+      footer: {
+        type: 'box', layout: 'vertical',
+        contents: [{ type: 'button', action: { type: 'uri', label: copy.F03_cta || 'ดูผลทีมแบบเต็ม', uri: groupUrl }, style: 'primary', color: primary }],
+      },
+    },
+  };
+
+  await Promise.allSettled(members.map(m => pushMessage(m.user_id, [message] as any)));
+}
+
+async function pushGroupUpdateToMember(
+  recipientId: string,
+  newJoinerId: string,
+  groupId: string,
+  campaignId: string,
+  cfg: Awaited<ReturnType<typeof getConfig>>,
+  members: Array<{ user_id: string; top_axis: string; axis_scores: Record<string, number>; batch_no: number; id: string; creator_picked: boolean; reward_claimed: boolean; joined_at: string }>,
+): Promise<void> {
+  const gcfg = cfg.group!;
+  const newTotal = members.length;
+  const archetype = evaluateArchetype(gcfg, members);
+  const primary = cfg.brand.primary || '#E63B2E';
+  const liffBase = env().LIFF_URL ?? '';
+  const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
+  const shortId = groupId.slice(-4).toUpperCase();
+  // Fetch joiner display name for the notification
+  const { data: joinerRow } = await db().from('users').select('display_name').eq('line_user_id', newJoinerId).maybeSingle();
+  const joinerName = (joinerRow as Record<string, unknown> | null)?.display_name as string || 'สมาชิกใหม่';
+
+  const bodyContents: Record<string, unknown>[] = [
+    { type: 'text', text: `ผลกลุ่ม · GRP-${shortId}`, size: 'xs', color: '#888888' },
+    { type: 'text', text: `${joinerName} เข้าร่วมทีม!`, weight: 'bold', size: 'lg', margin: 'sm' },
+  ];
+
+  if (archetype) {
+    bodyContents.push({ type: 'text', text: archetype.title, weight: 'bold', size: 'xl', color: primary, margin: 'sm' });
+    if (archetype.body) {
+      bodyContents.push({ type: 'text', text: archetype.body, size: 'sm', color: '#666666', wrap: true, margin: 'sm' });
+    }
+    if (archetype.primary_text) {
+      bodyContents.push({
+        type: 'box', layout: 'horizontal', margin: 'md',
+        contents: [
+          { type: 'text', text: 'รอด', size: 'xs', color: '#888888', flex: 0 },
+          { type: 'text', text: archetype.primary_text, weight: 'bold', size: 'xl', color: primary, margin: 'sm' },
+          { type: 'box', layout: 'vertical', flex: 0, justifyContent: 'center', paddingAll: '4px', backgroundColor: '#F5E14B', borderWidth: '1px', borderColor: '#1C1A17', cornerRadius: '4px', contents: [{ type: 'text', text: `${newTotal} คน`, size: 'xs', weight: 'bold', color: '#1C1A17' }] },
+        ],
+      });
+    }
+  } else {
+    bodyContents.push({ type: 'text', text: `${newTotal} คนในทีม — รอสมาชิกเพิ่ม`, size: 'sm', color: '#888888', margin: 'sm' });
+  }
+
+  const messages: Record<string, unknown>[] = [{
+    type: 'flex',
+    altText: archetype ? `${joinerName} เข้าร่วมทีม · ${archetype.title} · ${newTotal} คน` : `${joinerName} เข้าร่วมทีม GRP-${shortId} แล้ว`,
+    contents: {
+      type: 'bubble',
+      ...(archetype?.image_url ? { hero: { type: 'image', url: archetype.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
+      body: { type: 'box', layout: 'vertical', paddingAll: '16px', contents: bodyContents },
+      footer: {
+        type: 'box', layout: 'vertical',
+        contents: [{ type: 'button', action: { type: 'uri', label: 'ดูผลทีม', uri: groupUrl }, style: 'primary', color: primary }],
+      },
+    },
+  }];
+
+  await pushMessage(recipientId, messages as any);
 }
 
 /**
@@ -431,6 +575,15 @@ export async function getGroup(
     canClaim = batchFull;
   }
 
+  // Fetch display names for all members
+  const userIds = members.map(m => m.user_id);
+  const { data: userRows } = await db()
+    .from('users')
+    .select('line_user_id, display_name')
+    .in('line_user_id', userIds);
+  const nameMap = new Map<string, string>();
+  for (const u of userRows ?? []) nameMap.set(u.line_user_id, u.display_name);
+
   return {
     groupId,
     campaignId,
@@ -445,6 +598,7 @@ export async function getGroup(
     batchSize: gcfg.batch_size ?? null,
     members: members.map(m => ({
       userId: m.user_id,
+      displayName: nameMap.get(m.user_id) || undefined,
       topAxis: m.top_axis,
       batchNo: m.batch_no,
       joinedAt: m.joined_at,
@@ -452,6 +606,7 @@ export async function getGroup(
     result: groupResult,
     canClaim,
     createdBy: group.created_by as string,
+    name: (group.name as string | null) ?? null,
   };
 }
 
@@ -538,4 +693,316 @@ export async function claimGroupReward(
   }).eq('id', myMember.id);
 
   return { code: (code as Record<string, unknown>).code as string, message: 'claimed' };
+}
+
+/**
+ * Add selected pair-partners as group members (creator-only, batch call after createGroup).
+ * Resolves partner userIds from the pairs table, then computes their axis from user_quiz_answers
+ * (same path as joinGroup) so it works regardless of whether pairs.scores is populated.
+ * Pairs without a partner who has answered are silently skipped.
+ */
+export async function addPairsToGroup(
+  creatorId: string,
+  groupId: string,
+  pairIds: string[],
+): Promise<{ added: number }> {
+  if (!pairIds.length) return { added: 0 };
+
+  const group = await getGroupOrThrow(groupId);
+  if ((group.created_by as string) !== creatorId) throw new BadRequestError('Not the group creator');
+
+  const campaignId = group.campaign_id as string;
+  const { data: campaign } = await db()
+    .from('campaigns')
+    .select('current_version')
+    .eq('id', campaignId)
+    .single();
+  const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
+
+  // Fetch pairs (no status filter — we'll compute scores from user_quiz_answers regardless)
+  const { data: pairRows } = await db()
+    .from('pairs')
+    .select('id, a_user, b_user')
+    .in('id', pairIds)
+    .eq('campaign_id', campaignId);
+
+  if (!pairRows?.length) return { added: 0 };
+
+  // Collect unique partner userIds
+  const partnerIds = [...new Set(
+    (pairRows as Array<{ id: string; a_user: string; b_user: string }>)
+      .map(p => p.a_user === creatorId ? p.b_user : p.a_user)
+  )];
+
+  // Existing members — skip duplicates
+  const existing = await getMembersForGroup(groupId);
+  const existingUsers = new Set(existing.map((m) => m.user_id));
+  const currentBatch = (group.current_batch as number) ?? 1;
+
+  const toInsert: Array<{
+    group_id: string;
+    user_id: string;
+    top_axis: string;
+    axis_scores: Record<string, number>;
+    batch_no: number;
+    creator_picked: boolean;
+  }> = [];
+
+  for (const partnerId of partnerIds) {
+    if (existingUsers.has(partnerId)) continue;
+
+    // Compute partner's axis from their saved answers (same as joinGroup)
+    const { data: ansRows } = await db()
+      .from('user_quiz_answers')
+      .select('question_id, option_id')
+      .eq('user_id', partnerId)
+      .eq('campaign_id', campaignId);
+
+    if (!ansRows || ansRows.length === 0) continue; // partner hasn't answered yet — skip
+
+    const answers = ansRows.map(r => ({ questionId: r.question_id, optionId: r.option_id }));
+    const axisScores = scoreAnswers(cfg, answers);
+    const topAxis = dominantAxis(cfg, axisScores);
+
+    toInsert.push({
+      group_id: groupId,
+      user_id: partnerId,
+      top_axis: topAxis,
+      axis_scores: axisScores,
+      batch_no: currentBatch,
+      creator_picked: true,
+    });
+    existingUsers.add(partnerId);
+  }
+
+  if (toInsert.length) {
+    await db().from('group_members').insert(toInsert);
+  }
+
+  return { added: toInsert.length };
+}
+
+/**
+ * Get all groups the user is a member of for a given campaign.
+ */
+export async function getMyGroups(
+  userId: string,
+  campaignId: string,
+): Promise<{ groups: Array<{ groupId: string; memberCount: number; maxMembers: number; isFull: boolean; archCode: string | null; archTitle: string | null; primaryText: string | null; score: number | null; scoreUnit: string | null; memberAxes: string[] }> }> {
+  // Find all group_ids for this user in this campaign
+  const { data: memberships } = await db()
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId);
+  if (!memberships?.length) return { groups: [] };
+
+  const groupIds = memberships.map((m: Record<string, unknown>) => m.group_id as string);
+
+  const { data: groupRows } = await db()
+    .from('groups')
+    .select('id, campaign_id, current_batch')
+    .in('id', groupIds)
+    .eq('campaign_id', campaignId);
+  if (!groupRows?.length) return { groups: [] };
+
+  const { data: campaign } = await db()
+    .from('campaigns')
+    .select('current_version')
+    .eq('id', campaignId)
+    .single();
+  const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
+  const gcfg = cfg.group!;
+
+  const results = await Promise.all(
+    (groupRows as Array<Record<string, unknown>>).map(async (g) => {
+      const members = await getMembersForGroup(g.id as string);
+      const archetype = members.length >= gcfg.min_members ? evaluateArchetype(gcfg, members) : null;
+      const score = (gcfg.result_mode === 'score' && gcfg.formula && members.length >= gcfg.min_members)
+        ? computeScore(gcfg, members, cfg.axes.length) : null;
+      return {
+        groupId: g.id as string,
+        memberCount: members.length,
+        maxMembers: gcfg.max_members,
+        isFull: members.length >= gcfg.max_members,
+        archCode: archetype?.code ?? null,
+        archTitle: archetype?.title ?? null,
+        primaryText: archetype?.primary_text ?? (score != null ? `${score} ${gcfg.formula?.unit ?? 'วัน'}` : null),
+        score,
+        scoreUnit: gcfg.formula?.unit ?? null,
+        memberAxes: members.map(m => m.top_axis),
+      };
+    })
+  );
+
+  // Sort newest first (by groupId — UUIDs are time-ordered via insertion)
+  return { groups: results };
+}
+
+/**
+ * Share group result — locks current archetype code so the symbol is permanently unlocked for members.
+ * Idempotent: if already locked, just returns existing code.
+ */
+export async function shareGroup(userId: string, groupId: string): Promise<{ symbolCode: string | null }> {
+  const group = await getGroupOrThrow(groupId);
+  const campaignId = group.campaign_id as string;
+
+  // Confirm user is a member
+  const { data: membership } = await db()
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .single();
+  if (!membership) return { symbolCode: null };
+
+  // Already locked — return existing
+  const existingCode = group.locked_archetype_code as string | null;
+  if (existingCode) return { symbolCode: existingCode };
+
+  // Evaluate current archetype
+  const { data: campaign } = await db()
+    .from('campaigns')
+    .select('current_version')
+    .eq('id', campaignId)
+    .single();
+  const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
+  const gcfg = cfg.group!;
+
+  const members = await getMembersForGroup(groupId);
+  if (members.length < gcfg.min_members) return { symbolCode: null };
+
+  const archetype = evaluateArchetype(gcfg, members);
+  if (!archetype) return { symbolCode: null };
+
+  await db()
+    .from('groups')
+    .update({ locked_archetype_code: archetype.code, locked_at: new Date().toISOString() })
+    .eq('id', groupId);
+
+  // F-08: push symbol-unlock notification to the sharer (fire-and-forget)
+  pushSymbolUnlockedToUser(userId, campaignId, groupId, cfg, archetype).catch(() => {});
+
+  return { symbolCode: archetype.code };
+}
+
+async function pushSymbolUnlockedToUser(
+  userId: string,
+  campaignId: string,
+  groupId: string,
+  cfg: Awaited<ReturnType<typeof getConfig>>,
+  archetype: import('../config/schema.js').GroupArchetype,
+): Promise<void> {
+  const liffBase = env().LIFF_URL ?? '';
+  const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
+  const copy = (cfg as any).copy ?? {};
+
+  // Count how many distinct symbols the user has now (including the one just unlocked)
+  const { data: memberships } = await db()
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId);
+  const groupIds = (memberships ?? []).map((m: any) => m.group_id as string);
+  const { data: lockedGroups } = groupIds.length
+    ? await db().from('groups').select('locked_archetype_code').in('id', groupIds)
+        .eq('campaign_id', campaignId).not('locked_archetype_code', 'is', null)
+    : { data: [] };
+  const unlockedCodes = new Set<string>([
+    ...(lockedGroups ?? []).map((g: any) => g.locked_archetype_code as string).filter(Boolean),
+    archetype.code,
+  ]);
+  const unlockedCount = unlockedCodes.size;
+  const totalSymbols = cfg.group?.archetypes?.filter((a: any) => !a.fallback).length ?? 9;
+  const remaining = Math.max(0, totalSymbols - unlockedCount);
+
+  // Symbol hero image (symbol_url preferred, fall back to image_url)
+  const heroUrl = archetype.symbol_url || archetype.image_url;
+
+  // Progress dots: unlockedCount red filled, rest dark empty
+  const dots: Record<string, unknown>[] = [];
+  for (let i = 0; i < totalSymbols; i++) {
+    dots.push({
+      type: 'box', layout: 'vertical', width: '10px', height: '10px',
+      cornerRadius: '5px',
+      backgroundColor: i < unlockedCount ? '#E8354F' : '#1C1A17',
+      contents: [],
+    });
+  }
+
+  const bodyContents: Record<string, unknown>[] = [];
+
+  // Hero image section (yellow bg)
+  if (heroUrl) {
+    bodyContents.push({
+      type: 'box', layout: 'vertical', backgroundColor: '#F5E14B',
+      paddingAll: '0px', alignItems: 'center', justifyContent: 'center',
+      height: '120px',
+      contents: [{ type: 'image', url: heroUrl, size: 'full', aspectRatio: '1:1', aspectMode: 'fit' }],
+    });
+  }
+
+  // Text section
+  bodyContents.push({
+    type: 'box', layout: 'vertical', paddingAll: '14px', spacing: 'sm',
+    contents: [
+      // Eyebrow label
+      {
+        type: 'box', layout: 'vertical', paddingTop: '3px', paddingBottom: '3px',
+        paddingStart: '8px', paddingEnd: '8px',
+        backgroundColor: '#E8354F', cornerRadius: '4px', alignItems: 'flex-start',
+        contents: [{ type: 'text', text: copy.F08_eyebrow || 'ดวงใหม่รอบนี้', size: 'xxs', weight: 'bold', color: '#FFFDF6' }],
+      },
+      { type: 'text', text: archetype.title, size: 'lg', weight: 'bold', color: '#1C1A17', wrap: true, margin: 'xs' },
+      {
+        type: 'text',
+        text: `สะสมแล้ว ${unlockedCount}/${totalSymbols} ดวง · เหลือ ${remaining}`,
+        size: 'xs', color: 'rgba(28,26,23,.55)', margin: 'xs',
+      },
+      // Dots row
+      { type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'sm', contents: dots },
+    ],
+  });
+
+  const message = {
+    type: 'flex',
+    altText: `${copy.F08_eyebrow || 'ดวงใหม่รอบนี้'} — ${archetype.title} (${unlockedCount}/${totalSymbols})`,
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      body: {
+        type: 'box', layout: 'vertical', paddingAll: '0px', spacing: 'none',
+        contents: bodyContents,
+      },
+      footer: {
+        type: 'box', layout: 'vertical', paddingAll: '12px',
+        contents: [{
+          type: 'button',
+          action: { type: 'uri', label: copy.F08_cta || 'ดูสัญลักษณ์ที่เหลือ', uri: groupUrl },
+          style: 'primary', color: '#E8354F', height: 'sm',
+        }],
+      },
+    },
+  };
+
+  await pushMessage(userId, [message] as any);
+}
+
+/** Leave a group — removes user from group_members. Creator can also leave (group stays). */
+export async function leaveGroup(userId: string, groupId: string): Promise<void> {
+  const { error } = await db()
+    .from('group_members')
+    .delete()
+    .eq('group_id', groupId)
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
+/** Set/update group name — creator only. */
+export async function renameGroup(userId: string, groupId: string, name: string): Promise<void> {
+  const group = await getGroupOrThrow(groupId);
+  if ((group.created_by as string) !== userId) throw new BadRequestError('Only the group creator can rename the group');
+  const { error } = await db()
+    .from('groups')
+    .update({ name })
+    .eq('id', groupId);
+  if (error) throw new Error(error.message);
 }
