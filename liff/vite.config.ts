@@ -6,4 +6,10 @@ export default defineConfig({
   base: '/liff-app/',
   server: { port: 3000 },
   build: { outDir: '../public/liff-app', emptyOutDir: true },
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    coverage: { provider: 'v8', reporter: ['text', 'html'] },
+  },
 });
