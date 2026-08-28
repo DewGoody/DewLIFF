@@ -1,5 +1,5 @@
 {
-  "name": "laan-kijjakam",
+  "name": "dewliff",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,15 +12,22 @@
     "validate": "tsx src/config/validate.ts"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.49.0",
     "@types/multer": "^2.2.0",
+    "@types/react": "^19.2.18",
     "@types/ws": "^8.18.1",
+    "@vercel/og": "^1.0.1",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "multer": "^2.2.0",
     "pg-boss": "^10.1.0",
+    "react": "^19.2.8",
+    "satori": "^0.33.3",
+    "sharp": "^0.35.3",
     "ws": "^8.21.3",
     "zod": "^3.24.0"
   },

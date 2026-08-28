@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Codera Solutions — LINE Quiz Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F7F1E3; --bg-light: #FFFDF6; --dark: #1C1A17;
+      --red: #E8354F; --yellow: #F5E14B;
+      --border: 2.5px solid #1C1A17;
+      --shadow: 4px 4px 0 #1C1A17; --shadow-sm: 3px 3px 0 #1C1A17;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Bai Jamjuree', sans-serif; background: var(--bg); color: var(--dark); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    .font-bang { font-family: 'Bangers', cursive; letter-spacing: 0.04em; }
+    .container { max-width: 480px; margin: 0 auto; padding: 0 20px; }
+    .chip { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border: 2px solid var(--dark); border-radius: 99px; background: var(--bg-light); }
+    .chip-red { background: var(--red); color: #fff; }
+    .chip-yellow { background: var(--yellow); }
+    .card { background: var(--bg-light); border: var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+    /* NAV */
+    .nav { position: sticky; top: 0; z-index: 100; background: rgba(247,241,227,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1.5px solid rgba(28,26,23,.12); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Bangers', cursive; font-size: 22px; letter-spacing: 0.05em; }
+    .nav-logo span { color: var(--red); }
+    .nav-cta { background: var(--dark); color: #fff; font-family: 'Bai Jamjuree', sans-serif; font-weight: 700; font-size: 12px; padding: 8px 14px; border: 2px solid var(--dark); border-radius: 8px; text-decoration: none; box-shadow: 2px 2px 0 rgba(28,26,23,.2); }
+    /* HERO */
+    .hero { background: var(--dark); padding: 56px 20px 48px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.03) 20px,rgba(255,255,255,.03) 40px); pointer-events: none; }
+    .hero-eyebrow { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); margin-bottom: 16px; }
+    .hero-title { font-size: 52px; line-height: 1.0; color: #fff; margin-bottom: 8px; }
+    .hero-title span { color: var(--yellow); }
+    .hero-sub { font-size: 15px; line-height: 1.6; color: rgba(255,255,255,.65); max-width: 320px; margin: 0 auto 32px; }
+    .hero-cta { display: inline-block; background: var(--yellow); color: var(--dark); font-family: 'Bai Jamjuree', sans-serif; font-weight: 700; font-size: 15px; padding: 14px 28px; border: 2.5px solid var(--dark); border-radius: 12px; box-shadow: 4px 4px 0 rgba(255,255,255,.15); text-decoration: none; transition: transform .1s, box-shadow .1s; }
+    .hero-cta:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 rgba(255,255,255,.15); }
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid rgba(255,255,255,.12); margin-top: 40px; }
+    .stat { padding: 20px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,.12); }
+    .stat:last-child { border-right: none; }
+    .stat-num { font-size: 28px; color: var(--yellow); line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 11px; color: rgba(255,255,255,.5); line-height: 1.3; }
+    /* SECTION */
+    .section { padding: 48px 0; }
+    .section-header { margin-bottom: 28px; }
+    .section-title { font-size: 32px; line-height: 1.1; margin-top: 8px; }
+    .section-desc { font-size: 14px; line-height: 1.6; color: rgba(28,26,23,.6); margin-top: 10px; }
+    .anchor { scroll-margin-top: 56px; }
+    /* TIER CARD */
+    .tier-card { border: var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
+    .tier-header { padding: 24px 20px 20px; border-bottom: var(--border); }
+    .tier-header.solo { background: #FFF4CC; }
+    .tier-header.duo  { background: #FFE8EA; }
+    .tier-header.team { background: #E8F0FF; }
+    .tier-name { font-size: 38px; line-height: 1; margin: 4px 0; }
+    .tier-tagline { font-size: 13px; color: rgba(28,26,23,.6); font-style: italic; margin-top: 4px; }
+    .tier-body { background: var(--bg-light); padding: 20px; }
+    .flow-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(28,26,23,.45); margin-bottom: 12px; }
+    .flow-steps { display: flex; flex-direction: column; margin-bottom: 20px; }
+    .flow-step { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(28,26,23,.08); }
+    .flow-step:last-child { border-bottom: none; }
+    .step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--dark); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: #fff; margin-top: 1px; }
+    .step-screen { font-weight: 700; font-size: 13px; }
+    .step-desc { font-size: 12px; color: rgba(28,26,23,.55); line-height: 1.4; margin-top: 2px; }
+    .brand-gets { margin-top: 20px; }
+    .brand-gets-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(28,26,23,.45); margin-bottom: 10px; }
+    .gets-list { display: flex; flex-direction: column; gap: 6px; }
+    .gets-item { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; }
+    .gets-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--yellow); border: 1.5px solid var(--dark); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .highlight-box { background: var(--yellow); border: var(--border); border-radius: 12px; padding: 16px; margin: 20px 0 0; font-size: 13px; line-height: 1.6; }
+    .highlight-box strong { display: block; font-size: 15px; margin-bottom: 4px; }
+    .tier-footer { background: var(--bg-light); padding: 16px 20px; border-top: var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .tier-price { font-size: 13px; color: rgba(28,26,23,.55); }
+    .tier-price strong { font-size: 20px; color: var(--dark); font-weight: 700; }
+    .try-btn { display: inline-block; background: var(--dark); color: #fff; font-family: 'Bai Jamjuree', sans-serif; font-weight: 700; font-size: 13px; padding: 10px 18px; border: 2px solid var(--dark); border-radius: 10px; box-shadow: 3px 3px 0 rgba(28,26,23,.25); text-decoration: none; white-space: nowrap; transition: transform .1s, box-shadow .1s; }
+    .try-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(28,26,23,.25); }
+    .try-btn.yellow { background: var(--yellow); color: var(--dark); }
+    /* COMPARE TABLE */
+    .compare-table { width: 100%; border-collapse: collapse; border: var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+    .compare-table thead { background: var(--dark); color: #fff; }
+    .compare-table thead th { padding: 14px 12px; font-size: 12px; font-weight: 700; text-align: center; }
+    .compare-table thead th:first-child { text-align: left; }
+    .compare-table tbody tr:nth-child(even) { background: rgba(28,26,23,.03); }
+    .compare-table tbody tr { border-bottom: 1px solid rgba(28,26,23,.08); }
+    .compare-table tbody tr:last-child { border-bottom: none; }
+    .compare-table td { padding: 11px 12px; font-size: 12px; text-align: center; }
+    .compare-table td:first-child { text-align: left; font-weight: 500; }
+    .check { color: var(--red); font-size: 16px; }
+    .dash { color: rgba(28,26,23,.2); font-size: 16px; }
+    .col-hi { background: rgba(232,53,79,.05) !important; }
+    /* PRICING */
+    .pricing-grid { display: flex; flex-direction: column; gap: 16px; }
+    .price-card { border: var(--border); border-radius: 16px; box-shadow: var(--shadow-sm); background: var(--bg-light); padding: 20px; position: relative; }
+    .price-card.featured { background: var(--dark); color: #fff; }
+    .price-badge { position: absolute; top: -10px; right: 16px; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border: 2px solid var(--dark); border-radius: 99px; }
+    .price-tier { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: .6; }
+    .price-name { font-size: 28px; margin: 4px 0 2px; }
+    .price-amount { font-size: 36px; font-weight: 700; line-height: 1; margin: 12px 0 4px; }
+    .price-amount .currency { font-size: 16px; font-weight: 500; opacity: .6; margin-right: 2px; }
+    .price-setup { font-size: 12px; opacity: .55; margin-bottom: 16px; }
+    .price-includes { font-size: 12px; opacity: .7; line-height: 1.8; }
+    .price-includes li { list-style: none; padding-left: 16px; position: relative; }
+    .price-includes li::before { content: '—'; position: absolute; left: 0; opacity: .4; }
+    /* INCLUDED GRID */
+    .included-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .included-item { background: var(--bg-light); border: var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); padding: 16px; }
+    .included-icon { font-size: 24px; margin-bottom: 8px; }
+    .included-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .included-desc { font-size: 11px; color: rgba(28,26,23,.55); line-height: 1.4; }
+    /* CMS */
+    .cms-card { background: var(--yellow); border: var(--border); border-radius: 20px; box-shadow: var(--shadow); padding: 28px 20px; }
+    .cms-card h3 { font-size: 30px; margin: 8px 0; }
+    .cms-card p { font-size: 13px; line-height: 1.6; color: rgba(28,26,23,.7); margin-bottom: 20px; }
+    .cms-items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cms-item { background: rgba(28,26,23,.07); border: 1.5px solid rgba(28,26,23,.15); border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 600; }
+    /* CONTACT */
+    .contact-section { background: var(--dark); padding: 56px 20px; text-align: center; }
+    .contact-section h2 { font-size: 38px; color: #fff; margin: 8px 0 16px; }
+    .contact-section h2 span { color: var(--yellow); }
+    .contact-section p { font-size: 14px; color: rgba(255,255,255,.5); line-height: 1.6; max-width: 300px; margin: 0 auto 32px; }
+    .contact-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .btn-primary { display: block; width: 100%; max-width: 320px; background: var(--yellow); color: var(--dark); font-family: 'Bai Jamjuree', sans-serif; font-weight: 700; font-size: 15px; padding: 16px 24px; border: 2.5px solid var(--dark); border-radius: 12px; box-shadow: 4px 4px 0 rgba(255,255,255,.12); text-decoration: none; text-align: center; transition: transform .1s, box-shadow .1s; }
+    .btn-primary:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 rgba(255,255,255,.12); }
+    .btn-secondary { display: block; width: 100%; max-width: 320px; background: transparent; color: rgba(255,255,255,.6); font-family: 'Bai Jamjuree', sans-serif; font-size: 13px; padding: 12px 24px; border: 1.5px solid rgba(255,255,255,.2); border-radius: 12px; text-decoration: none; text-align: center; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Codera<span>.</span></div>
+  <a href="#contact" class="nav-cta">ติดต่อเรา</a>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">LINE Quiz Experience Platform</div>
+    <h1 class="hero-title font-bang">Growth<br>ที่ <span>user</span><br>สร้างเอง</h1>
+    <p class="hero-sub">Quiz บน LINE ที่คนอยากเล่น แชร์ต่อเอง และพาคนใหม่เข้ามาหาแบรนด์คุณ — โดยไม่ซื้อ ads</p>
+    <a href="#tiers" class="hero-cta">ดูว่าทำได้ยังไง ↓</a>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num font-bang">3</div>
+        <div class="stat-label">รูปแบบ<br>campaign</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num font-bang">0</div>
+        <div class="stat-label">acquisition<br>cost</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num font-bang">100%</div>
+        <div class="stat-label">first-party<br>data</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section anchor" id="tiers">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">3 Tiers</span>
+      <h2 class="section-title font-bang">เลือก Tier<br>ตามเป้าหมาย</h2>
+      <p class="section-desc">ทุก tier ปรับ theme, คำถาม, ผลลัพธ์ และสีแบรนด์ได้หมด — ผ่าน CMS ไม่ต้องแตะโค้ด</p>
+    </div>
+
+    <!-- SOLO -->
+    <div class="tier-card" id="solo">
+      <div class="tier-header solo">
+        <span class="chip">Tier 1</span>
+        <div class="tier-name font-bang">Solo Quiz</div>
+        <div class="tier-tagline">"รู้จักตัวเอง" — personalized result ที่ user อยากแชร์</div>
+      </div>
+      <div class="tier-body">
+        <div class="flow-title">User Flow — 4 Tap</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-screen">Intro</div>
+              <div class="step-desc">เข้ามาจาก rich menu หรือลิงก์แชร์ต่อ</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-screen">คำถาม</div>
+              <div class="step-desc">ออกแบบตามธีมแบรนด์ เปลี่ยนได้ทั้งหมด</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-screen">ผลลัพธ์ (Archetype)</div>
+              <div class="step-desc">Personalized → user รู้สึก "ใช่เลย" → จดจำแบรนด์</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-screen">แชร์ผล</div>
+              <div class="step-desc">ทุกการแชร์ = traffic ใหม่กลับมา OA โดยไม่ซื้อ ads</div>
+            </div>
+          </div>
+        </div>
+        <div class="brand-gets">
+          <div class="brand-gets-title">แบรนด์ได้อะไร</div>
+          <div class="gets-list">
+            <div class="gets-item"><div class="gets-icon">✓</div><span>First-party data — personality type ของ user แต่ละคน</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Organic reach จากการแชร์ — acquisition cost = 0</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Brand recall สูง — user รู้สึก seen จากผลที่ personalized</span></div>
+          </div>
+        </div>
+        <div class="highlight-box"><strong>เหมาะกับ</strong>Brand awareness · Event pre-launch · Loyalty program</div>
+      </div>
+      <div class="tier-footer">
+        <div class="tier-price">
+          <strong>20,000</strong> <span style="font-size:11px;">บาท setup</span><br>
+          <span>+ 5,000 บาท/เดือน</span>
+        </div>
+        <a href="https://liff.line.me/2011192503-E4zprfoA" class="try-btn yellow" target="_blank">ทดลองเล่น →</a>
+      </div>
+    </div>
+
+    <!-- DUO -->
+    <div class="tier-card" id="duo">
+      <div class="tier-header duo">
+        <span class="chip chip-red">แนะนำ</span>
+        <div class="tier-name font-bang">Duo Quiz</div>
+        <div class="tier-tagline">"รู้จักกันและกัน" — viral loop ที่ build-in ไม่หยุด</div>
+      </div>
+      <div class="tier-body">
+        <div class="flow-title">User Flow — 5 Tap</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-screen">Invited Screen</div>
+              <div class="step-desc">User ไม่ได้มาเอง <strong>เพื่อนพาเข้ามา</strong> → acquisition cost = 0</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-screen">คำถาม</div>
+              <div class="step-desc">ตอบในบริบทที่มีเพื่อนรอ → completion rate สูงกว่า solo</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-screen">Matching</div>
+              <div class="step-desc">ช่วงรอผล = engagement peak — user จดจำแบรนด์ตอนนี้</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-screen">ผลคู่ (Unique)</div>
+              <div class="step-desc">ผลที่เป็นของสองคนนี้เท่านั้น → <strong>เหตุผลที่ต้องแชร์</strong></div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <div class="step-screen">ชวนต่อ</div>
+              <div class="step-desc">B กลายเป็น A ใหม่ → ชวน C → ชวน D → loop ไม่หยุด</div>
+            </div>
+          </div>
+        </div>
+        <div class="brand-gets">
+          <div class="brand-gets-title">แบรนด์ได้อะไร</div>
+          <div class="gets-list">
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Viral loop ที่ build-in — B กลายเป็น A ใหม่ทุกครั้ง</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>User ไม่ได้มาเอง เพื่อนพามา → acquisition cost = 0</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Pair result unique ต่อคู่ = แรงจูงใจแชร์สูงมาก</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Push notification ที่ user รอรับ — ไม่ใช่ spam</span></div>
+          </div>
+        </div>
+        <div class="highlight-box"><strong>เหมาะกับ</strong>Friendship campaign · Seasonal campaign · Product launch ที่ต้องการ reach สูง</div>
+      </div>
+      <div class="tier-footer">
+        <div class="tier-price">
+          <strong>35,000</strong> <span style="font-size:11px;">บาท setup</span><br>
+          <span>+ 8,000 บาท/เดือน</span>
+        </div>
+        <a href="https://liff.line.me/2011192503-E4zprfoA" class="try-btn" target="_blank">ทดลองเล่น →</a>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="tier-card" id="team">
+      <div class="tier-header team">
+        <span class="chip">Tier 3</span>
+        <div class="tier-name font-bang">Team Quiz</div>
+        <div class="tier-tagline">"พลังของกลุ่ม" — community moment ที่แบรนด์สร้างได้</div>
+      </div>
+      <div class="tier-body">
+        <div class="flow-title">User Flow — 5 Tap</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-screen">Team Invite</div>
+              <div class="step-desc">User ลงทุน (ตอบ + เข้าทีม) → committed → retention สูง</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-screen">Progress Bar</div>
+              <div class="step-desc">การรอให้ทีมครบ = reason to return กลับมา OA หลายครั้ง</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-screen">สมาชิกเข้าร่วม</div>
+              <div class="step-desc">แต่ละคนที่เข้าทีม = push notification ถึง creator</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-screen">ทีมครบ</div>
+              <div class="step-desc">Push ถึงทุกคนพร้อมกัน = <strong>moment ร่วมกัน</strong>ที่แบรนด์สร้างได้</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <div class="step-screen">ผลทีม (Unique)</div>
+              <div class="step-desc">ผลที่เกิดได้เฉพาะกลุ่มนี้ → community ที่แบรนด์ own</div>
+            </div>
+          </div>
+        </div>
+        <div class="brand-gets">
+          <div class="brand-gets-title">แบรนด์ได้อะไร</div>
+          <div class="gets-list">
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Retention สูง — user มี reason to return รอทีมครบ</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Repeat session ต่อ user มากกว่า Solo/Duo</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Community moment — ทุกคนในทีมได้ผลพร้อมกัน</span></div>
+            <div class="gets-item"><div class="gets-icon">✓</div><span>Push notification ที่ user รอรับ — ไม่ใช่ spam</span></div>
+          </div>
+        </div>
+        <div class="highlight-box"><strong>เหมาะกับ</strong>Community building · CRM retention · Workplace engagement</div>
+      </div>
+      <div class="tier-footer">
+        <div class="tier-price">
+          <strong>50,000</strong> <span style="font-size:11px;">บาท setup</span><br>
+          <span>+ 15,000 บาท/เดือน</span>
+        </div>
+        <a href="https://liff.line.me/2011192503-E4zprfoA" class="try-btn" target="_blank">ทดลองเล่น →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIRAL LOOP -->
+<section style="background:var(--dark);padding:48px 0;">
+  <div class="container">
+    <div style="margin-bottom:24px;">
+      <span class="chip" style="border-color:rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);">Viral Mechanic</span>
+      <h2 class="font-bang" style="font-size:32px;color:#fff;margin-top:8px;line-height:1.1;">Loop ที่<br><span style="color:var(--yellow)">ไม่ต้องซื้อ ads</span></h2>
+      <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;margin-top:10px;">ทุกคนที่เล่น กลายเป็นช่องทาง acquisition ให้แบรนด์โดยอัตโนมัติ</p>
+    </div>
+    <div style="border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;background:rgba(255,255,255,.03);">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center;">
+        <div>
+          <div style="width:48px;height:48px;border-radius:50%;border:2px solid var(--yellow);background:rgba(245,225,75,.15);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;">👤</div>
+          <div style="font-size:10px;color:var(--yellow);font-weight:700;">A ตอบ quiz</div>
+        </div>
+        <div>
+          <div style="width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;">📤</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5);">แชร์ลิงก์<br>ให้ B</div>
+        </div>
+        <div>
+          <div style="width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;">👥</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5);">B ตอบ<br>+ แชร์ต่อ</div>
+        </div>
+        <div>
+          <div style="width:48px;height:48px;border-radius:50%;border:2px solid var(--yellow);background:rgba(245,225,75,.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;">🔄</div>
+          <div style="font-size:10px;color:var(--yellow);font-weight:700;">B → A ใหม่<br>loop ซ้ำ</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.35);">
+        แต่ละ loop = follower ใหม่บน LINE OA โดยไม่มี media cost
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="section anchor" id="compare">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">เปรียบเทียบ</span>
+      <h2 class="section-title font-bang">3 Tiers<br>ต่างกันยังไง</h2>
+    </div>
+    <div style="overflow-x:auto;border-radius:16px;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="min-width:130px;">Feature</th>
+            <th>Solo</th>
+            <th>Duo</th>
+            <th style="background:rgba(232,53,79,.15);">Team</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Personalized result</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td class="col-hi"><span class="check">✓</span></td></tr>
+          <tr><td>Social matching</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td class="col-hi"><span class="check">✓</span></td></tr>
+          <tr><td>Viral loop</td><td style="font-size:11px;color:rgba(28,26,23,.4);">อ่อน</td><td style="font-size:11px;font-weight:700;color:var(--red);">แข็งแกร่ง</td><td class="col-hi" style="font-size:11px;font-weight:700;color:var(--red);">แข็งแกร่ง</td></tr>
+          <tr><td>Retention</td><td style="font-size:11px;color:rgba(28,26,23,.4);">ต่ำ</td><td style="font-size:11px;">กลาง</td><td class="col-hi" style="font-size:11px;font-weight:700;">สูง</td></tr>
+          <tr><td>Community moment</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td class="col-hi"><span class="check">✓</span></td></tr>
+          <tr><td>Push notification</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td class="col-hi"><span class="check">✓</span></td></tr>
+          <tr><td>Data richness</td><td style="font-size:11px;">Individual</td><td style="font-size:11px;">Pair</td><td class="col-hi" style="font-size:11px;font-weight:700;">Group</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section anchor" id="pricing" style="background:rgba(28,26,23,.03);">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">Pricing</span>
+      <h2 class="section-title font-bang">ราคา<br>โปร่งใส</h2>
+      <p class="section-desc">รวม 3 เดือนแรก = setup + monthly × 3</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Tier 1</div>
+        <div class="price-name font-bang">Solo Quiz</div>
+        <div class="price-amount"><span class="currency">฿</span>20,000</div>
+        <div class="price-setup">setup · + 5,000 บาท/เดือน · รวม 3 เดือน = 35,000 บาท</div>
+        <ul class="price-includes">
+          <li>Config campaign ทั้งหมด</li>
+          <li>Integration กับ LINE OA ลูกค้า</li>
+          <li>Flex card ทุกใบตามธีม</li>
+          <li>Rich menu + auto-reply setup</li>
+          <li>ทดสอบ E2E + Handoff</li>
+        </ul>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">แนะนำ</div>
+        <div class="price-tier" style="color:rgba(255,255,255,.5);">Tier 2</div>
+        <div class="price-name font-bang" style="color:#fff;">Duo Quiz</div>
+        <div class="price-amount" style="color:var(--yellow);"><span class="currency" style="color:rgba(255,255,255,.5);">฿</span>35,000</div>
+        <div class="price-setup" style="color:rgba(255,255,255,.45);">setup · + 8,000 บาท/เดือน · รวม 3 เดือน = 59,000 บาท</div>
+        <ul class="price-includes" style="color:rgba(255,255,255,.7);">
+          <li>ทุกอย่างใน Solo +</li>
+          <li>Viral loop mechanic</li>
+          <li>Pair matching algorithm</li>
+          <li>Push notification (pair result)</li>
+          <li>Pair result card unique</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Tier 3</div>
+        <div class="price-name font-bang">Team Quiz</div>
+        <div class="price-amount"><span class="currency">฿</span>50,000</div>
+        <div class="price-setup">setup · + 15,000 บาท/เดือน · รวม 3 เดือน = 95,000 บาท</div>
+        <ul class="price-includes">
+          <li>ทุกอย่างใน Duo +</li>
+          <li>Team formation mechanic</li>
+          <li>Group archetype reveal</li>
+          <li>Push notification (team full)</li>
+          <li>Community moment</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding:16px;background:var(--bg-light);border:1.5px solid rgba(28,26,23,.12);border-radius:12px;font-size:12px;color:rgba(28,26,23,.55);line-height:1.7;">
+      Monthly ครอบคลุม: Hosting (Vercel + Supabase) · Support ≤ 5 change requests/เดือน · Campaign data report รายเดือน · Monitoring + incident response<br><br>
+      Volume add-on: User &gt;5,000 = +3,000 บาท/เดือน · User &gt;20,000 = custom pricing
+    </div>
+  </div>
+</section>
+
+<!-- CMS -->
+<section class="section">
+  <div class="container">
+    <div class="cms-card">
+      <span class="chip">No-code CMS</span>
+      <h3 class="font-bang">ปรับได้ทุกจุด<br>ไม่ต้องแตะโค้ด</h3>
+      <p>ทุกอย่างที่เห็น — ปรับธีม คำถาม ผลลัพธ์ สีแบรนด์ได้หมด ผ่าน CMS ไม่ต้องรอ dev</p>
+      <div class="cms-items">
+        <div class="cms-item">📝 คำถาม + ตัวเลือก</div>
+        <div class="cms-item">🎨 ผลลัพธ์ + สูตร</div>
+        <div class="cms-item">🖌️ สี + Brand</div>
+        <div class="cms-item">💬 ข้อความทุกจุด</div>
+        <div class="cms-item">📱 Rich Menu</div>
+        <div class="cms-item">🤖 Auto-reply</div>
+        <div class="cms-item">🔔 Notification</div>
+        <div class="cms-item">📊 Data Report</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INCLUDED -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">รวมอยู่ใน Setup</span>
+      <h2 class="section-title font-bang">เราทำให้<br>ครบทุกอย่าง</h2>
+    </div>
+    <div class="included-grid">
+      <div class="included-item">
+        <div class="included-icon">⚙️</div>
+        <div class="included-title">Config Campaign</div>
+        <div class="included-desc">คำถาม, ผลลัพธ์, สี, ข้อความ ครบ</div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">🔗</div>
+        <div class="included-title">LINE Integration</div>
+        <div class="included-desc">เชื่อม LINE OA ของลูกค้าพร้อมใช้</div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">🃏</div>
+        <div class="included-title">Flex Cards</div>
+        <div class="included-desc">ทุกใบตามธีม สวยงาม share-ready</div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">📋</div>
+        <div class="included-title">Rich Menu</div>
+        <div class="included-desc">Layout, ปุ่ม, ลิงก์ ครบ</div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">🤖</div>
+        <div class="included-title">Auto-reply</div>
+        <div class="included-desc">Keyword triggers + response</div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">✅</div>
+        <div class="included-title">E2E Test</div>
+        <div class="included-desc">ทดสอบก่อน launch + Handoff</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section anchor" id="contact">
+  <div class="container">
+    <span class="chip" style="border-color:rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);">Let's talk</span>
+    <h2 class="font-bang">พร้อมสร้าง<br><span>campaign</span><br>ที่ user อยากเล่น?</h2>
+    <p>บอกเป้าหมายของแบรนด์คุณ แล้วเราจะแนะนำ tier และ demo flow ที่เหมาะที่สุด</p>
+    <div class="contact-btns">
+      <a href="https://line.me/ti/p/~@codera" class="btn-primary" target="_blank">💬 คุยผ่าน LINE OA</a>
+      <a href="https://liff.line.me/2011192503-E4zprfoA" class="btn-secondary" target="_blank">ทดลองเล่น Duo Quiz →</a>
+    </div>
+  </div>
+</section>
+
+<div style="background:var(--dark);padding:20px;text-align:center;">
+  <div style="font-size:11px;color:rgba(255,255,255,.25);">© 2026 Codera Solutions · LINE Quiz Experience Platform</div>
+</div>
+
+</body>
+</html>

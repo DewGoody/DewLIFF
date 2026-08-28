@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIFF Config Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&family=Bangers&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #F7F1E3; color: #1C1A17; font-family: 'Bai Jamjuree', sans-serif; min-height: 100vh; }
+
+    .top-bar {
+      background: #1C1A17; color: #F7F1E3;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 22px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar .title { font-family: Bangers, cursive; font-size: 22px; letter-spacing: .06em; }
+    .top-bar .campaign-tag { font-size: 11px; font-weight: 600; background: #F5E14B; color: #1C1A17; padding: 2px 8px; border-radius: 4px; }
+
+    .save-bar {
+      background: #FFFDF6; border-top: 2.5px solid #1C1A17;
+      position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 22px;
+      display: flex; gap: 10px; align-items: center; z-index: 100;
+    }
+    .btn-save {
+      flex: 1; background: #E8354F; color: #FFFDF6; border: 2.5px solid #1C1A17;
+      border-radius: 12px; padding: 13px; font: 700 16px 'Bai Jamjuree', sans-serif;
+      cursor: pointer; box-shadow: 3px 4px 0 #1C1A17;
+    }
+    .btn-save:hover { background: #c52c41; }
+    .btn-save:disabled { background: rgba(28,26,23,.2); color: rgba(28,26,23,.4); box-shadow: none; cursor: default; }
+    .save-status { font-size: 12px; font-weight: 600; color: rgba(28,26,23,.5); }
+
+    .content { padding: 20px 22px 100px; display: flex; flex-direction: column; gap: 18px; max-width: 640px; margin: 0 auto; }
+
+    .section {
+      background: #FFFDF6; border: 2.5px solid #1C1A17; border-radius: 16px;
+      box-shadow: 4px 5px 0 #1C1A17; overflow: hidden;
+    }
+    .section-header {
+      background: #F5E14B; border-bottom: 2px solid #1C1A17;
+      padding: 11px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-header .icon { font-size: 18px; }
+    .section-header .label { font: 700 14px 'Bai Jamjuree', sans-serif; }
+    .section-body { padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font: 600 11px 'Bai Jamjuree', sans-serif; color: rgba(28,26,23,.5); letter-spacing: .06em; text-transform: uppercase; }
+    .field input, .field textarea {
+      background: #F7F1E3; border: 2px solid rgba(28,26,23,.25); border-radius: 8px;
+      padding: 10px 12px; font: 500 13px 'Bai Jamjuree', sans-serif; color: #1C1A17;
+      width: 100%; outline: none; transition: border-color .15s;
+    }
+    .field input:focus, .field textarea:focus { border-color: #E8354F; }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .field .hint { font-size: 10.5px; color: rgba(28,26,23,.4); }
+
+    .axis-row {
+      display: flex; align-items: center; gap: 10px;
+      background: #F7F1E3; border: 1.5px solid rgba(28,26,23,.15); border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .axis-thumb {
+      width: 36px; height: 50px; background: rgba(28,26,23,.08); border-radius: 6px;
+      flex-shrink: 0; object-fit: contain;
+    }
+    .axis-thumb-placeholder {
+      width: 36px; height: 50px; background: rgba(28,26,23,.08); border-radius: 6px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: rgba(28,26,23,.35); font-weight: 600; text-align: center;
+    }
+    .axis-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+    .axis-name { font: 700 12px 'Bai Jamjuree', sans-serif; }
+    .axis-input {
+      background: #FFFDF6; border: 1.5px solid rgba(28,26,23,.2); border-radius: 6px;
+      padding: 7px 10px; font: 500 12px 'Bai Jamjuree', sans-serif; color: #1C1A17;
+      width: 100%; outline: none;
+    }
+    .axis-input:focus { border-color: #E8354F; }
+
+    .loading-preview {
+      width: 60px; height: 60px; border-radius: 10px; border: 2px solid rgba(28,26,23,.15);
+      object-fit: contain; background: rgba(28,26,23,.06); flex-shrink: 0;
+    }
+    .loading-preview-wrap { display: flex; gap: 12px; align-items: flex-start; }
+    .loading-preview-wrap .field { flex: 1; }
+
+    .error-msg { background: #FEE; border: 1.5px solid #E8354F; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: #c52c41; }
+    .success-msg { background: #EFFFEE; border: 1.5px solid #2a9d4a; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: #2a9d4a; }
+
+    .spinner {
+      width: 22px; height: 22px; border: 3px solid rgba(28,26,23,.1); border-top-color: #E8354F;
+      border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .skeleton { background: linear-gradient(90deg, rgba(28,26,23,.07) 0%, rgba(28,26,23,.13) 50%, rgba(28,26,23,.07) 100%); background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 6px; height: 36px; }
+    @keyframes shimmer { to { background-position: -200%; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="title">LIFF EDITOR</span>
+  <span class="campaign-tag" id="campaignTag">buddy_demo</span>
+</div>
+
+<div class="content" id="content">
+  <!-- skeleton while loading -->
+  <div class="section">
+    <div class="section-header"><span class="icon">⏳</span><span class="label">กำลังโหลด config...</span></div>
+    <div class="section-body"><div class="skeleton"></div><div class="skeleton" style="height:24px"></div><div class="skeleton"></div></div>
+  </div>
+</div>
+
+<div class="save-bar">
+  <button class="btn-save" id="btnSave" disabled>บันทึก</button>
+  <span class="save-status" id="saveStatus">โหลดอยู่...</span>
+</div>
+
+<script>
+const CAMPAIGN_ID = 'buddy_demo';
+let cfg = null;
+
+async function load() {
+  try {
+    const res = await fetch(`/api/admin/campaign/${CAMPAIGN_ID}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    cfg = data.config;
+    render();
+    document.getElementById('saveStatus').textContent = `v${cfg.version} · ${new Date().toLocaleTimeString('th')}`;
+    document.getElementById('btnSave').disabled = false;
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="error-msg">โหลด config ไม่ได้: ${e.message}</div>`;
+    document.getElementById('saveStatus').textContent = 'โหลดไม่ได้';
+  }
+}
+
+function val(obj, path, fallback = '') {
+  return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : null), obj) ?? fallback;
+}
+
+function set(obj, path, value) {
+  const keys = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!cur[keys[i]] || typeof cur[keys[i]] !== 'object') cur[keys[i]] = {};
+    cur = cur[keys[i]];
+  }
+  cur[keys[keys.length - 1]] = value;
+}
+
+function imgThumb(url) {
+  if (!url) return `<div class="axis-thumb-placeholder">IMG</div>`;
+  return `<img class="axis-thumb" src="${url}" onerror="this.style.display='none'" />`;
+}
+
+function gifPreview(url) {
+  if (!url) return `<div class="loading-preview"></div>`;
+  return `<img class="loading-preview" src="${url}" onerror="this.style.display='none'" />`;
+}
+
+function field(label, id, value, hint = '', placeholder = '') {
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <input type="text" id="${id}" value="${escHtml(value)}" placeholder="${escHtml(placeholder)}" />
+      ${hint ? `<span class="hint">${hint}</span>` : ''}
+    </div>`;
+}
+
+function textarea(label, id, value, hint = '') {
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <textarea id="${id}">${escHtml(value)}</textarea>
+      ${hint ? `<span class="hint">${hint}</span>` : ''}
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function render() {
+  const copy = cfg.copy || {};
+  const axes = cfg.axes || [];
+  const images = (cfg.appearance && cfg.appearance.images) || {};
+  const loadingGif = images['loading_gif'] || '';
+
+  let html = '';
+
+  // ── Loading Screen ─────────────────────────────────────
+  html += `
+  <div class="section">
+    <div class="section-header"><span class="icon">⏳</span><span class="label">หน้า Loading</span></div>
+    <div class="section-body">
+      <div class="loading-preview-wrap">
+        <div id="gifPreviewWrap">${gifPreview(loadingGif)}</div>
+        <div class="field" style="flex:1">
+          <label>URL ของ GIF / รูป loading</label>
+          <input type="text" id="loading_gif" value="${escHtml(loadingGif)}" placeholder="https://..." />
+          <span class="hint">ใส่ URL ของ GIF ที่ต้องการแสดงระหว่างโหลด (ใช้ key: appearance.images.loading_gif)</span>
+        </div>
+      </div>
+      ${field('ข้อความระหว่างโหลด', 'loading_copy', val(cfg,'appearance.loading_copy'), 'appearance.loading_copy', 'กำลังโหลด...')}
+    </div>
+  </div>`;
+
+  // ── Intro Character (per axis) ──────────────────────────
+  html += `
+  <div class="section">
+    <div class="section-header"><span class="icon">🎭</span><span class="label">รูปตัวละครแต่ละสาย (Intro)</span></div>
+    <div class="section-body">
+      <span class="hint" style="font-size:11px;color:rgba(28,26,23,.5)">URL รูปการ์ดของแต่ละ axis ที่แสดงใน intro/summary (axes[i].image_url)</span>
+      ${axes.map((ax, i) => `
+        <div class="axis-row" id="axrow_${i}">
+          ${imgThumb(ax.image_url)}
+          <div class="axis-info">
+            <span class="axis-name">${escHtml(ax.label || ax.id)}${ax.label_en ? ` · ${escHtml(ax.label_en)}` : ''}</span>
+            <input class="axis-input" type="text" data-axis-idx="${i}" data-field="image_url"
+              value="${escHtml(ax.image_url || '')}" placeholder="https://..." />
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  // ── Invited Screen ──────────────────────────────────────
+  html += `
+  <div class="section">
+    <div class="section-header"><span class="icon">💌</span><span class="label">หน้า Invited (ถูกชวน)</span></div>
+    <div class="section-body">
+      ${field('หัวข้อ', 'copy_invited_title', val(cfg,'copy.invited_title'), 'ใช้ {inviter} สำหรับชื่อคนชวน', '{inviter} ชวนคุณมาตอบ')}
+      ${textarea('คำอธิบาย', 'copy_invited_body', val(cfg,'copy.invited_body'), 'copy.invited_body')}
+      ${field('ปุ่ม CTA', 'copy_invited_cta', val(cfg,'copy.invited_cta'), '', 'ตอบเลย')}
+    </div>
+  </div>`;
+
+  // ── Error / Expired Screen ──────────────────────────────
+  html += `
+  <div class="section">
+    <div class="section-header"><span class="icon">⚠️</span><span class="label">หน้า Error / หมดอายุ</span></div>
+    <div class="section-body">
+      ${field('หัวข้อ (หมดอายุ)', 'copy_expired_title', val(cfg,'copy.expired_title'), 'copy.expired_title', 'คำเชิญหมดอายุแล้ว')}
+      ${field('ข้อความ (หมดอายุ)', 'copy_expired_body', val(cfg,'copy.expired_body'), 'copy.expired_body', 'ขอโทษนะ ลิงก์นี้ใช้ไม่ได้แล้ว')}
+      ${field('ปุ่ม (หมดอายุ)', 'copy_expired_cta', val(cfg,'copy.expired_cta'), '', 'กลับหน้าหลัก')}
+      <div style="border-top:1.5px dashed rgba(28,26,23,.2);padding-top:13px">
+        ${field('หัวข้อ (ไม่พบแคมเปญ)', 'copy_error_title', val(cfg,'copy.error_title'), 'copy.error_title', 'เกิดข้อผิดพลาด')}
+        ${field('ข้อความ (ไม่พบแคมเปญ)', 'copy_error_body', val(cfg,'copy.error_body'), 'copy.error_body', 'ไม่พบแคมเปญที่ต้องการ')}
+      </div>
+    </div>
+  </div>`;
+
+  // ── Friend Gate ──────────────────────────────────────
+  html += `
+  <div class="section">
+    <div class="section-header"><span class="icon">🔒</span><span class="label">หน้า Friend Gate</span></div>
+    <div class="section-body">
+      ${field('หัวข้อ', 'copy_friend_gate_title', val(cfg,'copy.friend_gate_title'), '', 'เพิ่มเพื่อนก่อนดูผล')}
+      ${textarea('คำอธิบาย', 'copy_friend_gate_body', val(cfg,'copy.friend_gate_body'))}
+      ${field('ปุ่ม CTA', 'copy_friend_gate_cta', val(cfg,'copy.friend_gate_cta'), '', 'เพิ่มเพื่อน')}
+    </div>
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
+
+  // Live GIF preview
+  document.getElementById('loading_gif').addEventListener('input', (e) => {
+    document.getElementById('gifPreviewWrap').innerHTML = gifPreview(e.target.value);
+  });
+
+  // Live axis image preview
+  document.querySelectorAll('.axis-input[data-field="image_url"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const row = e.target.closest('.axis-row');
+      const oldThumb = row.querySelector('.axis-thumb, .axis-thumb-placeholder');
+      if (oldThumb) oldThumb.outerHTML = imgThumb(e.target.value);
+    });
+  });
+}
+
+function collectChanges() {
+  if (!cfg) return;
+  if (!cfg.appearance) cfg.appearance = {};
+  if (!cfg.appearance.images) cfg.appearance.images = {};
+  if (!cfg.copy) cfg.copy = {};
+
+  // Loading
+  const gif = document.getElementById('loading_gif')?.value?.trim();
+  if (gif) cfg.appearance.images['loading_gif'] = gif;
+  else delete cfg.appearance.images['loading_gif'];
+
+  const loadingCopy = document.getElementById('loading_copy')?.value?.trim();
+  if (loadingCopy) cfg.appearance.loading_copy = loadingCopy;
+  else delete cfg.appearance.loading_copy;
+
+  // Axis image_url
+  document.querySelectorAll('.axis-input[data-field="image_url"]').forEach(input => {
+    const idx = parseInt(input.dataset.axisIdx);
+    if (!isNaN(idx) && cfg.axes && cfg.axes[idx]) {
+      const v = input.value.trim();
+      if (v) cfg.axes[idx].image_url = v;
+      else delete cfg.axes[idx].image_url;
+    }
+  });
+
+  // Copy fields
+  const copyMap = {
+    invited_title: 'copy_invited_title',
+    invited_body: 'copy_invited_body',
+    invited_cta: 'copy_invited_cta',
+    expired_title: 'copy_expired_title',
+    expired_body: 'copy_expired_body',
+    expired_cta: 'copy_expired_cta',
+    error_title: 'copy_error_title',
+    error_body: 'copy_error_body',
+    friend_gate_title: 'copy_friend_gate_title',
+    friend_gate_body: 'copy_friend_gate_body',
+    friend_gate_cta: 'copy_friend_gate_cta',
+  };
+  for (const [key, domId] of Object.entries(copyMap)) {
+    const el = document.getElementById(domId);
+    if (el) {
+      const v = el.value.trim();
+      if (v) cfg.copy[key] = v;
+    }
+  }
+}
+
+document.getElementById('btnSave').addEventListener('click', async () => {
+  collectChanges();
+  const btn = document.getElementById('btnSave');
+  const status = document.getElementById('saveStatus');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
+  status.textContent = '';
+
+  try {
+    const res = await fetch(`/api/admin/campaign/${CAMPAIGN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: cfg }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.error?.message || `HTTP ${res.status}`;
+      const details = data?.error?.details ? '\n' + JSON.stringify(data.error.details, null, 2) : '';
+      throw new Error(msg + details);
+    }
+    cfg = data.config || cfg;
+    status.textContent = `✓ บันทึกแล้ว v${cfg.version}`;
+    status.style.color = '#2a9d4a';
+    render();
+    setTimeout(() => { status.style.color = ''; status.textContent = `v${cfg.version} · ${new Date().toLocaleTimeString('th')}`; }, 3000);
+  } catch (e) {
+    status.textContent = `❌ ${e.message.split('\n')[0]}`;
+    status.style.color = '#E8354F';
+    alert('บันทึกไม่ได้:\n' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'บันทึก';
+  }
+});
+
+load();
+</script>
+</body>
+</html>

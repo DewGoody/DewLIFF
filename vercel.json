@@ -8,11 +8,17 @@
       "config": { "maxLambdaSize": "10mb" }
     },
     {
+      "src": "api/og.ts",
+      "use": "@vercel/node",
+      "config": { "maxLambdaSize": "50mb" }
+    },
+    {
       "src": "public/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    { "src": "/api/og", "dest": "/api/og.ts" },
     { "src": "/api/webhook/(.*)", "dest": "/api/index.ts" },
     { "src": "/api/(.*)", "dest": "/api/index.ts" },
     { "src": "/quiz/(.*)", "dest": "/api/index.ts" },
@@ -20,12 +26,18 @@
     { "src": "/admin/assets/(.*)", "dest": "/public/admin-app/assets/$1" },
     { "src": "/admin", "dest": "/public/admin-app/index.html" },
     { "src": "/admin/(.*)", "dest": "/public/admin-app/index.html" },
+    { "src": "/demo", "dest": "/public/demo.html" },
+    { "src": "/liff-edit", "dest": "/public/liff-edit.html" },
     { "src": "/liff-app/(.*)", "dest": "/public/liff-app/$1" },
     { "src": "/liff-app", "dest": "/public/liff-app/index.html" },
     { "src": "/(.*\\.(html|js|css|png|jpg|svg|ico))", "dest": "/public/$1" },
     { "src": "/(.*)", "dest": "/public/liff-app/index.html" }
   ],
-  "crons": [],
+  "crons": [
+    { "path": "/api/cron/expire-pairs",            "schedule": "0 0 * * *" },
+    { "path": "/api/cron/remind-waiting",           "schedule": "0 1 * * *" },
+    { "path": "/api/cron/remind-incomplete-groups", "schedule": "0 2 * * *" }
+  ],
   "headers": [
     {
       "source": "/",
