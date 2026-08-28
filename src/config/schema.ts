@@ -18,10 +18,11 @@ const Slug = z.string().regex(/^[a-z0-9_]+$/, 'lowercase, digits and _ only');
 export const AxisDef = z.object({
   id: Slug,
   label: z.string().max(24),
-  body: z.string().max(200).optional(),
-  label_en: z.string().max(40).optional(),   // e.g. "THE MYSTIC"
-  order: z.string().max(4).optional(),        // e.g. "01"
-  short: z.string().max(60).optional(),       // e.g. "เช็คดวงก่อนทุกการตัดสินใจ"
+  label_en: z.string().max(40).optional(),   // e.g. "THE PREPPER"
+  body: z.string().max(400).optional(),       // longer description shown on Survivor Card
+  short: z.string().max(60).optional(),       // one-liner shown on axis chips
+  image_url: z.string().url().optional(),     // character portrait for Survivor Card / solo result
+  order: z.string().max(4).optional(),        // e.g. "01" — used for card display
   /** For solo/MBTI mode: two pole labels. positive score = poles[0], negative = poles[1] */
   poles: z.array(z.string().max(24)).length(2).optional(),
   /** Weight used in group score formula. Higher = this axis contributes more to group survival score. */
@@ -101,6 +102,8 @@ export const GroupCondition = z.object({
   dominant_threshold: z.number().min(0.3).max(0.9).default(0.5),
   /** Require at least N members to share the same axis */
   min_members_with_axis: z.number().int().min(1).optional(),
+  /** Max number of distinct top-axes present in the group. 1 = all same axis (clone condition). */
+  max_distinct: z.number().int().min(1).max(6).optional(),
 });
 
 /**
@@ -110,13 +113,17 @@ export const GroupCondition = z.object({
 export const GroupArchetype = z.object({
   code: Slug,
   title: z.string().min(1).max(120),
+  /** Pre-set main display text shown prominently on group result screen (e.g. "รอดได้ 40 วัน") */
+  primary_text: z.string().max(120).optional(),
   body: z.string().max(600),
   image_url: z.string().url().optional(),
+  /** Small symbol/icon shown in F-08 unlock push (distinct from the hero image_url) */
+  symbol_url: z.string().url().optional(),
   /** Minimum group size for this entry to be eligible. Default 2. */
   min_group_size: z.number().int().min(2).max(200).default(2),
   /** If set, this entry is only eligible when group size ≤ this value. */
   max_group_size: z.number().int().min(2).max(200).optional(),
-  condition: GroupCondition.optional(),
+  condition: GroupCondition.nullable().optional(),
   /** Catch-all: used when no other archetype at this size matches. Must have one per min_group_size tier. */
   fallback: z.boolean().optional(),
   /** Reward pool to unlock when this archetype is confirmed (group >= reward_members) */
@@ -155,7 +162,7 @@ export const GroupConfig = z.object({
   /** Members needed to unlock reward (code / claim) */
   reward_members: z.number().int().min(2).max(200).default(5),
   /** Hard cap on group size (for rolling: max per batch × max batches) */
-  max_members: z.number().int().min(2).max(200).default(50),
+  max_members: z.number().int().min(2).max(200).default(5),
 
   /**
    * What happens when group reaches max_members / reward_members:

@@ -28,7 +28,30 @@ async function loadVersion(id: string, version: number): Promise<CampaignConfig 
       .single();
 
     if (!error && data) {
-      const parsed = CampaignConfig.safeParse(data.config);
+      // Preprocess group archetypes: fix null conditions + ensure each size tier has a fallback
+      const raw = data.config as Record<string, unknown>;
+      if (Array.isArray((raw?.group as Record<string, unknown>)?.archetypes)) {
+        const archetypes = (raw.group as Record<string, unknown[]>).archetypes as Record<string, unknown>[];
+
+        // Fix: replace null conditions with undefined (Zod optional() rejects null)
+        // Fix: if a min_group_size tier has no fallback archetype, mark the first one as fallback
+        const fixed: Record<string, unknown>[] = archetypes.map((a) => ({
+          ...a,
+          condition: (a['condition'] ?? undefined) as unknown,
+        }));
+
+        const tiers = [...new Set(fixed.map((a) => a['min_group_size'] as number))];
+        for (const tier of tiers) {
+          const hasFallback = fixed.some((a) => a['min_group_size'] === tier && a['fallback'] === true);
+          if (!hasFallback) {
+            const idx = fixed.findIndex((a) => a['min_group_size'] === tier);
+            if (idx >= 0) fixed[idx] = { ...fixed[idx], fallback: true };
+          }
+        }
+
+        (raw.group as Record<string, unknown[]>).archetypes = fixed;
+      }
+      const parsed = CampaignConfig.safeParse(raw);
       if (!parsed.success) {
         console.error('[loader] config parse failed for', id, '@', version, JSON.stringify(parsed.error.issues.slice(0, 5)));
         throw new Error('Config validation failed: ' + parsed.error.issues.map(i => i.path.join('.') + ': ' + i.message).join(', '));

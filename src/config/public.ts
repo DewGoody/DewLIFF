@@ -24,7 +24,7 @@ export type PublicConfig = {
   mode: string;
   brand: CampaignConfig['brand'];
   copy: Record<string, string>;
-  axes: { id: string; label: string; label_en?: string; order?: string; short?: string; poles?: string[]; group_weight?: number }[];
+  axes: { id: string; label: string; label_en?: string; order?: string; short?: string; image_url?: string; poles?: string[]; group_weight?: number }[];
   questions: { id: string; kicker?: string; text: string; options: { id: string; label: string }[] }[];
   rewards?: RewardConfig;
   group?: PublicGroupConfig;
@@ -38,7 +38,7 @@ export function toPublicConfig(cfg: CampaignConfig): PublicConfig {
     mode: cfg.mode,
     brand: cfg.brand,
     copy: cfg.copy,
-    axes: cfg.axes.map((a) => ({ id: a.id, label: a.label, label_en: a.label_en, order: a.order, short: a.short, body: a.body, poles: a.poles, group_weight: a.group_weight })),
+    axes: cfg.axes.map((a) => ({ id: a.id, label: a.label, label_en: a.label_en, order: a.order, short: a.short, body: a.body, image_url: a.image_url, poles: a.poles, group_weight: a.group_weight })),
     questions: cfg.questions.map((q) => ({
       id: q.id,
       kicker: q.kicker,
