@@ -33,27 +33,3 @@ export function env(): Env {
   if (!_env) throw new Error('loadEnv() has not been called yet');
   return _env;
 }
-
-/**
- * This deployment's own public base URL (e.g. for building absolute image URLs
- * LINE's servers fetch, like /api/og). DewLIFF is deployed as its own separate
- * Vercel project from KimLIFF's, so this must never hardcode KimLIFF's domain
- * (laan-kijjakam.vercel.app) the way some of KimLIFF's own code does.
- *
- * Resolution order:
- *  1. APP_BASE_URL — explicit override, set this in Vercel if you want a custom domain.
- *  2. VERCEL_PROJECT_PRODUCTION_URL / VERCEL_URL — set automatically by Vercel for
- *     every deployment (production and preview alike), so this self-configures
- *     correctly on whatever domain this project actually deploys to.
- *  3. http://localhost:${PORT} — local dev fallback (LINE can't reach this anyway;
- *     only matters for code paths that build a URL without actually pushing it).
- */
-export function getAppBaseUrl(): string {
-  const override = process.env.APP_BASE_URL;
-  if (override) return override.replace(/\/+$/, '');
-
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
-  if (vercelHost) return `https://${vercelHost}`;
-
-  return `http://localhost:${process.env.PORT || 8080}`;
-}

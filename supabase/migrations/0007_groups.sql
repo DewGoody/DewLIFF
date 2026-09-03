@@ -98,15 +98,9 @@ end $$;
 
 -- ── helper view: group summary ───────────────────────────────────────────────
 -- Returns per-group member counts and axis distribution for quick reads.
---
--- NB (DewLIFF fork): the original single-query `group by g.id` version nested
--- jsonb_object_agg(..., count(...)) — two aggregates, one inside the other —
--- which Postgres rejects ("aggregate function calls cannot be nested"). Rewritten
--- with two LATERAL subqueries that each pre-aggregate to one row per group, so no
--- aggregate call ever wraps another. Same output shape as before.
 create or replace view group_summary as
 select
-  g.id                                       as group_id,
+  g.id                                      as group_id,
   g.campaign_id,
   g.status,
   g.current_batch,
@@ -115,26 +109,16 @@ select
   g.reward_members,
   g.max_members,
   g.locked_archetype_code,
-  coalesce(counts.total_members, 0)          as total_members,
-  coalesce(counts.current_batch_members, 0)  as current_batch_members,
+  count(m.id)::int                          as total_members,
+  count(m.id) filter (where m.batch_no = g.current_batch)::int
+                                            as current_batch_members,
   -- axis distribution: { axis_id: member_count }
-  coalesce(axis.axis_counts, '{}'::jsonb)    as axis_counts,
+  jsonb_object_agg(
+    m.top_axis,
+    count(m.id)
+  ) filter (where m.top_axis is not null)   as axis_counts,
   g.created_at,
   g.updated_at
 from groups g
-left join lateral (
-  select
-    count(*)::int as total_members,
-    count(*) filter (where m.batch_no = g.current_batch)::int as current_batch_members
-  from group_members m
-  where m.group_id = g.id
-) counts on true
-left join lateral (
-  select jsonb_object_agg(t.top_axis, t.cnt) as axis_counts
-  from (
-    select m.top_axis, count(*) as cnt
-    from group_members m
-    where m.group_id = g.id and m.top_axis is not null
-    group by m.top_axis
-  ) t
-) axis on true;
+left join group_members m on m.group_id = g.id
+group by g.id;

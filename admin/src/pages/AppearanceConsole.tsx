@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { saveAppearance, fetchCampaign } from '../api';
+import { saveAppearance, saveCampaign, fetchCampaign } from '../api';
 import type { AppearanceConfig, CampaignConfig } from '../types';
 
 const ACCENT = '#D95F2B';
 const PRESETS = ['#D95F2B', '#C9452F', '#E0A24A', '#7FA6A0', '#B5B0A6'];
 
-const DEFAULT_APPEARANCE: Required<AppearanceConfig> = {
+const DEFAULT_APPEARANCE: Partial<AppearanceConfig> = {
   accent: '#D95F2B',
   theme: 'dark',
   font: 'editorial',
-  texture: true,
+  texture: 'paper',
   kv_treatment: 'illustration',
   radius: 2,
   intro_layout: 'kv55',
@@ -49,7 +49,7 @@ const KV_SLOTS = [
   { key: 'kv-error',    slug: 'KV_ERROR',    spec: '600×600',   use: 'ไอคอน error' },
 ];
 
-type NavSection = 'theme' | 'layout' | 'motion' | 'kvs' | 'line' | 'publish';
+type NavSection = 'theme' | 'layout' | 'motion' | 'kvs' | 'line' | 'publish' | 'copy';
 type PreviewTab = 'loading' | 'intro' | 'question' | 'result';
 
 const NAV_ITEMS: { id: NavSection; num: string; label: string }[] = [
@@ -59,6 +59,7 @@ const NAV_ITEMS: { id: NavSection; num: string; label: string }[] = [
   { id: 'kvs',     num: '04', label: 'Key Visuals' },
   { id: 'line',    num: '05', label: 'LINE Integration' },
   { id: 'publish', num: '06', label: 'Publish' },
+  { id: 'copy',    num: '07', label: 'Labels & Copy' },
 ];
 
 /* ── Inline CSS animations ── */
@@ -163,7 +164,9 @@ export default function AppearanceConsole() {
   const navigate = useNavigate();
   const campaignId = id!;
 
-  const [appearance, setAppearance] = useState<Required<AppearanceConfig>>({ ...DEFAULT_APPEARANCE });
+  const [appearance, setAppearance] = useState<Partial<AppearanceConfig>>({ ...DEFAULT_APPEARANCE });
+  const [localCopy, setLocalCopy] = useState<Record<string, string>>({});
+  const [copySaving, setCopySaving] = useState(false);
   const [fullConfig, setFullConfig] = useState<CampaignConfig | null>(null);
   const [activeSection, setActiveSection] = useState<NavSection>('theme');
   const [activePreviewTab, setActivePreviewTab] = useState<PreviewTab>('intro');
@@ -194,6 +197,7 @@ export default function AppearanceConsole() {
       if (config.appearance) {
         setAppearance({ ...DEFAULT_APPEARANCE, ...config.appearance });
       }
+      setLocalCopy(config.copy || {});
     }).catch(e => showToast('โหลดไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e))));
   }, [campaignId, showToast]);
 
@@ -234,6 +238,20 @@ export default function AppearanceConsole() {
       showToast('บันทึกไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCopy = async () => {
+    if (copySaving || !fullConfig) return;
+    setCopySaving(true);
+    try {
+      await saveCampaign(campaignId, { ...fullConfig, copy: localCopy });
+      setFullConfig(prev => prev ? { ...prev, copy: localCopy } : prev);
+      showToast('บันทึก labels แล้ว');
+    } catch (e) {
+      showToast('บันทึกไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setCopySaving(false);
     }
   };
 
@@ -293,8 +311,8 @@ export default function AppearanceConsole() {
 
       {groupLabel('TEXTURE')}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button style={choiceBtn(appearance.texture === true, acc)} onClick={() => update('texture', true)}>เปิด</button>
-        <button style={choiceBtn(appearance.texture === false, acc)} onClick={() => update('texture', false)}>ปิด</button>
+        <button style={choiceBtn(appearance.texture === 'paper', acc)} onClick={() => update('texture', 'paper')}>เปิด</button>
+        <button style={choiceBtn(!appearance.texture || appearance.texture === 'none', acc)} onClick={() => update('texture', 'none')}>ปิด</button>
       </div>
 
       {groupLabel('KV TREATMENT')}
@@ -443,13 +461,13 @@ export default function AppearanceConsole() {
         </div>
 
         {groupLabel('MIN DISPLAY (ms)')}
-        <Stepper value={appearance.min_ms} onChange={v => update('min_ms', v)} step={100} min={0} max={5000} unit="ms" />
+        <Stepper value={appearance.min_ms ?? 800} onChange={v => update('min_ms', v)} step={100} min={0} max={5000} unit="ms" />
 
         {groupLabel('INIT TIMEOUT')}
-        <Stepper value={appearance.timeout_s} onChange={v => update('timeout_s', v)} step={1} min={3} max={30} unit="วินาที" />
+        <Stepper value={appearance.timeout_s ?? 10} onChange={v => update('timeout_s', v)} step={1} min={3} max={30} unit="วินาที" />
 
         {groupLabel('MATCHING DELAY (ms)')}
-        <Stepper value={appearance.match_ms} onChange={v => update('match_ms', v)} step={100} min={0} max={5000} unit="ms" />
+        <Stepper value={appearance.match_ms ?? 1800} onChange={v => update('match_ms', v)} step={100} min={0} max={5000} unit="ms" />
 
         {groupLabel('ข้อความระหว่างโหลด')}
         <input
@@ -657,6 +675,86 @@ export default function AppearanceConsole() {
     );
   };
 
+  const renderCopy = () => {
+    const COPY_FIELDS: { key: string; label: string; hint: string; long?: boolean }[] = [
+      // Intro
+      { key: 'intro_quiz_label', label: 'Quiz Label', hint: 'บรรทัดสีแดงบนการ์ด intro เช่น "JBTI · 5 ข้อ"' },
+      { key: 'intro_body',       label: 'Intro Body',  hint: 'ข้อความหลักหน้า intro', long: true },
+      { key: 'intro_cta',        label: 'Intro CTA',   hint: 'ปุ่มเริ่มตอบ เช่น "เริ่มตอบ"' },
+      { key: 'intro_note',       label: 'Intro Note',  hint: 'ข้อความเล็กใต้ปุ่ม เช่น "รู้ผลทันที"' },
+      // Summary
+      { key: 'share_btn',        label: 'Share Button', hint: 'ปุ่มแชร์บนหน้า Summary เช่น "↗ แชร์ผล"' },
+      { key: 'F02_eyebrow',      label: 'Share Card Eyebrow', hint: 'ข้อความบน flex share card' },
+      { key: 'F02_cta1',         label: 'Share CTA 1', hint: 'ปุ่มหลักบน flex share card' },
+      { key: 'F02_cta2',         label: 'Share CTA 2', hint: 'ปุ่มรองบน flex share card' },
+      // Invite (pair mode)
+      { key: 'invite_btn',       label: 'Invite Button', hint: 'ปุ่มเชิญเพื่อน (pair mode)' },
+      { key: 'invite_duo_label', label: 'Invite Duo Label', hint: 'ชื่อตัวเลือก 1:1 ใน invite sheet' },
+      { key: 'invite_duo_sub',   label: 'Invite Duo Sub',   hint: 'คำอธิบายตัวเลือก 1:1' },
+      { key: 'invite_team_label', label: 'Invite Team Label', hint: 'ชื่อตัวเลือกสร้างทีม' },
+      { key: 'invite_team_sub',  label: 'Invite Team Sub',  hint: 'คำอธิบายตัวเลือกสร้างทีม' },
+      // Group
+      { key: 'group_cta',        label: 'Group CTA', hint: 'ปุ่มสร้างทีม เช่น "สร้างทีมวันสิ้นโลก"' },
+      { key: 'symbols_title',    label: 'Symbols Title', hint: 'หัวข้อสะสมสัญลักษณ์' },
+      { key: 'symbols_sub',      label: 'Symbols Sub',   hint: 'คำอธิบายสะสมสัญลักษณ์' },
+    ];
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', padding: '8px 10px', boxSizing: 'border-box',
+      background: '#151312', border: '1px solid rgba(237,231,223,.13)',
+      borderRadius: 4, color: '#EDE7DF',
+      fontFamily: "'IBM Plex Sans Thai',sans-serif", fontSize: 13,
+      outline: 'none',
+    };
+
+    return (
+      <div>
+        {sectionHeader('Labels & Copy', '07')}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 18 }}>
+          <button
+            onClick={handleSaveCopy}
+            disabled={copySaving || !fullConfig}
+            style={{
+              padding: '8px 20px', borderRadius: 3, border: 'none',
+              background: ACCENT, color: '#fff', cursor: copySaving ? 'wait' : 'pointer',
+              fontFamily: "'IBM Plex Sans Thai',sans-serif", fontSize: 13, fontWeight: 600,
+              opacity: copySaving ? .7 : 1,
+            }}
+          >{copySaving ? 'กำลังบันทึก...' : 'บันทึก Labels'}</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {COPY_FIELDS.map(({ key, label, hint, long }) => (
+            <div key={key}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
+                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: acc, letterSpacing: '.08em' }}>{key}</span>
+                <span style={{ fontFamily: "'IBM Plex Sans Thai',sans-serif", fontSize: 11, color: 'rgba(237,231,223,.45)' }}>— {label}</span>
+              </div>
+              <div style={{ fontFamily: "'IBM Plex Sans Thai',sans-serif", fontSize: 11, color: 'rgba(237,231,223,.3)', marginBottom: 5 }}>{hint}</div>
+              {long ? (
+                <textarea
+                  value={localCopy[key] ?? ''}
+                  onChange={e => setLocalCopy(prev => ({ ...prev, [key]: e.target.value }))}
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={localCopy[key] ?? ''}
+                  onChange={e => setLocalCopy(prev => ({ ...prev, [key]: e.target.value }))}
+                  style={inputStyle}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 18, border: '1px dashed rgba(237,231,223,.14)', borderRadius: 4, padding: '10px 14px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: 'rgba(237,231,223,.35)', lineHeight: 1.7 }}>
+          ช่องที่ปล่อยว่างจะใช้ default text ของ LIFF — ไม่จำเป็นต้องกรอกทุกช่อง
+        </div>
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'theme':   return renderTheme();
@@ -665,6 +763,7 @@ export default function AppearanceConsole() {
       case 'kvs':     return renderKVs();
       case 'line':    return renderLine();
       case 'publish': return renderPublish();
+      case 'copy':    return renderCopy();
     }
   };
 

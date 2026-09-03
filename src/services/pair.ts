@@ -7,7 +7,6 @@ import { createInvite, verifyAndConsumeInvite } from './invite.js';
 import { logEvent } from './events.js';
 import { DEMO_BUDDY_USER_ID, getDemoBuddyAnswers } from './demoBuddy.js';
 import { sendPartnerDonePush } from './push.js';
-import { writeResultToLineKit } from './lineKitClient.js';
 import { BadRequestError, NotFoundError, ConflictError } from '../errors/index.js';
 import type { Answer, CampaignConfig } from '../config/schema.js';
 
@@ -238,39 +237,12 @@ export async function submitAnswers(
     axisBuddy: buddyAxis,
   }).catch((e) => console.error('Result card push failed:', e));
 
-  // Also tell LineKit this player's result — server-to-server, doesn't touch
-  // KimLIFF's own DB write or trust model, and must never break the response above.
-  // Awaited (not fire-and-forget): on Vercel, work left running after the response
-  // is sent can be frozen mid-flight before the fetch ever completes — writeResultToLineKit
-  // never throws, so awaiting it costs a little latency but no reliability.
-  await writeResultToLineKit(userId, {
-    source: 'buddy_quiz_pair',
-    campaignId: pair.campaign_id,
-    pairId,
-    resultCode: outcome.result.code,
-    resultTitle: outcome.result.title,
-    axisMe: myAxis,
-    axisBuddy: buddyAxis,
-    scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
-  }, pairId).catch((e) => console.error('LineKit write-back failed:', e));
-
   // Push notification to the other user (skip for demo buddy)
   const otherUser = isA ? pair.b_user : pair.a_user;
   if (otherUser && otherUser !== DEMO_BUDDY_USER_ID) {
     sendPartnerDonePush(otherUser, pair.campaign_id, pairId)
       .then(() => logEvent({ userId: otherUser, type: 'push_sent', pairId, campaignId: pair.campaign_id }))
       .catch((e) => console.error('Partner done push failed:', e));
-
-    await writeResultToLineKit(otherUser, {
-      source: 'buddy_quiz_pair',
-      campaignId: pair.campaign_id,
-      pairId,
-      resultCode: outcome.result.code,
-      resultTitle: outcome.result.title,
-      axisMe: buddyAxis,
-      axisBuddy: myAxis,
-      scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
-    }, pairId).catch((e) => console.error('LineKit write-back failed (partner):', e));
   }
 
   return {
@@ -291,6 +263,8 @@ export type PairView =
       result: ReturnType<typeof toPublicResult>;
       axisMe: string;
       axisBuddy: string;
+      axisMeId?: string;
+      axisBuddyId?: string;
     };
 
 /**
@@ -327,6 +301,8 @@ export async function getPairWithPartner(userId: string, partnerId: string, camp
     result: toPublicResult(resultRule),
     axisMe: isA ? labelOf(axisA) : labelOf(axisB),
     axisBuddy: isA ? labelOf(axisB) : labelOf(axisA),
+    axisMeId: isA ? axisA : axisB,
+    axisBuddyId: isA ? axisB : axisA,
   };
 }
 
@@ -363,5 +339,7 @@ export async function getPairStatus(userId: string, pairId: string): Promise<Pai
     result: toPublicResult(resultRule),
     axisMe: isA ? labelOf(axisA) : labelOf(axisB),
     axisBuddy: isA ? labelOf(axisB) : labelOf(axisA),
+    axisMeId: isA ? axisA : axisB,
+    axisBuddyId: isA ? axisB : axisA,
   };
 }

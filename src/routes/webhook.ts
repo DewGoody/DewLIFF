@@ -3,9 +3,8 @@ import express from 'express';
 import { webhookSignature } from '../middleware/webhookSignature.js';
 import { db } from '../db/client.js';
 import { logEvent } from '../services/events.js';
-import { handleTextMessage, getWelcomeMessage } from '../services/autoReply.js';
+import { handleTextMessage } from '../services/autoReply.js';
 import { handleTriggerMessage } from '../services/triggerReply.js';
-import { replyMessage } from '../services/line.js';
 
 export const webhookRouter = Router();
 
@@ -59,10 +58,6 @@ async function processEvent(event: LineEvent): Promise<void> {
           { onConflict: 'line_user_id' },
         );
       logEvent({ userId, type: 'follow' });
-      if (event.replyToken) {
-        const welcomeText = await getWelcomeMessage();
-        await replyMessage(event.replyToken, [{ type: 'text', text: welcomeText }]);
-      }
       break;
 
     case 'unfollow':

@@ -24,7 +24,7 @@ export type PublicConfig = {
   mode: string;
   brand: CampaignConfig['brand'];
   copy: Record<string, string>;
-  axes: { id: string; label: string; label_en?: string; order?: string; short?: string; image_url?: string; poles?: string[]; group_weight?: number }[];
+  axes: { id: string; label: string; label_en?: string; order?: string; short?: string; body?: string; image_url?: string; poles?: string[]; group_weight?: number }[];
   questions: { id: string; kicker?: string; text: string; options: { id: string; label: string }[] }[];
   rewards?: RewardConfig;
   group?: PublicGroupConfig;
@@ -64,5 +64,7 @@ export type PublicResult = {
 };
 
 export function toPublicResult(r: ResultRule): PublicResult {
-  return { code: r.code, title: r.title, body: r.body, image_url: r.image_url, rank: r.rank };
+  // Strip legacy rank prefix (e.g. "อันดับที่ 15 จาก 15 คู่\n\n...") from body
+  const body = (r.body || '').replace(/^อันดับที่\s*\d+\s*จาก\s*\d+\s*คู่\s*\n+/, '').trim();
+  return { code: r.code, title: r.title, body, image_url: r.image_url, rank: r.rank };
 }

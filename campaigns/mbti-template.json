@@ -1,0 +1,290 @@
+{
+  "id": "mbti_template",
+  "type": "buddy_quiz",
+  "mode": "mbti",
+  "version": 1,
+  "brand": {
+    "name": "QUIZ NAME",
+    "primary": "#E8354F",
+    "surface": "#0C0B0A",
+    "on_surface": "#EDE7DF"
+  },
+  "copy": {
+    "intro_quiz_label": "SOLO QUIZ · 8 ข้อ",
+    "intro_body": "ตอบ 8 ข้อ รู้ว่าคุณเป็น type ไหน",
+    "intro_cta": "เริ่มตอบ",
+    "intro_note": "รู้ผลทันที",
+    "share_btn": "↗ แชร์ผล"
+  },
+  "axes": [
+    {
+      "id": "dim1",
+      "label": "มิติที่ 1",
+      "group_weight": 10,
+      "poles": [
+        "I",
+        "E"
+      ]
+    },
+    {
+      "id": "dim2",
+      "label": "มิติที่ 2",
+      "group_weight": 10,
+      "poles": [
+        "N",
+        "S"
+      ]
+    },
+    {
+      "id": "dim3",
+      "label": "มิติที่ 3",
+      "group_weight": 10,
+      "poles": [
+        "T",
+        "F"
+      ]
+    },
+    {
+      "id": "dim4",
+      "label": "มิติที่ 4",
+      "group_weight": 10,
+      "poles": [
+        "J",
+        "P"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "kicker": "01",
+      "text": "คำถามที่ 1",
+      "options": [
+        {
+          "id": "q1a",
+          "label": "ตัวเลือก A",
+          "scores": {
+            "dim1": 2,
+            "dim2": 1,
+            "dim3": 0,
+            "dim4": 0
+          }
+        },
+        {
+          "id": "q1b",
+          "label": "ตัวเลือก B",
+          "scores": {
+            "dim1": -2,
+            "dim2": -1,
+            "dim3": 0,
+            "dim4": 0
+          }
+        },
+        {
+          "id": "q1c",
+          "label": "ตัวเลือก C",
+          "scores": {
+            "dim1": 0,
+            "dim2": 0,
+            "dim3": 2,
+            "dim4": 0
+          }
+        },
+        {
+          "id": "q1d",
+          "label": "ตัวเลือก D",
+          "scores": {
+            "dim1": 0,
+            "dim2": 0,
+            "dim3": -2,
+            "dim4": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "kicker": "02",
+      "text": "คำถามที่ 2",
+      "options": [
+        {
+          "id": "q2a",
+          "label": "ตัวเลือก A",
+          "scores": {
+            "dim1": 0,
+            "dim2": 2,
+            "dim3": 0,
+            "dim4": 1
+          }
+        },
+        {
+          "id": "q2b",
+          "label": "ตัวเลือก B",
+          "scores": {
+            "dim1": 0,
+            "dim2": -2,
+            "dim3": 0,
+            "dim4": -1
+          }
+        },
+        {
+          "id": "q2c",
+          "label": "ตัวเลือก C",
+          "scores": {
+            "dim1": 1,
+            "dim2": 0,
+            "dim3": 0,
+            "dim4": 2
+          }
+        },
+        {
+          "id": "q2d",
+          "label": "ตัวเลือก D",
+          "scores": {
+            "dim1": -1,
+            "dim2": 0,
+            "dim3": 0,
+            "dim4": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "kicker": "03",
+      "text": "คำถามที่ 3",
+      "options": [
+        {
+          "id": "q3a",
+          "label": "ตัวเลือก A",
+          "scores": {
+            "dim1": 2,
+            "dim2": 0,
+            "dim3": 1,
+            "dim4": 0
+          }
+        },
+        {
+          "id": "q3b",
+          "label": "ตัวเลือก B",
+          "scores": {
+            "dim1": -2,
+            "dim2": 0,
+            "dim3": -1,
+            "dim4": 0
+          }
+        },
+        {
+          "id": "q3c",
+          "label": "ตัวเลือก C",
+          "scores": {
+            "dim1": 0,
+            "dim2": 1,
+            "dim3": 0,
+            "dim4": 2
+          }
+        },
+        {
+          "id": "q3d",
+          "label": "ตัวเลือก D",
+          "scores": {
+            "dim1": 0,
+            "dim2": -1,
+            "dim3": 0,
+            "dim4": -2
+          }
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "code": "intj",
+      "title": "INTJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "intp",
+      "title": "INTP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "infj",
+      "title": "INFJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "infp",
+      "title": "INFP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "istj",
+      "title": "ISTJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "istp",
+      "title": "ISTP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "isfj",
+      "title": "ISFJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "isfp",
+      "title": "ISFP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "entj",
+      "title": "ENTJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "entp",
+      "title": "ENTP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "enfj",
+      "title": "ENFJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "enfp",
+      "title": "ENFP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "estj",
+      "title": "ESTJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "estp",
+      "title": "ESTP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "esfj",
+      "title": "ESFJ — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    },
+    {
+      "code": "esfp",
+      "title": "ESFP — ชื่อ type",
+      "body": "คำอธิบาย type นี้"
+    }
+  ],
+  "fallback_result": "intj",
+  "rules": {
+    "invite_ttl_hours": 48,
+    "require_friend": false,
+    "max_pairs_per_user_per_day": 50,
+    "allow_self_pair": false
+  },
+  "messages": {}
+}

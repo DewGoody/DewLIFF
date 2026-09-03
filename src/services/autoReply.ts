@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
 import { replyMessage } from './line.js';
-import { env, getAppBaseUrl } from '../env.js';
+import { env } from '../env.js';
 import type { LineMessage } from './line.js';
 
 /**
@@ -151,9 +151,7 @@ function buildReply(rule: CachedRule): LineMessage | null {
   }
 }
 
-// DewLIFF is its own separate Vercel deployment from KimLIFF's — never hardcode
-// KimLIFF's own domain here. getAppBaseUrl() self-configures (see src/env.ts).
-const DEMO_URL = `${getAppBaseUrl()}/demo`;
+const DEMO_URL = 'https://laan-kijjakam.vercel.app/demo';
 
 function buildDemoCard(): LineMessage {
   return {

@@ -2,13 +2,11 @@ import type { RequestHandler } from 'express';
 import { verifyIdToken } from '../services/line.js';
 import { UnauthorizedError } from '../errors/index.js';
 import { db } from '../db/client.js';
-import { env } from '../env.js';
 
 /** Requires a valid LINE ID token. Rejects with 401 if missing or invalid. */
 export const auth: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
-    console.error('[auth debug] no Authorization header on', req.path);
     next(new UnauthorizedError());
     return;
   }
@@ -16,21 +14,8 @@ export const auth: RequestHandler = async (req, _res, next) => {
   const idToken = header.slice(7);
 
   try {
-    const payload = idToken.split('.')[1];
-    const claims = payload ? JSON.parse(Buffer.from(payload, 'base64').toString('utf8')) : null;
-    console.error(
-      '[auth debug] token aud:', claims?.aud,
-      'exp:', claims?.exp, 'now:', Math.floor(Date.now() / 1000),
-      'expected LINE_CHANNEL_ID:', env().LINE_CHANNEL_ID,
-    );
-  } catch (e) {
-    console.error('[auth debug] could not decode token payload:', e);
-  }
-
-  try {
     const profile = await verifyIdToken(idToken);
     req.userId = profile.sub;
-    console.error('[auth debug] verified ok, sub:', profile.sub);
 
     // Upsert user — fire and forget
     db()
@@ -48,7 +33,6 @@ export const auth: RequestHandler = async (req, _res, next) => {
 
     next();
   } catch (err) {
-    console.error('[auth debug] verifyIdToken failed:', err instanceof Error ? err.message : err);
     next(err instanceof UnauthorizedError ? err : new UnauthorizedError());
   }
 };

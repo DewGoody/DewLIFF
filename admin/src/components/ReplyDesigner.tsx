@@ -252,10 +252,10 @@ export default function ReplyDesigner() {
         >
           ← แคมเปญ
         </button>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
         <span style={{ width: 1, height: 16, background: '#E5E5E3' }} />
         <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.015em' }}>Reply Designer</span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', border: '1px solid #E5E5E3', background: '#F7F7F5', padding: '3px 8px' }}>{cid}</span>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', border: '1px solid #E5E5E3', background: '#F7F7F5', padding: '3px 8px' }}>{cid}</span>
         <div style={{ flex: 1 }} />
         <button onClick={() => navigate('/campaign/' + cid)} style={{ fontSize: 13, color: '#5C5C58', border: '1px solid #E5E5E3', borderRadius: 9, padding: '8px 14px', background: '#fff', cursor: 'pointer' }}>Config Playground</button>
         <button
@@ -277,7 +277,7 @@ export default function ReplyDesigner() {
           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 28px', borderBottom: '1px solid #E5E5E3', fontSize: 13,
           background: noteError ? 'rgba(230,59,46,.08)' : 'rgba(22,163,74,.08)',
         }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
             {noteError ? 'Error' : 'Saved'}
           </span>
           <span>{note}</span>
@@ -287,16 +287,16 @@ export default function ReplyDesigner() {
       {/* Stats bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: '1px solid #E5E5E3' }}>
         <div style={{ padding: '18px 28px' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>จุดที่ส่งข้อความ</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6 }}>{FLOWS.length}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>จุดที่ส่งข้อความ</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6 }}>{FLOWS.length}</div>
         </div>
         <div style={{ padding: '18px 28px', borderLeft: '1px solid #E5E5E3' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#16A34A' }}>ฟรี · ไม่นับ quota</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6, color: '#16A34A' }}>{freeCount}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#16A34A' }}>ฟรี · ไม่นับ quota</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6, color: '#16A34A' }}>{freeCount}</div>
         </div>
         <div style={{ padding: '18px 28px', borderLeft: '1px solid #E5E5E3', background: 'rgba(217,119,6,.06)' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#D97706' }}>Push · นับ quota</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6, color: '#D97706' }}>{pushCount}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#D97706' }}>Push · นับ quota</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 500, letterSpacing: '-.02em', marginTop: 6, color: '#D97706' }}>{pushCount}</div>
         </div>
       </div>
 
@@ -318,16 +318,16 @@ export default function ReplyDesigner() {
                 onClick={() => setOpenFlow(isOpen ? '' : f.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '15px 18px', border: 0, background: 'transparent', cursor: 'pointer' }}
               >
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.06em', color: '#9B9B98' }}>{f.mark}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.06em', color: '#9B9B98' }}>{f.mark}</span>
                 <span style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-.01em', textAlign: 'left' }}>{f.title}</span>
                 <span style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase',
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase',
                   padding: '3px 8px', border: '1px solid ' + ch.color, background: ch.bg, color: ch.color,
                 }}>
                   {ch.label}
                 </span>
                 {v.enabled !== undefined && (
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: off ? '#9B9B98' : '#111111' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: off ? '#9B9B98' : '#111111' }}>
                     {off ? 'ปิด' : 'เปิด'}
                   </span>
                 )}
@@ -340,20 +340,20 @@ export default function ReplyDesigner() {
                 <div style={{ borderTop: '1px solid #E5E5E3', padding: '20px 22px', background: '#FAFAF9' }}>
                   {/* Trigger */}
                   <div style={{ border: '1px solid #E5E5E3', background: '#fff', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Trigger</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Trigger</div>
                     {f.trigger.map((t, ti) => (
                       <div key={ti} style={{ display: 'grid', gridTemplateColumns: '16px 1fr', gap: 9, alignItems: 'start', fontSize: 13.5, lineHeight: 1.55 }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#9B9B98', paddingTop: 2 }}>{t.mark}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#9B9B98', paddingTop: 2 }}>{t.mark}</span>
                         <span>{t.text}</span>
                       </div>
                     ))}
-                    <div style={{ marginTop: 2, fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#5C5C58', background: '#F7F7F5', border: '1px solid #E5E5E3', padding: '7px 9px' }}>{f.api}</div>
+                    <div style={{ marginTop: 2, fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#5C5C58', background: '#F7F7F5', border: '1px solid #E5E5E3', padding: '7px 9px' }}>{f.api}</div>
                   </div>
 
                   {/* Keywords — from DB */}
                   {f.keywords && (
                     <div style={{ border: '1px solid #E5E5E3', borderTop: 0, background: '#fff', padding: '14px 16px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 10 }}>Keywords ที่ผูก</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 10 }}>Keywords ที่ผูก</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center' }}>
                         {keywords.length === 0 && (
                           <span style={{ fontSize: 12.5, color: '#9B9B98' }}>ยังไม่มี keyword ที่ผูกกับแคมเปญนี้</span>
@@ -381,7 +381,7 @@ export default function ReplyDesigner() {
                         ))}
                         <button
                           onClick={() => navigate('/message-manager')}
-                          style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#2563EB', padding: '5px 10px', border: '1px dashed #C9C9C6', borderRadius: 99, background: 'transparent', cursor: 'pointer' }}
+                          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#2563EB', padding: '5px 10px', border: '1px dashed #C9C9C6', borderRadius: 99, background: 'transparent', cursor: 'pointer' }}
                         >
                           + จัดการ keyword
                         </button>
@@ -394,7 +394,7 @@ export default function ReplyDesigner() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', border: '1px solid #E5E5E3', borderTop: 0, background: '#fff' }}>
                     {/* Editor */}
                     <div style={{ padding: '18px 18px 22px', display: 'flex', flexDirection: 'column', gap: 16, borderRight: '1px solid #E5E5E3' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Editor</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Editor</div>
                       {f.fields.map((fd) => {
                         const rawVal = v[fd.k];
                         const isBool = fd.type === 'bool';
@@ -403,8 +403,8 @@ export default function ReplyDesigner() {
                         return (
                           <div key={fd.k}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>{fd.label}</span>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#C0C0BD' }}>{fd.k}</span>
+                              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>{fd.label}</span>
+                              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#C0C0BD' }}>{fd.k}</span>
                             </div>
                             {fd.type === 'text' && (
                               <input
@@ -443,8 +443,8 @@ export default function ReplyDesigner() {
                     {/* Preview */}
                     <div style={{ padding: '18px 18px 22px', background: '#F7F7F5', display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Preview</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#111' }}>{sf.label}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Preview</span>
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#111' }}>{sf.label}</span>
                       </div>
 
                       {/* Push banner */}
@@ -454,7 +454,7 @@ export default function ReplyDesigner() {
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                               <span style={{ fontSize: 11.5, fontWeight: 600, color: '#fff' }}>{sf.who}</span>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: 'rgba(255,255,255,.5)' }}>ตอนนี้</span>
+                              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, color: 'rgba(255,255,255,.5)' }}>ตอนนี้</span>
                             </div>
                             <div style={{ fontSize: 11.5, lineHeight: 1.45, color: 'rgba(255,255,255,.82)', marginTop: 3 }}>
                               {typeof v.altText === 'string' ? v.altText.slice(0, 44) + (v.altText.length > 44 ? '…' : '') : ''}
@@ -466,7 +466,7 @@ export default function ReplyDesigner() {
                       {/* ShareTargetPicker */}
                       {!off && f.picker && (
                         <div style={{ border: '1px solid #E5E5E3', background: '#fff', padding: '11px 12px' }}>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 9 }}>ShareTargetPicker</div>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 9 }}>ShareTargetPicker</div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             {pickerFriends.map((p) => (
                               <div key={p.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
@@ -521,7 +521,7 @@ export default function ReplyDesigner() {
                       {/* Alt text preview (friend surface) */}
                       {typeof v.altText === 'string' && v.altText && f.surface === 'friend' && (
                         <div style={{ border: '1px solid #E5E5E3', background: '#fff', padding: '9px 11px' }}>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ในรายการแชท</div>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ในรายการแชท</div>
                           <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr', gap: 8, alignItems: 'center' }}>
                             <span style={{ width: 20, height: 20, borderRadius: 99, background: '#E5E5E3', display: 'block' }} />
                             <div style={{ minWidth: 0 }}>
@@ -545,11 +545,11 @@ export default function ReplyDesigner() {
         {/* Quota note */}
         <div style={{ border: '1px solid #E5E5E3', background: '#F7F7F5', padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>กติกา quota</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>กติกา quota</div>
             <div style={{ fontSize: 13, lineHeight: 1.65, color: '#5C5C58' }}>Reply กับ ShareTargetPicker ส่งฟรีไม่จำกัด — Push นับ quota ทุกข้อความ · ระบบออกแบบให้ 5 ใน 6 จุดเป็นฟรี เหลือ Push เฉพาะจุดที่ต้องดึงคนกลับมา</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>ต่อไปที่ไหน</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>ต่อไปที่ไหน</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               <button onClick={() => navigate('/')} style={{ fontSize: 12.5, border: '1px solid #E5E5E3', background: '#fff', borderRadius: 99, padding: '6px 13px', cursor: 'pointer' }}>Campaigns</button>
               <button onClick={() => navigate('/campaign/' + cid)} style={{ fontSize: 12.5, border: '1px solid #E5E5E3', background: '#fff', borderRadius: 99, padding: '6px 13px', cursor: 'pointer' }}>Config Playground</button>

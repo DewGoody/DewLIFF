@@ -10,21 +10,44 @@ interface Props {
   onPlay: () => void;
 }
 
+function generateMbtiCodes(axes: EditorState['axes']): string[] {
+  let codes = [''];
+  for (const ax of axes) {
+    const p0 = (ax.poles?.[0] ?? ax.id[0] ?? 'A').toUpperCase();
+    const p1 = (ax.poles?.[1] ?? ax.id[1] ?? 'B').toUpperCase();
+    codes = codes.flatMap(prefix => [prefix + p0, prefix + p1]);
+  }
+  return codes.map(c => c.toLowerCase());
+}
+
 function validate(state: EditorState): string[] {
   const issues: string[] = [];
-  if (state.axes.length < 2) issues.push('ต้องมีแกนอย่างน้อย 2 แกน');
+  if (state.axes.length < 1) issues.push('ต้องมีแกนอย่างน้อย 1 แกน');
   if (state.questions.length < 1) issues.push('ต้องมีคำถามอย่างน้อย 1 ข้อ');
   state.questions.forEach((q, i) => {
     if (!q.text.trim()) issues.push(`คำถามข้อ ${i + 1} ยังไม่มีข้อความ`);
-    const hasScore = q.options.some((o) => Object.values(o.scores).some((v) => v > 0));
+    const hasScore = q.options.some((o) => Object.values(o.scores).some((v) => v !== 0));
     if (!hasScore) issues.push(`คำถามข้อ ${i + 1} ยังไม่มีคะแนน`);
     if (q.options.length < 2) issues.push(`คำถามข้อ ${i + 1} ต้องมีตัวเลือกอย่างน้อย 2 ข้อ`);
   });
-  for (let i = 0; i < state.axes.length; i++) {
-    for (let j = i; j < state.axes.length; j++) {
-      const key = pairKey(state.axes[i].id, state.axes[j].id);
-      const r = state.results[key];
-      if (!r || !r.title) issues.push(`ยังไม่มีผลลัพธ์สำหรับ ${state.axes[i].label}+${state.axes[j].label}`);
+
+  if (state.mode === 'mbti') {
+    const hasPoles = state.axes.every(ax => ax.poles?.[0] && ax.poles?.[1]);
+    if (!hasPoles) {
+      issues.push('แกน MBTI ต้องมี Pole+ และ Pole− ทุกแกน');
+    } else {
+      const codes = generateMbtiCodes(state.axes);
+      for (const code of codes) {
+        if (!state.results[code]?.title) issues.push(`ยังไม่มีผลลัพธ์สำหรับ type "${code.toUpperCase()}"`);
+      }
+    }
+  } else {
+    for (let i = 0; i < state.axes.length; i++) {
+      for (let j = i; j < state.axes.length; j++) {
+        const key = pairKey(state.axes[i].id, state.axes[j].id);
+        const r = state.results[key];
+        if (!r || !r.title) issues.push(`ยังไม่มีผลลัพธ์สำหรับ ${state.axes[i].label}+${state.axes[j].label}`);
+      }
     }
   }
   return issues;
@@ -32,15 +55,18 @@ function validate(state: EditorState): string[] {
 
 export default function Sidebar({ state, campaignStatus, isSaving, onSave, onStatusChange, onPlay }: Props) {
   const axes = state.axes;
-  const totalPairs = axes.length * (axes.length + 1) / 2;
-  const filledPairs = Object.values(state.results).filter((r) => r && r.title).length;
+  const isMbti = state.mode === 'mbti';
   const issues = validate(state);
 
+  const filledResults = Object.values(state.results).filter((r) => r && r.title).length;
+  let totalExpected: number;
   let resultText: string;
-  if (filledPairs >= totalPairs && totalPairs > 0) {
-    resultText = `ครบ ${totalPairs} คู่`;
+  if (isMbti) {
+    totalExpected = Math.pow(2, axes.length);
+    resultText = filledResults >= totalExpected ? `ครบ ${totalExpected} types` : `${filledResults}/${totalExpected} types`;
   } else {
-    resultText = `${filledPairs} ผล`;
+    totalExpected = axes.length * (axes.length + 1) / 2;
+    resultText = filledResults >= totalExpected && totalExpected > 0 ? `ครบ ${totalExpected} คู่` : `${filledResults} ผล`;
   }
 
   const STATUS_OPTIONS: Array<{ value: 'draft' | 'live' | 'ended'; label: string }> = [
@@ -85,7 +111,23 @@ export default function Sidebar({ state, campaignStatus, isSaving, onSave, onSta
         </div>
       </div>
 
-      {axes.length >= 2 && (
+      {isMbti && axes.length >= 1 && axes.every(ax => ax.poles?.[0] && ax.poles?.[1]) && (
+        <div className="sb-section">
+          <div className="sb-title">MBTI Types</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+            {generateMbtiCodes(axes).map(code => {
+              const has = !!(state.results[code]?.title);
+              return (
+                <span key={code} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '2px 6px', borderRadius: 4, background: has ? '#1C1A17' : '#F0F0EE', color: has ? '#fff' : '#aaa', border: '1px solid ' + (has ? '#1C1A17' : '#E5E5E3') }}>
+                  {code.toUpperCase()}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!isMbti && axes.length >= 2 && (
         <div className="sb-section">
           <div className="sb-title">Pair Matrix</div>
           <div className="matrix">

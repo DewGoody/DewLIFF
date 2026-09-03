@@ -18,6 +18,8 @@ import { richMenusRouter } from './routes/richmenus.js';
 import { uploadRouter } from './routes/upload.js';
 import { rewardsAdminRouter, rewardsQuizRouter } from './routes/rewards.js';
 import { groupRouter } from './routes/group.js';
+import { reportsRouter } from './routes/reports.js';
+import { joinRouter } from './routes/join.js';
 import { auth } from './middleware/auth.js';
 import { env } from './env.js';
 
@@ -48,6 +50,8 @@ export function createApp() {
   app.use('/api/admin/rewards', rewardsAdminRouter);
   app.use('/api/quiz/rewards', auth, rewardsQuizRouter);
   app.use('/api/group', groupRouter);
+  app.use('/api/reports', reportsRouter);
+  app.use('/join', joinRouter);
 
   // Serve LIFF frontend
   const publicDir = path.join(__dirname, '..', 'public');

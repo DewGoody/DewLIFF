@@ -11,7 +11,10 @@
   --border:2.5px solid #1C1A17;
   --shadow:4px 5px 0 #1C1A17;
   --shadow-lg:5px 6px 0 #1C1A17;
-  --radius:13px
+  --radius:13px;
+  --font-display:'Bangers';
+  --font-body:'Bai Jamjuree';
+  --font-accent:'Gloria Hallelujah'
 }
 html,body,#root{height:100%;overflow:hidden}
 body{font-family:'Bai Jamjuree',system-ui,sans-serif;background:var(--bg);color:var(--ink)}

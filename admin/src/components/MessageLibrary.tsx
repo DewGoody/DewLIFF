@@ -197,10 +197,10 @@ export default function MessageLibrary() {
         >
           ← แคมเปญ
         </button>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
         <span style={{ width: 1, height: 16, background: '#E5E5E3' }} />
         <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.015em' }}>Message Library</span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', border: '1px solid #E5E5E3', background: '#F7F7F5', padding: '3px 8px' }}>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', border: '1px solid #E5E5E3', background: '#F7F7F5', padding: '3px 8px' }}>
           {msgs.length} messages
         </span>
         <div style={{ flex: 1, minWidth: 12 }} />
@@ -212,7 +212,7 @@ export default function MessageLibrary() {
       {/* Saved note */}
       {note && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 28px', borderBottom: '1px solid #E5E5E3', background: note.includes('ไม่สำเร็จ') ? 'rgba(230,59,46,.08)' : 'rgba(22,163,74,.08)', fontSize: 13 }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: note.includes('ไม่สำเร็จ') ? '#E63B2E' : '#16A34A' }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: note.includes('ไม่สำเร็จ') ? '#E63B2E' : '#16A34A' }}>
             {note.includes('ไม่สำเร็จ') ? 'Error' : 'Saved'}
           </span>
           <span>{note}</span>
@@ -235,7 +235,7 @@ export default function MessageLibrary() {
               }}
             >
               {f.label}
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: on ? 'rgba(255,255,255,.6)' : '#9B9B98' }}>{n}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: on ? 'rgba(255,255,255,.6)' : '#9B9B98' }}>{n}</span>
             </button>
           );
         })}
@@ -254,7 +254,7 @@ export default function MessageLibrary() {
         {/* Left: table */}
         <div style={{ borderRight: '1px solid #E5E5E3' }}>
           {/* Head row */}
-          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 14, padding: '11px 16px', borderBottom: '1px solid #E5E5E3', background: '#fff', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#C0C0BD' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 14, padding: '11px 16px', borderBottom: '1px solid #E5E5E3', background: '#fff', fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#C0C0BD' }}>
             <span>ID</span><span>Preview</span><span>ชื่อ</span><span>ประเภท</span><span>ใช้ในจุด</span><span>แก้ล่าสุด</span>
           </div>
 
@@ -273,14 +273,14 @@ export default function MessageLibrary() {
                   boxShadow: on ? 'inset 3px 0 0 #111' : undefined,
                 }}
               >
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#9B9B98' }}>{String(m.id).padStart(3, '0')}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#9B9B98' }}>{String(m.id).padStart(3, '0')}</span>
                 <div style={{
                   height: 44, border: '1px solid #E5E5E3',
                   background: m.type === 'text' ? '#fff' : '#F7F7F5',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   padding: '0 6px', textAlign: 'center', overflow: 'hidden',
                   fontSize: 9.5, lineHeight: 1.25, color: '#9B9B98',
-                  fontFamily: m.type === 'text' ? undefined : "'DM Mono',monospace",
+                  fontFamily: m.type === 'text' ? undefined : "'JetBrains Mono',monospace",
                   letterSpacing: m.type === 'text' ? undefined : '.06em',
                   textTransform: m.type === 'text' ? undefined : 'uppercase',
                 }}>
@@ -293,7 +293,7 @@ export default function MessageLibrary() {
                   </div>
                 </div>
                 <span style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase',
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase',
                   padding: '3px 8px', justifySelf: 'start', border: '1px solid ' + typeColor(m.type), color: typeColor(m.type),
                 }}>
                   {tt.label}
@@ -301,7 +301,7 @@ export default function MessageLibrary() {
                 <span style={{ fontSize: 11.5, color: m.usage.length ? '#5C5C58' : '#C0C0BD' }}>
                   {m.usage.length ? m.usage.join(' · ') : 'ยังไม่ผูก'}
                 </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: '#9B9B98' }}>{relativeTime(m.updated_at)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, color: '#9B9B98' }}>{relativeTime(m.updated_at)}</span>
               </div>
             );
           })}
@@ -315,11 +315,11 @@ export default function MessageLibrary() {
 
           {/* Type reference table */}
           <div style={{ padding: '22px 28px 34px', borderTop: '1px solid #E5E5E3' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 12 }}>ประเภทที่ส่งได้ผ่าน Messaging API</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 12 }}>ประเภทที่ส่งได้ผ่าน Messaging API</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', border: '1px solid #E5E5E3' }}>
               {TYPES.map((t, i) => (
                 <div key={t.id} style={{ padding: '14px 14px 16px', borderRight: i < TYPES.length - 1 ? '1px solid #E5E5E3' : undefined }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98' }}>{t.code}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98' }}>{t.code}</div>
                   <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>{t.label}</div>
                   <div style={{ fontSize: 11.5, color: '#5C5C58', lineHeight: 1.5, marginTop: 5 }}>{t.fields}</div>
                 </div>
@@ -333,7 +333,7 @@ export default function MessageLibrary() {
           {selMsg ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '16px 22px', borderBottom: '1px solid #E5E5E3' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>
                   #{selMsg.id} · {typeOf(selType).label}
                 </span>
                 <div style={{ display: 'flex', gap: 6 }}>
@@ -345,7 +345,7 @@ export default function MessageLibrary() {
               <div style={{ padding: '20px 22px', borderBottom: '1px solid #E5E5E3', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* Name */}
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ชื่อข้อความ</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ชื่อข้อความ</div>
                   <input
                     value={selMsg.name}
                     onChange={(e) => patch({ name: e.target.value })}
@@ -356,21 +356,21 @@ export default function MessageLibrary() {
                 {/* Body */}
                 {(isText || isFlex) && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ข้อความ</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ข้อความ</div>
                     <textarea
                       value={selMsg.body}
                       onChange={(e) => patch({ body: e.target.value })}
                       rows={4}
                       style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', border: '1px solid #E5E5E3', borderRadius: 9, fontSize: 13.5, lineHeight: 1.55, resize: 'vertical', outline: 'none' }}
                     />
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginTop: 5 }}>{selMsg.body.length} / 5000</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginTop: 5 }}>{selMsg.body.length} / 5000</div>
                   </div>
                 )}
 
                 {/* Title (flex) */}
                 {isFlex && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>Title</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>Title</div>
                     <input
                       value={selMsg.title}
                       onChange={(e) => patch({ title: e.target.value })}
@@ -382,7 +382,7 @@ export default function MessageLibrary() {
                 {/* Image Upload */}
                 {(isFlex || isImg) && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>
                       Image
                     </div>
                     <ImageUploader
@@ -395,14 +395,14 @@ export default function MessageLibrary() {
                 )}
                 {isVid && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>
                       Video URL
                     </div>
                     <input
                       value={selMsg.image_url}
                       onChange={(e) => patch({ image_url: e.target.value })}
                       placeholder="https://…mp4"
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'DM Mono',monospace", fontSize: 12, outline: 'none' }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'JetBrains Mono',monospace", fontSize: 12, outline: 'none' }}
                     />
                     <div style={{ marginTop: 6, fontSize: 11, color: '#9B9B98' }}>mp4 · ≤ 200mb</div>
                   </div>
@@ -411,7 +411,7 @@ export default function MessageLibrary() {
                 {/* CTA button (flex) */}
                 {isFlex && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ปุ่มบนการ์ด</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ปุ่มบนการ์ด</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 118px', gap: 8 }}>
                       <input
                         value={selMsg.cta}
@@ -421,7 +421,7 @@ export default function MessageLibrary() {
                       <input
                         value={selMsg.action}
                         onChange={(e) => patch({ action: e.target.value })}
-                        style={{ width: '100%', boxSizing: 'border-box', padding: '11px 10px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'DM Mono',monospace", fontSize: 11.5, outline: 'none' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '11px 10px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, outline: 'none' }}
                       />
                     </div>
                   </div>
@@ -430,11 +430,11 @@ export default function MessageLibrary() {
                 {/* Imagemap areas */}
                 {isMap && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 7 }}>พื้นที่กด</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 7 }}>พื้นที่กด</div>
                     <div style={{ border: '1px solid #E5E5E3' }}>
                       {(selMsg.areas || []).map((a, ai) => (
                         <div key={ai} style={{ display: 'grid', gridTemplateColumns: '22px 1fr 96px', gap: 10, alignItems: 'center', padding: '9px 11px', borderBottom: ai < (selMsg.areas?.length || 0) - 1 ? '1px solid #F0F0EE' : undefined }}>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: '#9B9B98' }}>{String(ai + 1).padStart(2, '0')}</span>
+                          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, color: '#9B9B98' }}>{String(ai + 1).padStart(2, '0')}</span>
                           <input
                             value={a.label}
                             onChange={(e) => {
@@ -443,7 +443,7 @@ export default function MessageLibrary() {
                             }}
                             style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #E5E5E3', borderRadius: 7, fontSize: 13, outline: 'none' }}
                           />
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: '#5C5C58' }}>{a.action}</span>
+                          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, color: '#5C5C58' }}>{a.action}</span>
                         </div>
                       ))}
                     </div>
@@ -452,7 +452,7 @@ export default function MessageLibrary() {
 
                 {/* Usage chips */}
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 7 }}>ใช้ในจุด</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 7 }}>ใช้ในจุด</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {USAGES.map((u) => {
                       const on = selMsg.usage.includes(u);
@@ -478,9 +478,9 @@ export default function MessageLibrary() {
               {/* Preview panel */}
               <div style={{ padding: '20px 22px 28px', background: '#F7F7F5', flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Preview ใน LINE</span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>Preview ใน LINE</span>
                   <span style={{
-                    fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '2px 7px',
+                    fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '2px 7px',
                     border: '1px solid ' + (isPaid ? '#D97706' : '#16A34A'),
                     color: isPaid ? '#D97706' : '#16A34A',
                     background: isPaid ? 'rgba(217,119,6,.08)' : 'rgba(22,163,74,.08)',
@@ -491,7 +491,7 @@ export default function MessageLibrary() {
 
                 <div style={{ border: '1px solid #E5E5E3', background: '#fff', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <span style={{ width: 28, height: 28, borderRadius: 99, background: '#F0F0EE', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#9B9B98' }}>OA</span>
+                    <span style={{ width: 28, height: 28, borderRadius: 99, background: '#F0F0EE', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: '#9B9B98' }}>OA</span>
                     <div style={{
                       border: '1px solid #E5E5E3', overflow: 'hidden', borderRadius: '4px 14px 14px 14px', background: '#fff',
                       ...(isText ? { maxWidth: 250, padding: '10px 12px' } : { width: 250, flexShrink: 0 }),
@@ -501,7 +501,7 @@ export default function MessageLibrary() {
                         <>
                           <div style={{
                             height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', color: '#fff',
+                            fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', color: '#fff',
                             background: selMsg.image_url ? `center/cover no-repeat url("${selMsg.image_url}")` : ACCENT,
                           }}>
                             {selMsg.image_url ? '' : 'HERO 1040×520'}
@@ -518,7 +518,7 @@ export default function MessageLibrary() {
                       {(isImg || isVid) && (
                         <div style={{
                           width: '100%', height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', color: '#9B9B98',
+                          fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', color: '#9B9B98',
                           background: selMsg.image_url ? `center/cover no-repeat url("${selMsg.image_url}")` : 'repeating-linear-gradient(135deg,#F7F7F5 0 8px,#EFEFEC 8px 16px)',
                         }}>
                           {selMsg.image_url ? '' : (isVid ? 'VIDEO PREVIEW' : 'IMAGE 1040×1040')}
@@ -533,7 +533,7 @@ export default function MessageLibrary() {
                       )}
                     </div>
                   </div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#C0C0BD', textAlign: 'right' }}>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', color: '#C0C0BD', textAlign: 'right' }}>
                     {typeOf(selType).label} · altText {selMsg.name.length + 8} chars
                   </div>
                 </div>
@@ -584,7 +584,7 @@ export default function MessageLibrary() {
                     background: '#fff', cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98' }}>{t.code}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98' }}>{t.code}</span>
                   <span style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>{t.label}</span>
                   <span style={{ fontSize: 12, color: '#5C5C58', lineHeight: 1.5, marginTop: 4 }}>{t.fields}</span>
                 </button>

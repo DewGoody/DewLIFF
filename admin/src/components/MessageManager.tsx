@@ -158,7 +158,7 @@ export default function MessageManager() {
         >
           ← แคมเปญ
         </button>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
         <span style={{ width: 1, height: 16, background: '#E5E5E3' }} />
         <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.015em' }}>Message Manager</span>
         <div style={{ flex: 1 }} />
@@ -182,7 +182,7 @@ export default function MessageManager() {
           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 28px', borderBottom: '1px solid #E5E5E3', fontSize: 13,
           background: noteError ? 'rgba(230,59,46,.08)' : 'rgba(22,163,74,.08)',
         }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
             {noteError ? 'Error' : 'Saved'}
           </span>
           <span>{note}</span>
@@ -198,15 +198,15 @@ export default function MessageManager() {
           {/* Section 01 — Welcome */}
           <div style={{ padding: '24px 28px', borderBottom: '1px solid #E5E5E3' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>01 · ข้อความต้อนรับ</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '3px 8px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.08)', color: '#16A34A' }}>Reply · ฟรี</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>01 · ข้อความต้อนรับ</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '3px 8px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.08)', color: '#16A34A' }}>Reply · ฟรี</span>
             </div>
             <div style={{ fontSize: 13.5, color: '#5C5C58', lineHeight: 1.6, marginBottom: 16 }}>ส่งอัตโนมัติเมื่อ user กดเพิ่มเพื่อน OA — ไม่นับ quota · บอกวิธีเริ่มเล่นให้ชัดในบรรทัดนี้</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 250px', gap: 18, alignItems: 'start' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>welcome.text</span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>welcome.text</span>
                   <button
                     onClick={() => { setWelcome((w) => ({ ...w, on: !w.on })); setWelcomeDirty(true); }}
                     style={{
@@ -225,12 +225,12 @@ export default function MessageManager() {
                   rows={4}
                   style={{ width: '100%', boxSizing: 'border-box', padding: 12, border: '1px solid #E5E5E3', borderRadius: 9, fontSize: 13.5, lineHeight: 1.6, outline: 'none', resize: 'vertical' }}
                 />
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, marginTop: 7, color: over ? '#E63B2E' : '#9B9B98' }}>
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, marginTop: 7, color: over ? '#E63B2E' : '#9B9B98' }}>
                   {welcomeLen} / 300 ตัวอักษร
                 </div>
               </div>
               <div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>Preview</div>
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>Preview</div>
                 <div style={{ border: '1px solid #E5E5E3', background: '#EDEDEA', padding: 12, minHeight: 96, display: 'flex' }}>
                   {welcome.on ? (
                     <div style={{ alignSelf: 'flex-start', maxWidth: '92%', background: '#fff', border: '1px solid #E5E5E3', padding: '10px 12px', borderRadius: '4px 14px 14px 14px', fontSize: 12.5, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{welcome.text}</div>
@@ -245,8 +245,8 @@ export default function MessageManager() {
           {/* Section 02 — Keyword Auto-Reply */}
           <div style={{ padding: '24px 28px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>02 · Keyword Auto-Reply</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '3px 8px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.08)', color: '#16A34A' }}>Reply · ฟรี</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98' }}>02 · Keyword Auto-Reply</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase', padding: '3px 8px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.08)', color: '#16A34A' }}>Reply · ฟรี</span>
               <div style={{ flex: 1 }} />
               <button
                 onClick={() => setAddOpen(true)}
@@ -261,7 +261,7 @@ export default function MessageManager() {
               {/* Table head */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.2fr 1.1fr 70px 118px', background: '#F7F7F5', borderBottom: '1px solid #E5E5E3' }}>
                 {['Keyword', 'ตอบด้วย', 'Campaign', 'Prio', ''].map((h, i) => (
-                  <div key={i} style={{ padding: '10px 14px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>{h}</div>
+                  <div key={i} style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>{h}</div>
                 ))}
               </div>
 
@@ -283,7 +283,7 @@ export default function MessageManager() {
                     </div>
                     <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, minWidth: 0 }}>
                       <span style={{
-                        fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase',
+                        fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.06em', textTransform: 'uppercase',
                         padding: '2px 7px', flexShrink: 0, border: '1px solid ' + (isFlex ? '#2563EB' : '#9B9B98'),
                         color: isFlex ? '#2563EB' : '#9B9B98',
                       }}>
@@ -293,10 +293,10 @@ export default function MessageManager() {
                         {isFlex ? 'การ์ดแคมเปญ' : (r.reply_text || '—')}
                       </span>
                     </div>
-                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
+                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
                       {isFlex ? (r.campaign_id || '—') : '—'}
                     </div>
-                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: '#9B9B98' }}>
+                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, color: '#9B9B98' }}>
                       {r.priority}
                     </div>
                     <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -317,7 +317,7 @@ export default function MessageManager() {
                 <div style={{ borderTop: '1px solid #111111', background: '#FAFAF9', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.2fr 1.1fr 70px', gap: 10, alignItems: 'start' }}>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>Keyword</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>Keyword</div>
                       <input
                         value={newWord}
                         onChange={(e) => setNewWord(e.target.value)}
@@ -330,7 +330,7 @@ export default function MessageManager() {
                       />
                     </div>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>ตอบด้วย</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>ตอบด้วย</div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {(['flex_campaign', 'text'] as const).map((id) => (
                           <button
@@ -350,7 +350,7 @@ export default function MessageManager() {
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>
                         {newType === 'flex_campaign' ? 'Campaign ID' : 'ข้อความ'}
                       </div>
                       <input
@@ -361,11 +361,11 @@ export default function MessageManager() {
                       />
                     </div>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>Priority</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>Priority</div>
                       <input
                         value={newPriority}
                         onChange={(e) => setNewPriority(e.target.value.replace(/[^0-9]/g, ''))}
-                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'DM Mono',monospace", fontSize: 13, outline: 'none' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', border: '1px solid #E5E5E3', borderRadius: 9, fontFamily: "'JetBrains Mono',monospace", fontSize: 13, outline: 'none' }}
                       />
                     </div>
                   </div>
@@ -404,7 +404,7 @@ export default function MessageManager() {
         {/* Right sidebar — Section 03 */}
         <aside style={{ padding: '24px 22px', display: 'flex', flexDirection: 'column', gap: 22, alignSelf: 'start', position: 'sticky', top: 60 }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>03 · ทดสอบ Keyword</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 6 }}>03 · ทดสอบ Keyword</div>
             <div style={{ fontSize: 13, color: '#5C5C58', lineHeight: 1.6, marginBottom: 12 }}>ทดสอบจาก DB จริง · กฎที่บันทึกแล้วเท่านั้น</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
@@ -464,7 +464,7 @@ export default function MessageManager() {
           </div>
 
           <div style={{ borderTop: '1px solid #E5E5E3', paddingTop: 18 }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 10 }}>กฎการ match</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 10 }}>กฎการ match</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12.5, color: '#5C5C58', lineHeight: 1.55 }}>
               {[
                 'ตัดช่องว่างหัวท้าย แล้วเทียบแบบไม่สนตัวพิมพ์เล็กใหญ่',

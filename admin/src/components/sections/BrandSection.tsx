@@ -43,36 +43,6 @@ export default function BrandSection({ brand, onChange }: Props) {
         </div>
       </div>
 
-      <div className="adv-section" style={{ marginTop: 16 }}>
-        <div className="adv-group-label">สี 3 ตัวที่คุมทั้งระบบ</div>
-        {([
-          ['primary', brand.primary, 'ปุ่ม CTA ทุกปุ่ม · progress bar · ชื่อผลลัพธ์'],
-          ['surface', brand.surface, 'พื้นหลังทุกหน้าใน LIFF'],
-          ['on_surface', brand.on_surface, 'ตัวอักษรทั้งหมดที่วางบนพื้นหลัง'],
-        ] as [keyof Brand, string, string][]).map(([key, val, effect]) => (
-          <div className="adv-row" key={key}>
-            <div className="akey">{key}</div>
-            <div>
-              <div className="color-field">
-                <div className="color-swatch" style={{ background: val }}>
-                  <input
-                    type="color"
-                    value={val}
-                    onChange={(e) => set(key, e.target.value)}
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={val}
-                  style={{ width: 100, fontFamily: 'var(--mono)', fontSize: 12 }}
-                  onChange={(e) => set(key, e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="aeffect">{effect}</div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

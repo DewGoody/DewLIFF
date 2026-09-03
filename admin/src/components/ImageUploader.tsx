@@ -5,9 +5,10 @@ interface Props {
   onChange: (url: string) => void;
   aspectRatio?: string;   // e.g. '1:1' | '2:1' | '16:9'
   hint?: string;
+  maxHeight?: number;     // cap preview box height in px
 }
 
-export default function ImageUploader({ value, onChange, aspectRatio = '1:1', hint }: Props) {
+export default function ImageUploader({ value, onChange, aspectRatio = '1:1', hint, maxHeight }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +38,7 @@ export default function ImageUploader({ value, onChange, aspectRatio = '1:1', hi
 
   // Compute preview box aspect ratio
   const [aw, ah] = aspectRatio.split(':').map(Number);
-  const paddingTop = `${((ah / aw) * 100).toFixed(1)}%`;
+  const paddingTop = maxHeight ? undefined : `${((ah / aw) * 100).toFixed(1)}%`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -50,6 +51,7 @@ export default function ImageUploader({ value, onChange, aspectRatio = '1:1', hi
           position: 'relative',
           width: '100%',
           paddingTop,
+          height: maxHeight ? maxHeight : undefined,
           borderRadius: 8,
           border: '1.5px dashed ' + (error ? '#E63B2E' : '#D0D0CC'),
           background: value ? 'transparent' : '#F7F7F5',

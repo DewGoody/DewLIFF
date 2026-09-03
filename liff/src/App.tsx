@@ -1,54 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { setToken, api } from './api';
 import { getAxisCard, findAxisId } from './data';
+import { getScreenBlocks, floatStyle, scaleFont, getPatternDefaults } from './screenConfig';
 import Loading from './screens/Loading';
 import Intro from './screens/Intro';
 import Invited from './screens/Invited';
 import Question from './screens/Question';
 import Summary from './screens/Summary';
 import PairResult from './screens/PairResult';
-import Rewards from './screens/Rewards';
 import Group from './screens/Group';
 import SoloShare from './screens/SoloShare';
+import SymbolCollection from './screens/SymbolCollection';
+import Rewards from './screens/Rewards';
 import ErrorScreen from './screens/ErrorScreen';
-import FriendGate from './screens/FriendGate';
 import type { PairPopup } from './screens/Summary';
 
-// DewLIFF's own LIFF ID — never KimLIFF's (see fix commit 9294b15; a wrong
-// LIFF ID here makes liff.init() authenticate against the wrong LINE channel).
-const LIFF_ID = '2011192503-E4zprfoA';
+const DEFAULT_LIFF_ID = import.meta.env.VITE_LIFF_ID || '2011037337-KlqFK4LM';
 const IS_PREVIEW = new URLSearchParams(window.location.search).get('preview') === '1';
 
-type Screen = 'loading' | 'intro' | 'invited' | 'question' | 'summary' | 'solo-share' | 'pair-result' | 'error' | 'friend-gate' | 'open-in-line' | 'matching' | 'rewards' | 'group';
+type Screen = 'loading' | 'intro' | 'invited' | 'question' | 'summary' | 'solo-share' | 'pair-result' | 'error' | 'open-in-line' | 'matching' | 'group' | 'symbols' | 'rewards';
 
-interface RewardMilestone {
-  key: string;
-  trigger_pairs: number;
-  reward_pool_id: string;
-  label: string;
-  icon?: string;
-}
-
-interface RewardsConfig {
-  enabled: boolean;
-  points_per_pair: number;
-  milestones?: RewardMilestone[];
-}
-
-interface RewardClaim {
-  id: string;
-  milestone_key: string;
-  pool_type: string;
-  pool_name: string;
-  code?: string;
-  issued_at: string;
-  meta?: { code?: string; pool_type?: string; pool_name?: string };
-}
 
 interface AppearanceConfig {
   accent?: string;
   theme?: 'dark' | 'light';
   radius?: number;
+  border_width?: number;
+  shadow?: 'none' | 'soft' | 'hard';
+  shadow_offset?: number;
   intro_layout?: string;
   question_layout?: string;
   summary_layout?: string;
@@ -56,8 +35,24 @@ interface AppearanceConfig {
   loading_style?: string;
   loading_copy?: string;
   images?: Record<string, string>;
+  og_base_url?: string;
   liff_id?: string;
   oa_id?: string;
+  font_display?: string;
+  font_body?: string;
+  font_accent?: string;
+  font_scale?: number;
+  colors?: {
+    primary?: string; on_primary?: string; surface?: string; on_surface?: string;
+    muted?: string; accent?: string; accent_soft?: string; highlight?: string; background?: string;
+    overlay?: string; danger?: string; success?: string; line_green?: string;
+  };
+  card_radius?: number;
+  progress_radius?: number;
+  axis_chip_radius?: number;
+  badge_radius?: number;
+  tilt?: 'off' | 'subtle' | 'playful';
+  texture?: 'none' | 'paper';
   [key: string]: unknown;
 }
 
@@ -104,8 +99,8 @@ interface AppConfig {
   results?: Array<unknown>;
   mode?: string;
   chat_trigger?: boolean;
-  rewards?: RewardsConfig;
   group?: GroupConfig;
+  rewards?: { enabled?: boolean };
   appearance?: AppearanceConfig;
 }
 
@@ -116,6 +111,7 @@ interface SummaryData {
   myArchetypeEn?: string;
   myArchetypeOrder?: string;
   myArchetypeShort?: string;
+  myArchetypeImage?: string;
   archStats?: { bestPartnerLabel: string; bestSurvival: string; worstPartnerLabel: string; worstSurvival: string };
   pairsDone: number;
   shareUrl: string;
@@ -139,10 +135,12 @@ interface PairResultData {
   imageUrl?: string;
   axisMe?: string;
   axisBuddy?: string;
+  axisMeId?: string;
+  axisBuddyId?: string;
   axisMeShort?: string;
   axisBuddyShort?: string;
-  rank?: number;
   pairUrl?: string;
+  inviteUrl?: string;
 }
 
 function parseCampaignId(): string {
@@ -193,7 +191,7 @@ export default function App() {
   const [isDemo, setIsDemo] = useState(false);
   const [pairId, setPairId] = useState<string | null>(null);
   const [pendingInviterId, setPendingInviterId] = useState<string | null>(null);
-  const [rewardClaims, setRewardClaims] = useState<RewardClaim[]>([]);
+  const [teamsVersion, setTeamsVersion] = useState(0);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [groupCreatorId, setGroupCreatorId] = useState<string | null>(null);
   const [groupInfo, setGroupInfo] = useState<{ archTitle?: string; memberCount?: number; maxMembers?: number; body?: string; primaryText?: string; creatorName?: string } | null>(null);
@@ -204,6 +202,8 @@ export default function App() {
   const [matchingBuddyAxisId, setMatchingBuddyAxisId] = useState<string>('');
   const [matchingMyAxisId, setMatchingMyAxisId] = useState<string>('');
   const [soloShareMyUserId, setSoloShareMyUserId] = useState<string>('');
+  const [liffId, setLiffId] = useState<string>(DEFAULT_LIFF_ID);
+  const [isFriend, setIsFriend] = useState(false);
 
   // Notify parent (admin preview) when screen changes
   useEffect(() => {
@@ -229,24 +229,104 @@ export default function App() {
     setScreen('error');
   }, []);
 
-  const applyTheme = useCallback((brand?: AppConfig['brand']) => {
-    if (!brand) return;
+  const applyTheme = useCallback((brand?: AppConfig['brand'], appearance?: AppearanceConfig) => {
     const root = document.documentElement;
-    if (brand.primary) root.style.setProperty('--primary', brand.primary);
-    if (brand.surface) root.style.setProperty('--surface', brand.surface);
-    if (brand.on_surface) root.style.setProperty('--on', brand.on_surface);
-  }, []);
+    const c = appearance?.colors;
+    const isLight = appearance?.theme === 'light';
 
-  const applyAppearance = useCallback((appearance?: AppConfig['appearance']) => {
-    if (!appearance) return;
-    const root = document.documentElement;
-    if (appearance.accent) root.style.setProperty('--primary', appearance.accent);
-    if (appearance.radius !== undefined) root.style.setProperty('--radius', appearance.radius + 'px');
-    const dark = appearance.theme !== 'light';
-    if (appearance.theme) {
-      root.style.setProperty('--surface', dark ? '#0C0B0A' : '#F5F1EA');
-      root.style.setProperty('--on', dark ? '#EDE7DF' : '#1A1714');
+    // --ac: primary action color (colors.primary > brand.primary > default)
+    const ac = c?.primary || brand?.primary || '#E8354F';
+    root.style.setProperty('--ac', ac);
+
+    // --on-ac: text on primary button
+    root.style.setProperty('--on-ac', c?.on_primary || '#FFFDF6');
+
+    // --bg: page background
+    root.style.setProperty('--bg', c?.background || (isLight ? '#F5F1EA' : '#F7F1E3'));
+
+    // --card: card/surface background
+    root.style.setProperty('--card', c?.surface || (isLight ? '#FFFFFF' : '#FFFDF6'));
+
+    // --ink: primary text color
+    const ink = c?.on_surface || (isLight ? '#1A1714' : '#1C1A17');
+    root.style.setProperty('--ink', ink);
+
+    // --ink2 / --ink3: colors.muted if the admin set one, else derived semi-transparent ink
+    const hexToRgba = (hex: string, a: number) => {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.length === 3 ? h[0]+h[0] : h.slice(0,2), 16);
+      const g = parseInt(h.length === 3 ? h[1]+h[1] : h.slice(2,4), 16);
+      const b = parseInt(h.length === 3 ? h[2]+h[2] : h.slice(4,6), 16);
+      return isNaN(r) ? `rgba(28,26,23,${a})` : `rgba(${r},${g},${b},${a})`;
+    };
+    if (c?.muted) {
+      root.style.setProperty('--ink2', c.muted);
+      root.style.setProperty('--ink3', c.muted);
+    } else {
+      root.style.setProperty('--ink2', hexToRgba(ink, 0.6));
+      root.style.setProperty('--ink3', hexToRgba(ink, 0.4));
     }
+
+    // --hl: highlight color
+    root.style.setProperty('--hl', c?.highlight || '#F5E14B');
+
+    // --accent / --accent-soft / --line / --overlay / --danger: remaining Colors tab fields
+    root.style.setProperty('--accent', c?.accent || '#7AC4D6');
+    root.style.setProperty('--accent-soft', c?.accent_soft || '#E6F1F5');
+    root.style.setProperty('--line', c?.line_green || '#06C755');
+    root.style.setProperty('--overlay', c?.overlay || 'rgba(28,26,23,.55)');
+    root.style.setProperty('--danger', c?.danger || '#C0392B');
+
+    // --border: card border shorthand
+    const bw = appearance?.border_width ?? 2.5;
+    root.style.setProperty('--border', `${bw}px solid ${ink}`);
+
+    // --shadow / --shadow-lg: none / soft / hard, per Shape & Feel → Shadow Style
+    const so = appearance?.shadow_offset ?? 4;
+    const shadowStyle = appearance?.shadow || 'hard';
+    if (shadowStyle === 'none') {
+      root.style.setProperty('--shadow', 'none');
+      root.style.setProperty('--shadow-lg', 'none');
+    } else if (shadowStyle === 'soft') {
+      root.style.setProperty('--shadow', `0 ${so / 2 + 2}px ${so * 2 + 8}px rgba(28,26,23,.18)`);
+      root.style.setProperty('--shadow-lg', `0 ${so / 2 + 3}px ${so * 2 + 12}px rgba(28,26,23,.22)`);
+    } else {
+      root.style.setProperty('--shadow', `${so}px ${so + 1}px 0 ${ink}`);
+      root.style.setProperty('--shadow-lg', `${so + 1}px ${so + 2}px 0 ${ink}`);
+    }
+
+    // --radius: button radius (unchanged) · --card-radius / --progress-radius /
+    // --axis-chip-radius / --badge-radius: the other Shape & Feel radius fields,
+    // previously admin-only
+    if (appearance?.radius !== undefined) root.style.setProperty('--radius', appearance.radius + 'px');
+    root.style.setProperty('--card-radius', (appearance?.card_radius ?? 16) + 'px');
+    root.style.setProperty('--progress-radius', (appearance?.progress_radius ?? 8) + 'px');
+    root.style.setProperty('--axis-chip-radius', (appearance?.axis_chip_radius ?? 11) + 'px');
+    root.style.setProperty('--badge-radius', (appearance?.badge_radius ?? 0) + 'px');
+
+    // --tilt-deg: Card Tilt preset → degrees (off/subtle/playful), mirrors admin's tokC.tiltDeg
+    const tiltPreset = appearance?.tilt || 'off';
+    const tiltDeg = tiltPreset === 'off' ? 0 : tiltPreset === 'subtle' ? 0.6 : 1.4;
+    root.style.setProperty('--tilt-deg', String(tiltDeg));
+
+    // --texture-bg: paper texture overlay (or none)
+    root.style.setProperty(
+      '--texture-bg',
+      appearance?.texture === 'paper'
+        ? 'repeating-linear-gradient(120deg,rgba(0,0,0,.035) 0 2px,transparent 2px 5px)'
+        : 'none',
+    );
+
+    // font vars
+    if (appearance?.font_display) root.style.setProperty('--font-display', `'${appearance.font_display}'`);
+    if (appearance?.font_body)    root.style.setProperty('--font-body',    `'${appearance.font_body}'`);
+    if (appearance?.font_accent)  root.style.setProperty('--font-accent',  `'${appearance.font_accent}'`);
+
+    // Cache theme so next load can apply it instantly (eliminates loading-screen flicker)
+    try {
+      const cid = parseCampaignId();
+      if (cid) localStorage.setItem(`theme_${cid}`, JSON.stringify({ brand, appearance }));
+    } catch {}
   }, []);
 
   const loadSummary = useCallback(async (): Promise<SummaryData> => {
@@ -262,9 +342,8 @@ export default function App() {
       if (e.data?.type !== 'preview_config') return;
       const cfg: AppConfig = e.data.config;
       setConfig(cfg);
-      applyTheme(cfg.brand);
-      applyAppearance(cfg.appearance);
-      const validScreens = ['loading','intro','invited','question','summary','pair-result','rewards','group'];
+      applyTheme(cfg.brand, cfg.appearance);
+      const validScreens = ['loading','intro','invited','question','summary','pair-result','group'];
       const startScreen = e.data.startScreen;
       setScreen((validScreens.includes(startScreen) ? startScreen : 'intro') as Screen);
       setAnswers([]);
@@ -278,10 +357,27 @@ export default function App() {
   // --- Init ---
   useEffect(() => {
     if (IS_PREVIEW) return; // skip real init in preview mode
+    // Apply cached theme immediately so loading screen shows correct colors before API responds
+    try {
+      const cid = parseCampaignId();
+      const cached = cid && localStorage.getItem(`theme_${cid}`);
+      if (cached) { const { brand, appearance } = JSON.parse(cached); applyTheme(brand, appearance); }
+    } catch {}
     async function init() {
       try {
-        console.log('[App] starting LIFF init, liffId:', LIFF_ID);
-        await liff.init({ liffId: LIFF_ID });
+        // Fetch campaign config first to get the correct LIFF ID
+        let resolvedLiffId = DEFAULT_LIFF_ID;
+        try {
+          const cfgRes = await fetch(`/api/campaign/${campaignId}`);
+          if (cfgRes.ok) {
+            const cfgJson = await cfgRes.json();
+            if (cfgJson?.appearance?.liff_id) resolvedLiffId = cfgJson.appearance.liff_id;
+          }
+        } catch { /* use default */ }
+        setLiffId(resolvedLiffId);
+
+        console.log('[App] starting LIFF init, liffId:', resolvedLiffId);
+        await liff.init({ liffId: resolvedLiffId });
         console.log('[App] LIFF init OK, isLoggedIn:', liff.isLoggedIn());
 
         if (!liff.isLoggedIn()) {
@@ -305,22 +401,9 @@ export default function App() {
         } catch { /* non-critical */ }
 
         try {
-          const { friendFlag } = await liff.getFriendship();
-          if (!friendFlag) {
-            setScreen('friend-gate');
-            return;
-          }
-        } catch (e) {
-          // getFriendship threw — could be scope/API issue OR external browser limitation.
-          // If we're inside LINE client, it's an API error → allow through (user is likely a friend).
-          // If we're outside LINE client, be conservative → show friend-gate so user adds OA first.
-          if (!liff.isInClient()) {
-            console.warn('[App] getFriendship failed in external browser, showing friend-gate:', e);
-            setScreen('friend-gate');
-            return;
-          }
-          console.warn('[App] getFriendship failed in LINE client (API issue), allowing through:', e);
-        }
+          const friendship = await liff.getFriendship();
+          setIsFriend(friendship.friendFlag);
+        } catch { /* not available outside LINE */ }
 
         // LIFF sometimes encodes params inside ?liff.state=... — extract from all sources
         function resolveParams(): URLSearchParams {
@@ -365,8 +448,7 @@ export default function App() {
           setGroupId(urlGroupId);
           const data = await api<AppConfig>('GET', `/api/campaign/${campaignId}`);
           setConfig(data);
-          applyTheme(data.brand);
-          applyAppearance(data.appearance);
+          applyTheme(data.brand, data.appearance);
 
           // Fetch group info to get creator + archetype for Invited screen
           let creatorId: string | null = null;
@@ -447,8 +529,7 @@ export default function App() {
               api<AppConfig>('GET', `/api/campaign/${campaignId}`),
             ]);
             setConfig(cfgData);
-            applyTheme(cfgData.brand);
-            applyAppearance(cfgData.appearance);
+            applyTheme(cfgData.brand, cfgData.appearance);
 
             try {
               const summary = await loadSummary();
@@ -480,8 +561,7 @@ export default function App() {
         try {
           const data = await api<AppConfig>('GET', `/api/campaign/${campaignId}`);
           setConfig(data);
-          applyTheme(data.brand);
-          applyAppearance(data.appearance);
+          applyTheme(data.brand, data.appearance);
 
           try {
             const myAnswers = await api<{ answered: boolean }>('GET', `/api/quiz/my-answers?campaignId=${campaignId}`);
@@ -489,7 +569,9 @@ export default function App() {
               console.log('[App] A already answered, going to summary');
               const summary = await loadSummary();
               setSummaryData(summary);
-              setScreen('summary');
+              // If opened from F-08 push → go directly to symbols screen
+              const urlView = params.get('view');
+              setScreen(urlView === 'symbols' ? 'symbols' : urlView === 'rewards' ? 'rewards' : 'summary');
               return;
             }
           } catch (e) {
@@ -522,15 +604,14 @@ export default function App() {
       setInviterArchLabel(profile.archLabel);
       setInviterArchEn(profile.archEn);
       setConfig(data);
-      applyTheme(data.brand);
-      applyAppearance(data.appearance);
+      applyTheme(data.brand, data.appearance);
 
       // If B already answered → auto-match using stored answers, skip quiz
       try {
         const myAnswers = await api<{ answered: boolean }>('GET', `/api/quiz/my-answers?campaignId=${campaignId}`);
         console.log('[App] handleInviterFlow answered:', myAnswers.answered);
         if (myAnswers.answered) {
-          setMatchingBuddyAxisId(findAxisId(profile.archLabel || profile.archEn || '') || 'chill');
+          setMatchingBuddyAxisId(findAxisId(profile.archLabel || profile.archEn || '', data.axes) || data.axes?.[0]?.id || '');
           setMatchingMyAxisId('');
           setScreen('matching');
           try {
@@ -588,19 +669,13 @@ export default function App() {
         config?: AppConfig;
       }>('POST', '/api/quiz/join', { token });
       setPairId(data.pairId);
-      if (data.config) { setConfig(data.config); applyTheme(data.config.brand); }
+      if (data.config) { setConfig(data.config); applyTheme(data.config.brand, data.config.appearance); }
       if (data.inviter) { setInviterName(data.inviter.displayName); setInviterPic(data.inviter.pictureUrl); }
       setScreen('invited');
     } catch (err) {
       showError('ลิงก์ไม่ถูกต้อง', (err as Error).message);
     }
   }
-
-  // --- Friend gate passed ---
-  const handleFriendAdded = useCallback(() => {
-    if (pendingInviterId) handleInviterFlow(pendingInviterId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingInviterId]);
 
   // --- Start quiz (A) ---
   const handleStart = useCallback(async (demo: boolean) => {
@@ -641,7 +716,7 @@ export default function App() {
 
       if (!isViewOnly && firstMatchId) {
         // Show matching animation for first member (creator), background-match the rest
-        setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '') || 'chill');
+        setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '', config.axes) || config.axes?.[0]?.id || '');
         setMatchingMyAxisId('');
         setScreen('matching');
         try {
@@ -708,10 +783,19 @@ export default function App() {
     }
 
     try {
+      // Solo/MBTI mode: save answers → summary directly, no pair matching
+      if (config.mode === 'solo' || config.mode === 'mbti') {
+        await api('POST', '/api/quiz/save-answers', { campaignId, answers: newAnswers });
+        const summary = await loadSummary();
+        setSummaryData(summary);
+        setScreen('summary');
+        return;
+      }
+
       if (pendingInviterId) {
         // B's flow — save answers first, then match with A → popup + summary
         await api('POST', '/api/quiz/save-answers', { campaignId, answers: newAnswers });
-        setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '') || 'chill');
+        setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '', config.axes) || config.axes?.[0]?.id || '');
         setMatchingMyAxisId('');
         setScreen('matching');
         let data: {
@@ -744,15 +828,13 @@ export default function App() {
         if (!data.pushSentToInviter && data.inviterShareUrl && liff.isInClient()) {
           const primary = config.brand?.primary || '#E8354F';
           const copy = config.copy || {};
-          // DewLIFF is its own separate Vercel deployment from KimLIFF's — this LIFF
-          // app is served from the same origin as its own /api/og (see vercel.json),
-          // so window.location.origin is always correct here, unlike a hardcoded domain.
-          const OG_BASE = `${window.location.origin}/api/og`;
-          const liffBase = `https://liff.line.me/${LIFF_ID}`;
+          const OG_BASE = config.appearance?.og_base_url || `${window.location.origin}/api/og`;
+          const liffBase = `https://liff.line.me/${liffId}`;
+          const liffDeepBase = `line://app/${liffId}`;
 
           // Resolve axis IDs from labels (data.axisMe = B's label, data.axisBuddy = A's label)
-          const axisIdMe = findAxisId(data.axisMe) || 'prep';
-          const axisIdBuddy = findAxisId(data.axisBuddy) || 'prep';
+          const axisIdMe = findAxisId(data.axisMe, config.axes) || config.axes?.[0]?.id || '';
+          const axisIdBuddy = findAxisId(data.axisBuddy, config.axes) || config.axes?.[0]?.id || '';
           const cardMeUrl = getAxisCard(axisIdMe, config.axes) || '';
           const cardBuddyUrl = getAxisCard(axisIdBuddy, config.axes) || '';
           const axisLabelMe = config.axes?.find(a => a.id === axisIdMe)?.label || data.axisMe;
@@ -864,7 +946,7 @@ export default function App() {
         const firstMatchId = groupCreatorId || existingMemberIds[0];
 
         if (firstMatchId) {
-          setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '') || 'chill');
+          setMatchingBuddyAxisId(findAxisId(inviterArchLabel || inviterArchEn || '', config.axes) || config.axes?.[0]?.id || '');
           setMatchingMyAxisId('');
           setScreen('matching');
           try {
@@ -920,10 +1002,15 @@ export default function App() {
         result?: { title: string; body: string; eyebrow?: string; image_url?: string };
         axisMe?: string;
         axisBuddy?: string;
+        axisMeId?: string;
+        axisBuddyId?: string;
       }>('GET', `/api/pair/${pid}`);
 
       if (data.status === 'completed' && data.result) {
-        const liffBase = `https://liff.line.me/${LIFF_ID}`;
+        const liffBase = `https://liff.line.me/${liffId}`;
+        const liffDeepBase = `line://app/${liffId}`;
+        // For clipboard/web share, use current origin so dev stays on dev
+        const shareBase = liff.isInClient() ? liffBase : window.location.origin + window.location.pathname;
         setPairResultData({
           pairId: pid,
           partnerName,
@@ -932,7 +1019,10 @@ export default function App() {
           imageUrl: data.result.image_url,
           axisMe: data.axisMe,
           axisBuddy: data.axisBuddy,
-          pairUrl: `${liffBase}?campaignId=${campaignId}&pairId=${pid}`,
+          axisMeId: data.axisMeId,
+          axisBuddyId: data.axisBuddyId,
+          pairUrl: `${shareBase}?campaignId=${campaignId}&pairId=${pid}`,
+          inviteUrl: myUserId ? `${shareBase}?campaignId=${campaignId}&inviterId=${myUserId}` : undefined,
         });
         setScreen('pair-result');
       }
@@ -942,16 +1032,6 @@ export default function App() {
     }
   }, [campaignId, showError]);
 
-  // --- Go to rewards screen (load claims first) ---
-  const handleGoRewards = useCallback(async () => {
-    try {
-      const data = await api<{ claims: RewardClaim[] }>('GET', `/api/quiz/rewards/my/${campaignId}`);
-      setRewardClaims(data.claims || []);
-    } catch {
-      setRewardClaims([]);
-    }
-    setScreen('rewards');
-  }, [campaignId]);
 
   // --- Solo share preview screen ---
   const handleSoloShare = useCallback(() => {
@@ -976,34 +1056,79 @@ export default function App() {
     }
   }, [campaignId, showError]);
 
-  // --- Claim a milestone reward ---
-  const handleClaim = useCallback(async (milestoneKey: string) => {
-    await api('POST', '/api/quiz/rewards/claim', { campaign_id: campaignId, milestone_key: milestoneKey });
-    // Refresh claims
-    const data = await api<{ claims: RewardClaim[] }>('GET', `/api/quiz/rewards/my/${campaignId}`);
-    setRewardClaims(data.claims || []);
-  }, [campaignId]);
 
   // --- Render ---
   return (
     <div className="app">
-      {screen === 'loading' && <Loading />}
-      {screen === 'matching' && (
-        <div className="screen" style={{ alignItems:'center', justifyContent:'center', gap:26, background:'#F7F1E3' }}>
-          <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(245,225,75,.4),transparent 55%)', pointerEvents:'none' }} />
-          <div style={{ position:'relative', display:'flex', alignItems:'center', gap:6 }}>
-            <div style={{ backgroundImage:`url('${getAxisCard(matchingMyAxisId || 'prep', config.axes)}')`, backgroundSize:'contain', backgroundPosition:'center', backgroundRepeat:'no-repeat', width:124, height:172, marginRight:-26, animation:'v2TiltL 2.2s ease-in-out infinite' }} />
-            <div style={{ backgroundImage:`url('${getAxisCard(matchingBuddyAxisId || 'chill', config.axes)}')`, backgroundSize:'contain', backgroundPosition:'center', backgroundRepeat:'no-repeat', width:124, height:172, marginLeft:-26, animation:'v2TiltR 2.2s ease-in-out .35s infinite', zIndex:2 }} />
+      {screen === 'loading' && <Loading config={config} />}
+      {screen === 'matching' && (() => {
+        const matchingAppearance = (config.appearance ?? {}) as {
+          screen_config?: Record<string, { blocks: any[] }>;
+          font_scale?: number;
+          progress_style_matching?: 'default' | 'compact' | 'bar';
+          art_shape?: 'card' | 'circle' | 'square' | 'wide' | 'none';
+          art_frame?: 'outline' | 'soft' | 'flat';
+          art_hero?: 'pair' | 'single' | 'band';
+          group_hero_pattern?: 'fan' | 'grid';
+        };
+        const { blockOrder, blockVisible, geo, pos, pat } = getScreenBlocks(matchingAppearance, 'Matching', ['matArt', 'loadCopy', 'loadBar']);
+        const artH = Number(geo('matArt').h) || 172;
+        const pairPat = pat('matArt', 'pair', getPatternDefaults(matchingAppearance).pair);
+        const fontScale = matchingAppearance.font_scale;
+        const progressStyleMatching = matchingAppearance.progress_style_matching || 'default';
+        const artStyle = (side: 'me' | 'buddy'): React.CSSProperties => {
+          const base: React.CSSProperties = { backgroundSize:'contain', backgroundPosition:'center', backgroundRepeat:'no-repeat', width:124, height:artH };
+          if (pairPat === 'side') return { ...base, marginRight: side === 'me' ? 6 : 0 };
+          if (pairPat === 'overlap') return { ...base, marginRight: side === 'me' ? -50 : 0, zIndex: side === 'buddy' ? 2 : undefined };
+          // tilt (default) — preserves the original wobble animation
+          return side === 'me'
+            ? { ...base, marginRight:-26, animation:'v2TiltL 2.2s ease-in-out infinite' }
+            : { ...base, marginLeft:-26, animation:'v2TiltR 2.2s ease-in-out .35s infinite', zIndex:2 };
+        };
+
+        const RENDERERS: Record<string, () => React.ReactNode> = {
+          matArt: () => (
+            <div key="matArt" style={{ position:'relative', display:'flex', alignItems:'center', gap:6 }}>
+              <div style={{ backgroundImage:`url('${getAxisCard(matchingMyAxisId || 'prep', config.axes)}')`, ...artStyle('me') }} />
+              <div style={{ backgroundImage:`url('${getAxisCard(matchingBuddyAxisId || 'chill', config.axes)}')`, ...artStyle('buddy') }} />
+            </div>
+          ),
+          loadCopy: () => (
+            <div key="loadCopy" style={{ position:'relative', textAlign:'center' }}>
+              <div style={{ fontFamily:"var(--font-display,'Bangers'),cursive", fontSize:scaleFont(26, fontScale), letterSpacing:'.05em' }}>{config.copy?.matching_title || 'MATCHING...'}</div>
+              <div style={{ font:`500 ${scaleFont(13, fontScale)}px var(--font-body,'Bai Jamjuree'),sans-serif`, color:'var(--ink2)', marginTop:4 }}>{inviterName ? `${config.copy?.matching_with || 'จับคู่กับ'} ${inviterName}` : (config.copy?.matching_sub || 'กำลังคำนวณผลคู่...')}</div>
+            </div>
+          ),
+          loadBar: () => (
+            <div key="loadBar" style={{ position:'relative', width:190, height:12, border:'2px solid var(--ink)', borderRadius:'var(--progress-radius)', overflow:'hidden', background:'var(--card)' }}>
+              {progressStyleMatching === 'default' ? (
+                <div style={{ height:'100%', width:'72%', background:'repeating-linear-gradient(115deg,#E8354F 0 10px,#F5E14B 10px 18px)', backgroundSize:'36px 100%', animation:'v2Dash 1s linear infinite' }} />
+              ) : (
+                <div style={{
+                  height:'100%',
+                  width: progressStyleMatching === 'compact' ? '45%' : '72%',
+                  background: progressStyleMatching === 'bar' ? '#E8354F' : 'repeating-linear-gradient(115deg,#E8354F 0 10px,#F5E14B 10px 18px)',
+                  backgroundSize: progressStyleMatching === 'bar' ? undefined : '36px 100%',
+                  animation: progressStyleMatching === 'bar' ? undefined : 'v2Dash 1s linear infinite',
+                }} />
+              )}
+            </div>
+          ),
+        };
+
+        const visible = blockOrder.filter(blockVisible);
+        const flowIds = visible.filter(id => !pos(id));
+        const floatIds = visible.filter(id => pos(id));
+
+        return (
+          <div className="screen" style={{ alignItems:'center', justifyContent:'center', gap:26, background:'var(--bg)' }}>
+            <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(245,225,75,.4),transparent 55%)', pointerEvents:'none' }} />
+            <div style={{ position:'absolute', inset:0, background:'var(--texture-bg)', pointerEvents:'none' }} />
+            {flowIds.map(id => RENDERERS[id]?.())}
+            {floatIds.map(id => <div key={id} style={floatStyle(pos(id)!)}>{RENDERERS[id]?.()}</div>)}
           </div>
-          <div style={{ position:'relative', textAlign:'center' }}>
-            <div style={{ fontFamily:'Bangers,cursive', fontSize:26, letterSpacing:'.05em' }}>{config.copy?.matching_title || 'MATCHING...'}</div>
-            <div style={{ font:"500 13px 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.55)', marginTop:4 }}>{inviterName ? `${config.copy?.matching_with || 'จับคู่กับ'} ${inviterName}` : (config.copy?.matching_sub || 'กำลังคำนวณผลคู่...')}</div>
-          </div>
-          <div style={{ position:'relative', width:190, height:12, border:'2px solid #1C1A17', borderRadius:8, overflow:'hidden', background:'#FFFDF6' }}>
-            <div style={{ height:'100%', width:'72%', background:'repeating-linear-gradient(115deg,#E8354F 0 10px,#F5E14B 10px 18px)', backgroundSize:'36px 100%', animation:'v2Dash 1s linear infinite' }} />
-          </div>
-        </div>
-      )}
+        );
+      })()}
       {screen === 'intro' && <Intro config={{ ...config, appearance: config.appearance }} onStart={handleStart} />}
       {screen === 'invited' && (
         <Invited
@@ -1015,7 +1140,8 @@ export default function App() {
           isFull={groupId ? groupIsFull : false}
           onViewGroup={groupId ? () => setScreen('group') : undefined}
           kvImageUrl={config.brand?.kv_image_url}
-          introUrl={`https://liff.line.me/${LIFF_ID}?campaignId=${campaignId}`}
+          introUrl={`https://liff.line.me/${liffId}?campaignId=${campaignId}`}
+          isFriend={isFriend}
           onStart={handleStartInvited}
         />
       )}
@@ -1026,38 +1152,45 @@ export default function App() {
         <Summary
           config={config}
           campaignId={campaignId}
-          liffId={LIFF_ID}
+          liffId={liffId}
           myArchetype={summaryData.myArchetype}
           myArchetypeLabel={summaryData.myArchetypeLabel}
           myArchetypeBody={summaryData.myArchetypeBody}
           myArchetypeEn={summaryData.myArchetypeEn}
           myArchetypeOrder={summaryData.myArchetypeOrder}
           myArchetypeShort={summaryData.myArchetypeShort}
-          archStats={summaryData.archStats}
+          myArchetypeImage={summaryData.myArchetypeImage}
           pairsDone={summaryData.pairsDone}
           shareUrl={summaryData.shareUrl}
           pairs={summaryData.pairs}
           initialPopup={initialPopup}
           onViewPair={handleViewPair}
-          onGoRewards={config.rewards?.enabled ? handleGoRewards : undefined}
           onCreateGroup={config.group?.enabled ? handleCreateGroupDirect : undefined}
           onGoGroup={handleGoGroup}
           onSoloShare={handleSoloShare}
           onRetake={() => { setAnswers([]); setQuestionIndex(0); setScreen('question'); }}
+          onPopupDismissed={() => setInitialPopup(null)}
+          onGoSymbols={config.group?.enabled ? () => setScreen('symbols') : undefined}
+          onGoRewards={config.rewards?.enabled ? () => setScreen('rewards') : undefined}
+          isFriend={isFriend}
+          teamsVersion={teamsVersion}
         />
       )}
       {screen === 'solo-share' && summaryData && (() => {
-        const axisId = summaryData.myArchetype || findAxisId(summaryData.myArchetypeLabel || '') || 'prep';
-        const cardUrl = getAxisCard(axisId, config.axes);
+        const axisId = summaryData.myArchetype || findAxisId(summaryData.myArchetypeLabel || '', config.axes) || config.axes?.[0]?.id || '';
+        const cardUrl = summaryData.myArchetypeImage || getAxisCard(axisId, config.axes);
         return (
           <SoloShare
             config={config}
             campaignId={campaignId}
-            liffId={LIFF_ID}
+            liffId={liffId}
             archTitle={summaryData.myArchetypeLabel || ''}
+            archTitleEn={summaryData.myArchetypeEn || ''}
             archBody={summaryData.myArchetypeBody || ''}
+            axisId={axisId}
             cardImageUrl={cardUrl}
             myUserId={soloShareMyUserId}
+            isFriend={isFriend}
             onBack={() => setScreen('summary')}
             onPlayAgain={() => { setAnswers([]); setQuestionIndex(0); setScreen('intro'); }}
           />
@@ -1072,23 +1205,30 @@ export default function App() {
           imageUrl={pairResultData.imageUrl}
           axisMe={pairResultData.axisMe}
           axisBuddy={pairResultData.axisBuddy}
+          axisMeId={pairResultData.axisMeId}
+          axisBuddyId={pairResultData.axisBuddyId}
           axisMeShort={pairResultData.axisMeShort}
           axisBuddyShort={pairResultData.axisBuddyShort}
-          rank={pairResultData.rank}
           pairUrl={pairResultData.pairUrl}
+          inviteUrl={pairResultData.inviteUrl}
           myName={myDisplayName || undefined}
+          isFriend={isFriend}
           onBack={() => setScreen('summary')}
         />
       )}
-      {screen === 'rewards' && summaryData && (
-        <Rewards
-          pairsDone={summaryData.pairsDone}
-          pairs={summaryData.pairs}
-          rewardsConfig={config.rewards}
-          claims={rewardClaims}
-          onClaim={handleClaim}
-          onBack={() => setScreen('summary')}
+      {screen === 'symbols' && (
+        <SymbolCollection
+          config={config}
           campaignId={campaignId}
+          onBack={() => setScreen('summary')}
+        />
+      )}
+      {screen === 'rewards' && (
+        <Rewards
+          campaignId={campaignId}
+          pairsDone={summaryData?.pairsDone ?? 0}
+          onBack={() => setScreen('summary')}
+          copy={config.copy}
           groupArchetypes={config.group?.archetypes}
         />
       )}
@@ -1098,25 +1238,57 @@ export default function App() {
           campaignId={campaignId}
           myUserId={myUserId}
           config={config}
-          liffId={LIFF_ID}
-          onBack={() => setScreen(summaryData ? 'summary' : 'intro')}
+          liffId={liffId}
+          isFriend={isFriend}
+          onBack={() => { setTeamsVersion(v => v + 1); setScreen(summaryData ? 'summary' : 'intro'); }}
           onViewPair={handleViewPair}
         />
       )}
       {screen === 'open-in-line' && (
-        <div className="screen fade-enter" style={{ background:'#F7F1E3', alignItems:'center', justifyContent:'center', padding:20, textAlign:'center' }}>
-          <div style={{ fontFamily:'Bangers,cursive', fontSize:28, letterSpacing:'.05em', marginBottom:12 }}>เปิดในแอป LINE</div>
-          <div style={{ font:"500 14px/1.7 'Bai Jamjuree',sans-serif", color:'rgba(28,26,23,.65)', marginBottom:24 }}>
-            กรุณาเปิดลิงก์นี้ผ่านแอป LINE เพื่อเริ่มเล่นและเพิ่มเพื่อน Official Account
+        <div className="screen fade-enter" style={{ background:'var(--bg)', alignItems:'center', justifyContent:'center', padding:20, textAlign:'center' }}>
+          <div style={{ fontFamily:"var(--font-display,'Bangers'),cursive", fontSize:28, letterSpacing:'.05em', marginBottom:12 }}>{config.copy?.open_in_line_title || 'เปิดในแอป LINE'}</div>
+          <div style={{ font:"500 14px/1.7 var(--font-body,'Bai Jamjuree'),sans-serif", color:'var(--ink2)', marginBottom:24 }}>
+            {config.copy?.open_in_line_body || 'กรุณาเปิดลิงก์นี้ผ่านแอป LINE เพื่อเริ่มเล่นและเพิ่มเพื่อน Official Account'}
           </div>
           <button
-            onClick={() => { window.location.href = `https://liff.line.me/${LIFF_ID}${window.location.search}`; }}
-            style={{ padding:'15px 24px', background:'#06C755', color:'#fff', border:'none', borderRadius:13, font:"700 17px/1 'Bai Jamjuree',sans-serif", cursor:'pointer' }}
-          >เปิดใน LINE</button>
+            onClick={() => { window.location.href = `https://liff.line.me/${liffId}${window.location.search}`; }}
+            style={{ padding:'15px 24px', background:'#06C755', color:'#fff', border:'none', borderRadius:'var(--radius)', font:"700 17px/1 var(--font-body,'Bai Jamjuree'),sans-serif", cursor:'pointer' }}
+          >{config.copy?.open_in_line_btn || 'เปิดใน LINE'}</button>
         </div>
       )}
-      {screen === 'error' && <ErrorScreen title={errorInfo.title} body={errorInfo.body} onRetry={errorInfo.retryFn} />}
-      {screen === 'friend-gate' && <FriendGate onFriendAdded={handleFriendAdded} oaId={config.appearance?.oa_id} returnUrl={window.location.href} />}
+      {screen === 'error' && <ErrorScreen title={errorInfo.title} body={errorInfo.body} onRetry={errorInfo.retryFn} copy={config.copy} cardUrl={config.axes?.[config.axes.length - 1]?.image_url} axes={config.axes} appearance={config.appearance} />}
+
+      {/* Global LINE OA floating button — visible on all active screens */}
+      {!isFriend && !['loading', 'matching', 'error', 'open-in-line'].includes(screen) && (
+        <button
+          onClick={() => {
+            const oaId = (config.appearance?.oa_id || '747xtauy').replace('@', '');
+            window.open(`https://line.me/R/ti/p/%40${oaId}`, '_blank');
+          }}
+          title="เพิ่มเพื่อน LINE OA"
+          style={{
+            position: 'fixed', bottom: 24, right: 16, zIndex: 50,
+            width: 44, height: 44,
+            background: '#06C755',
+            border: '2px solid var(--ink)',
+            borderRadius: '50%',
+            boxShadow: '2px 3px 0 var(--ink)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.477 2 2 6.038 2 11.05c0 2.492 1.045 4.735 2.738 6.352.22.21.283.554.175.843l-.54 1.94a.5.5 0 0 0 .664.613l2.163-.87c.23-.092.49-.07.706.058A10.5 10.5 0 0 0 12 20.1c5.523 0 10-4.038 10-9.05S17.523 2 12 2Z" fill="white"/>
+          </svg>
+        </button>
+      )}
+      <div style={{
+        position: 'fixed', bottom: 6, left: 8, zIndex: 9999,
+        font: '11px/1 ui-monospace,monospace', color: '#00000055',
+        pointerEvents: 'none', userSelect: 'none',
+      }}>
+        {__COMMIT_HASH__}
+      </div>
     </div>
   );
 }

@@ -1,30 +1,29 @@
 {
   "id": "buddy_demo",
-  "type": "buddy_quiz",
-  "version": 2,
-  "mode": "pair",
-
+  "type": "group",
+  "version": 6,
+  "mode": "group",
   "brand": {
     "name": "ลานกิจกรรม",
     "primary": "#D95F2B",
     "surface": "#0C0B0A",
-    "on_surface": "#EDE7DF"
+    "on_surface": "#EDE7DF",
+    "kv_image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/buddy_demo/kv-intro.png"
   },
-
   "copy": {
     "intro_title": "โลกแตกพรุ่งนี้ เรารอดกี่วัน",
-    "intro_body": "ตอบ 6 ข้อ แล้วชวนเพื่อนมาตอบ เพื่อดูว่าคู่นี้รอดได้กี่วัน",
+    "intro_body": "ตอบ 5 ข้อ แล้วชวนเพื่อนมาตอบ เพื่อดูว่าคู่นี้รอดได้กี่วัน",
     "intro_cta": "เริ่มเอาตัวรอด",
     "question_counter": "QUESTION {current} / {total}",
     "share_title": "ส่งให้เพื่อนตอบ",
-    "share_body": "เพื่อนคุณเป็นสายไหน ตอบ 6 ข้อ 1 นาทีรู้ผล",
+    "share_body": "เพื่อนคุณเป็นสายไหน ตอบ 5 ข้อ 1 นาทีรู้ผล",
     "share_cta": "ดูผลของเรา",
     "demo_cta": "ลองกับคู่หูตัวอย่าง",
     "waiting_title": "รอสัญญาณจากคู่หู",
     "waiting_body": "ปิดหน้านี้ได้เลย พอเขาตอบเสร็จจะรู้ผลทันที",
     "waiting_close": "ปิดหน้าต่าง",
     "invited_title": "{inviter} ชวนคุณมาตอบ",
-    "invited_body": "ตอบ 6 ข้อ แล้วดูว่าโลกแตกแล้วคุณสองคนรอดกี่วัน",
+    "invited_body": "ตอบ 5 ข้อ แล้วดูว่าโลกแตกแล้วคุณสองคนรอดกี่วัน",
     "invited_cta": "ตอบให้ {inviter} →",
     "result_eyebrow": "คู่นี้รอดได้",
     "result_share_cta": "แชร์การ์ดคู่นี้",
@@ -40,125 +39,440 @@
     "error_title": "SIGNAL LOST",
     "error_body": "สัญญาณขาดหายไปสักครู่ — ลองใหม่อีกที",
     "chat_trigger_enabled": "true",
-    "chat_trigger_text": "โลกแตกพรุ่งนี้ เราสองคนรอดกี่วัน?"
+    "chat_trigger_text": "โลกแตกพรุ่งนี้ เราสองคนรอดกี่วัน?",
+    "F01_eyebrow": "APOCALYPSE SQUAD · DUO QUIZ",
+    "F01_title": "มาดูว่าถ้าโลกแตกพรุ่งนี้ เราสองคนจะรอดกี่วัน!",
+    "F01_body": "{name} ชวนคุณมาตอบ 5 ข้อ ไม่ถึงนาที",
+    "F01_cta1": "เริ่มตอบ · 1 นาที",
+    "F01_cta2": "ดูผลคู่กับฉัน",
+    "F02_eyebrow": "สายของฉันคือ",
+    "F02_cta1": "เล่นดูว่าคุณสายไหน",
+    "F02_cta2": "ดูผลคู่กับฉัน",
+    "F03_title": "{partner} ตอบแล้ว! มาดูว่าคู่นี้รอดกี่วัน",
+    "F03_body": "ผลลัพธ์พร้อมแล้ว มาเผชิญความจริงด้วยกัน",
+    "F03_cta": "ดูผลเลย",
+    "F04_title": "คู่หูตอบแล้ว ดูผลกัน!",
+    "F04_body": "{partner} ตอบครบแล้ว มาดูกันว่าคู่นี้รอดได้กี่วัน",
+    "F04_cta": "ดูผลลัพธ์",
+    "FGRP_eyebrow": "ผลทีมของคุณ",
+    "FGRP_title": "ทีมนี้รอดได้ {days} วัน!",
+    "FGRP_body": "ทีมที่สมดุล ทักษะครบ รอดได้นานสุด",
+    "FGRP_cta": "ดูผลทีม"
   },
-
   "axes": [
-    { "id": "mu",    "label": "สายมู",           "label_en": "THE MYSTIC",    "order": "01", "short": "เช็คดวงก่อนทุกการตัดสินใจ", "body": "ออกเดินทางต้องดูฤกษ์ กินข้าวต้องแบ่งไหว้ ไม่ได้ขี้กลัว แค่ขอความมั่นใจจากจักรวาลหน่อย" },
-    { "id": "prep",  "label": "สายเตรียมพร้อม",  "label_en": "THE PREPPER",   "order": "02", "short": "มีของครบ ยกไม่ไหวเอง",         "body": "กระเป๋าหนัก 20 กิโล มีทุกอย่างที่ต้องใช้และอีก 40 อย่างที่ไม่ได้ใช้ คนอื่นรอดเพราะคุณ" },
-    { "id": "live",  "label": "สายไลฟ์สด",       "label_en": "THE STREAMER",  "order": "03", "short": "อัดไว้ก่อน รอดค่อยว่ากัน",     "body": "โลกจะแตกก็ต้องมีคนบันทึก อย่างน้อยคนรุ่นหลังจะได้รู้ว่าเกิดอะไรขึ้น (ถ้ามีคนรุ่นหลัง)" },
-    { "id": "chill", "label": "สายปลง",          "label_en": "THE ZEN",       "order": "04", "short": "จะเป็นไงก็เป็น",               "body": "ไม่ตื่นเต้น ไม่บ่น ไม่แย่งใคร รอดมาได้เพราะไม่เคยตัดสินใจอะไรผิด (เพราะไม่เคยตัดสินใจ)" },
-    { "id": "line",  "label": "สายไลน์กลุ่ม",   "label_en": "THE GROUPCHAT", "order": "05", "short": "ส่งต่อทุกอย่างที่อ่านมา",       "body": "หวังดีที่สุดในกลุ่ม ส่งวิธีเอาตัวรอดมาให้ 47 วิธี ถูกอยู่ประมาณ 3 วิธี" }
+    {
+      "id": "mu",
+      "label": "สายมู",
+      "label_en": "THE SPIRITUAL ANCHOR",
+      "order": "01",
+      "image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-02-mystic-v3.png",
+      "short": "สัญชาตญาณและความเชื่อคือเข็มทิศในความมืด",
+      "body": "คุณคือเสาหลักทางอารมณ์ของค่าย เมื่อกฎหมายพังทลาย คุณใช้ความเชื่อและสัญชาตญาณเยียวยาจิตใจคน ทำให้ทุกคนรู้สึกปลอดภัยและมีหวัง"
+    },
+    {
+      "id": "prep",
+      "label": "สายตุน",
+      "label_en": "THE QUARTERMASTER",
+      "order": "02",
+      "image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-04-prepper-v3.png",
+      "short": "บริหารทรัพยากรอย่างเป็นระบบ เพราะท้องต้องอิ่มก่อน",
+      "body": "คุณคือเสาหลักด้านกายภาพของกลุ่ม ให้ความสำคัญกับทรัพยากรและระบบแลกเปลี่ยน ตัดสินใจเด็ดขาดเพื่อผลประโยชน์สูงสุด มีแผนสำรองเสมอแต่อาจถูกมองว่าเย็นชา"
+    },
+    {
+      "id": "live",
+      "label": "สายไลฟ์สด",
+      "label_en": "THE ARCHIVIST",
+      "order": "03",
+      "image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-03-influencer-v3.png",
+      "short": "บันทึกทุกช่วงเวลา แม้ในวันที่โลกกำลังแตก",
+      "body": "คุณรู้ว่ามนุษย์ต้องการมากกว่าแค่รอด คุณคือผู้บันทึกประวัติศาสตร์และนักสื่อสาร ทักษะสังเกตและตั้งคำถามช่วยให้กลุ่มไม่สูญเสียความเป็นมนุษย์"
+    },
+    {
+      "id": "chill",
+      "label": "สายชิล",
+      "label_en": "THE ADAPTABLE STOIC",
+      "order": "04",
+      "image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-01-chiller-v3.png",
+      "short": "ปรับตัวเข้ากับทุกสถานการณ์ ไม่ตื่นตระหนก",
+      "body": "คุณปรับตัวเข้ากับความสูญเสียได้เร็วที่สุด ใช้พลังงานอย่างคุ้มค่า ไม่ตื่นตระหนก เหมือนน้ำที่ปรับรูปทรงตามภาชนะ เอาตัวรอดได้ในทุกสภาพแวดล้อม"
+    },
+    {
+      "id": "line",
+      "label": "สายเสมอ",
+      "label_en": "THE OVER-ANALYZER",
+      "order": "05",
+      "image_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/axis-05-analyst-v3.png",
+      "short": "วิเคราะห์ทุกมุม รอจังหวะที่สมบูรณ์แบบก่อนลงมือ",
+      "body": "คุณคือมันสมองของกลุ่ม มองเห็นโครงสร้างและความเสี่ยงที่คนอื่นมองข้าม ออกแบบระบบได้รัดกุม แต่ติดกับดักวิเคราะห์จนพลาดโอกาสในยามฉุกเฉิน"
+    }
   ],
-
   "questions": [
     {
       "id": "q1",
-      "kicker": "01 · THE NEWS",
-      "text": "ข่าวโลกแตกเด้งขึ้นมาตอนตีสาม คุณทำอะไรก่อน",
+      "kicker": "01 · THE SUPPLY",
+      "text": "เสบียงในค่ายอพยพกำลังจะหมดลงในอีก 3 วัน สิ่งแรกที่คุณจะลงมือทำในเช้าวันนี้คือ...",
       "options": [
-        { "id": "q1_mu",    "label": "ลุกไปจุดธูปก่อน",           "scores": { "mu": 3, "line": 1 } },
-        { "id": "q1_prep",  "label": "เปิดกระเป๋าเช็คของ",         "scores": { "prep": 3, "chill": 1 } },
-        { "id": "q1_live",  "label": "เปิดกล้อง อัดไว้ก่อน",       "scores": { "live": 3, "line": 1 } },
-        { "id": "q1_chill", "label": "อ่านจบแล้วนอนต่อ",           "scores": { "chill": 3, "mu": 1 } },
-        { "id": "q1_line",  "label": "ส่งต่อในกลุ่มครอบครัว",       "scores": { "line": 3, "live": 1 } }
+        {
+          "id": "q1_prep",
+          "label": "จัดทำบัญชีทรัพยากร วางระบบปันส่วน",
+          "scores": {
+            "prep": 1
+          }
+        },
+        {
+          "id": "q1_live",
+          "label": "บันทึกสภาพค่ายไว้เป็นจดหมายเหตุ",
+          "scores": {
+            "live": 1
+          }
+        },
+        {
+          "id": "q1_chill",
+          "label": "เก็บแรงไว้ รอสังเกตสถานการณ์ก่อน",
+          "scores": {
+            "chill": 1
+          }
+        },
+        {
+          "id": "q1_mu",
+          "label": "รวมตัวสวดมนต์ เสริมกำลังใจคน",
+          "scores": {
+            "mu": 1
+          }
+        },
+        {
+          "id": "q1_line",
+          "label": "ร่างแผนหาเสบียง แต่ใช้เวลานานจนค่ำ",
+          "scores": {
+            "line": 1
+          }
+        }
       ]
     },
     {
       "id": "q2",
-      "kicker": "02 · THE BAG",
-      "text": "หยิบติดตัวไปได้อย่างเดียว",
+      "kicker": "02 · THE ROLE",
+      "text": "ค่ายต้องการคนรับหน้าที่เฉพาะทาง คุณจะเสนอตัวทำตำแหน่งใดที่จะดึงศักยภาพคุณออกมาได้ดีที่สุด?",
       "options": [
-        { "id": "q2_mu",    "label": "พระเครื่ององค์ที่แม่ให้",     "scores": { "mu": 3, "chill": 1 } },
-        { "id": "q2_prep",  "label": "ไฟฉายกับมีดพับ",              "scores": { "prep": 3, "live": 1 } },
-        { "id": "q2_live",  "label": "พาวเวอร์แบงก์",               "scores": { "live": 3, "prep": 1 } },
-        { "id": "q2_chill", "label": "หมอนใบเดิม",                  "scores": { "chill": 3, "line": 1 } },
-        { "id": "q2_line",  "label": "มือถือ ต้องอัปเดตกลุ่ม",       "scores": { "line": 3, "mu": 1 } }
+        {
+          "id": "q2_prep",
+          "label": "คุมระบบแลกเปลี่ยนสิ่งของทั้งหมด",
+          "scores": {
+            "prep": 1
+          }
+        },
+        {
+          "id": "q2_mu",
+          "label": "ดูแลจิตใจและสุขภาพใจของคน",
+          "scores": {
+            "mu": 1
+          }
+        },
+        {
+          "id": "q2_live",
+          "label": "ดูแลวิทยุ กระจายข่าวสาร",
+          "scores": {
+            "live": 1
+          }
+        },
+        {
+          "id": "q2_chill",
+          "label": "ไกล่เกลี่ยทุกความขัดแย้ง",
+          "scores": {
+            "chill": 1
+          }
+        },
+        {
+          "id": "q2_line",
+          "label": "ออกแบบแปลนป้องกันค่าย (ยังไม่ได้สร้าง)",
+          "scores": {
+            "line": 1
+          }
+        }
       ]
     },
     {
       "id": "q3",
-      "kicker": "03 · THE FORK",
-      "text": "เจอทางแยกสองทาง ไม่มีป้ายบอก",
+      "kicker": "03 · THE STRANGER",
+      "text": "คนแปลกหน้าบาดเจ็บเดินทางมาขอความช่วยเหลือที่หน้าค่าย คุณจะตอบสนองอย่างไร?",
       "options": [
-        { "id": "q3_mu",    "label": "เสี่ยงทายด้วยเหรียญ",         "scores": { "mu": 3, "chill": 1 } },
-        { "id": "q3_prep",  "label": "ดูรอยเท้ากับทิศแดด",           "scores": { "prep": 3, "mu": 1 } },
-        { "id": "q3_live",  "label": "ถ่ายไว้ทั้งสองทางก่อน",        "scores": { "live": 3, "prep": 1 } },
-        { "id": "q3_chill", "label": "เดินตามเพื่อนไป",              "scores": { "chill": 3, "line": 1 } },
-        { "id": "q3_line",  "label": "ในกลุ่มเคยบอกว่าให้ไปซ้าย",    "scores": { "line": 3, "live": 1 } }
+        {
+          "id": "q3_live",
+          "label": "สอบถามประวัติ บันทึกไว้ก่อน",
+          "scores": {
+            "live": 1
+          }
+        },
+        {
+          "id": "q3_mu",
+          "label": "เปิดใจรับด้วยสัญชาตญาณและเมตตา",
+          "scores": {
+            "mu": 1
+          }
+        },
+        {
+          "id": "q3_prep",
+          "label": "ประเมินผลได้ผลเสียก่อนตัดสินใจ",
+          "scores": {
+            "prep": 1
+          }
+        },
+        {
+          "id": "q3_chill",
+          "label": "รอดูท่าทีคนอื่นก่อน ไม่รีบร้อน",
+          "scores": {
+            "chill": 1
+          }
+        },
+        {
+          "id": "q3_line",
+          "label": "ตั้งกฎกักตัวที่ซับซ้อนจนคนเบื่อรอ",
+          "scores": {
+            "line": 1
+          }
+        }
       ]
     },
     {
       "id": "q4",
-      "kicker": "04 · THE LAST MEAL",
-      "text": "อาหารเหลือมื้อสุดท้าย",
+      "kicker": "04 · THE BLACKOUT",
+      "text": "เครื่องปั่นไฟตัวสุดท้ายของค่ายพังลงท่ามกลางความมืด คุณจัดการกับความเครียดนี้อย่างไร?",
       "options": [
-        { "id": "q4_mu",    "label": "แบ่งไว้ไหว้ก่อนหน่อย",         "scores": { "mu": 3, "prep": 1 } },
-        { "id": "q4_prep",  "label": "แบ่ง 7 ส่วน กินวันละส่วน",     "scores": { "prep": 3, "chill": 1 } },
-        { "id": "q4_live",  "label": "จัดจานถ่ายรูปก่อน",            "scores": { "live": 3, "mu": 1 } },
-        { "id": "q4_chill", "label": "กินให้หมดเลย",                  "scores": { "chill": 3, "live": 1 } },
-        { "id": "q4_line",  "label": "ถ่ายส่งกลุ่มถามว่ากินได้ไหม",   "scores": { "line": 3, "prep": 1 } }
+        {
+          "id": "q4_chill",
+          "label": "ยอมรับความมืด กลับไปนอนพักผ่อน",
+          "scores": {
+            "chill": 1
+          }
+        },
+        {
+          "id": "q4_prep",
+          "label": "หยิบโซลาร์เซลล์สำรองที่เตรียมไว้",
+          "scores": {
+            "prep": 1
+          }
+        },
+        {
+          "id": "q4_live",
+          "label": "จุดเทียน ชวนทุกคนล้อมวงคุยกัน",
+          "scores": {
+            "live": 1
+          }
+        },
+        {
+          "id": "q4_line",
+          "label": "รื้อเครื่องตรวจสอบ แต่ยิ่งรื้อยิ่งพัง",
+          "scores": {
+            "line": 1
+          }
+        },
+        {
+          "id": "q4_mu",
+          "label": "ทำสมาธิ สร้างเกราะพลังจิตป้องกัน",
+          "scores": {
+            "mu": 1
+          }
+        }
       ]
     },
     {
       "id": "q5",
-      "kicker": "05 · THE STRANGER",
-      "text": "เจอคนแปลกหน้าเดินเข้ามา",
+      "kicker": "05 · THE LEGACY",
+      "text": "หากต้องทิ้งข้อความสุดท้ายไว้ให้คนรุ่นหลังที่อาจจะรอดชีวิต คุณจะเขียนว่าอะไร?",
       "options": [
-        { "id": "q5_mu",    "label": "ดูหน้าก่อนว่าถูกโฉลกไหม",      "scores": { "mu": 3, "live": 1 } },
-        { "id": "q5_prep",  "label": "ถามชื่อ เช็คของในมือ",          "scores": { "prep": 3, "line": 1 } },
-        { "id": "q5_live",  "label": "ขอถ่ายรูปคู่ไว้ก่อน",           "scores": { "live": 3, "chill": 1 } },
-        { "id": "q5_chill", "label": "พยักหน้าทักแล้วนั่งต่อ",         "scores": { "chill": 3, "prep": 1 } },
-        { "id": "q5_line",  "label": "ถามว่าอยู่กลุ่มไหน",            "scores": { "line": 3, "mu": 1 } }
-      ]
-    },
-    {
-      "id": "q6",
-      "kicker": "06 · LAST NIGHT",
-      "text": "คืนสุดท้ายก่อนมีคนมาช่วย",
-      "options": [
-        { "id": "q6_mu",    "label": "สวดมนต์ให้ครบบท",              "scores": { "mu": 3, "chill": 1 } },
-        { "id": "q6_prep",  "label": "จัดของให้พร้อมออกเดินทาง",      "scores": { "prep": 3, "mu": 1 } },
-        { "id": "q6_live",  "label": "ไลฟ์ปิดท้ายสักรอบ",             "scores": { "live": 3, "line": 1 } },
-        { "id": "q6_chill", "label": "นอน",                           "scores": { "chill": 3, "live": 1 } },
-        { "id": "q6_line",  "label": "พิมพ์ขอบคุณทุกคนในกลุ่ม",       "scores": { "line": 3, "prep": 1 } }
+        {
+          "id": "q5_prep",
+          "label": "ระบบบริหารทรัพยากรที่ดี คือสิ่งที่ทำให้รอด",
+          "scores": {
+            "prep": 1
+          }
+        },
+        {
+          "id": "q5_line",
+          "label": "อย่ารอจนสมบูรณ์ ตัดสินใจช้าเกินไปก็ตาย",
+          "scores": {
+            "line": 1
+          }
+        },
+        {
+          "id": "q5_mu",
+          "label": "ศรัทธาและความหวังคือสิ่งสุดท้ายที่จะพาคุณรอด",
+          "scores": {
+            "mu": 1
+          }
+        },
+        {
+          "id": "q5_live",
+          "label": "จงบันทึกทุกอย่างไว้ ความงามมีอยู่แม้ในวันสิ้นโลก",
+          "scores": {
+            "live": 1
+          }
+        },
+        {
+          "id": "q5_chill",
+          "label": "ลื่นไหลเหมือนน้ำ อย่ายึดติดกับโลกใบเก่า",
+          "scores": {
+            "chill": 1
+          }
+        }
       ]
     }
   ],
-
   "results": [
-    { "code": "chill_prep",  "rank": 1,  "pair": ["chill", "prep"],  "title": "1 ปี 2 เดือน",  "body": "คนนึงทำทุกอย่าง อีกคนไม่บ่นสักคำ ตลอดทั้งปีไม่มีใครทะเลาะกันเลย" },
-    { "code": "mu_prep",     "rank": 2,  "pair": ["mu",    "prep"],  "title": "8 เดือน",       "body": "คนนึงเตรียมของ คนนึงเตรียมใจ ไปได้ไกลมาก เสียแค่ทุกการตัดสินใจต้องรอเช็คดวงก่อน" },
-    { "code": "live_prep",   "rank": 3,  "pair": ["live",  "prep"],  "title": "6 เดือน",       "body": "คนนึงหาของ คนนึงหากล้อง แต่บันทึกไว้ครบทุกวัน อย่างน้อยโลกจะได้รู้ว่าเกิดอะไรขึ้น" },
-    { "code": "chill_chill", "rank": 4,  "pair": ["chill", "chill"], "title": "6 เดือน",       "body": "ไม่หาอะไรกิน ไม่หาที่หลบ ไม่ทะเลาะ นอนอยู่เฉยๆ จนมีคนมาเจอพอดี รอดแบบไม่ได้ตั้งใจ" },
-    { "code": "chill_mu",    "rank": 5,  "pair": ["chill", "mu"],    "title": "3 สัปดาห์",     "body": "ไม่มีใครทำอะไรเลย แต่ก็ไม่มีใครทำอะไรผิดเหมือนกัน" },
-    { "code": "line_prep",   "rank": 6,  "pair": ["line",  "prep"],  "title": "11 วัน",        "body": "เตรียมของมาครบ แล้วโดนเกลี้ยกล่อมให้ทิ้งหมดเพราะอ่านมาว่ามีสารตกค้าง" },
-    { "code": "chill_live",  "rank": 7,  "pair": ["chill", "live"],  "title": "9 วัน",         "body": "คนนึงถ่าย คนนึงไม่สนกล้องเลย ได้คอนเทนต์ดีที่สุดในบรรดาทุกคู่ แต่ก็แค่นั้น" },
-    { "code": "live_mu",     "rank": 8,  "pair": ["live",  "mu"],    "title": "5 วัน",         "body": "ไลฟ์พิธีขอฝน คนดู 12 คน ฝนไม่ตก แต่ยอดวิวขึ้น" },
-    { "code": "chill_line",  "rank": 9,  "pair": ["chill", "line"],  "title": "5 วัน",         "body": "คนนึงส่งวิธีเอาตัวรอดมาให้ 47 วิธี อีกคนไม่ได้อ่านสักอัน" },
-    { "code": "prep_prep",   "rank": 10, "pair": ["prep",  "prep"],  "title": "4 วัน",         "body": "กระเป๋าสองใบหนักรวม 40 กิโล เดินไม่ไหวทั้งคู่ นั่งอยู่ข้างกระเป๋าที่มีทุกอย่าง" },
-    { "code": "mu_mu",       "rank": 11, "pair": ["mu",    "mu"],    "title": "2 วัน",         "body": "เสียเวลาวันครึ่งไปกับการหาฤกษ์ออกเดินทาง ฤกษ์ดีที่สุดคือวันที่น้ำหมดพอดี" },
-    { "code": "line_live",   "rank": 12, "pair": ["line",  "live"],  "title": "40 ชั่วโมง",    "body": "ทำคลิปสอนวิธีเอาตัวรอดจากข้อมูลที่ผิดทั้งหมด มีคนทำตาม 200 คน" },
-    { "code": "line_mu",     "rank": 13, "pair": ["line",  "mu"],    "title": "30 ชั่วโมง",    "body": "เชื่อว่าน้ำต้มใบไม้แก้ได้ทุกอย่าง ใบไม้นั้นไม่ควรต้ม" },
-    { "code": "live_live",   "rank": 14, "pair": ["live",  "live"],  "title": "19 ชั่วโมง",    "body": "แย่งกันเป็นคนถ่าย ไม่มีใครยอมเป็นคนหาน้ำ แบตหมดพร้อมกันตอนเที่ยงคืน" },
-    { "code": "line_line",   "rank": 15, "pair": ["line",  "line"],  "title": "12 ชั่วโมง",    "body": "ส่งข้อมูลผิดให้กันไปมาจนมั่นใจว่าถูก แล้วเดินไปทางตรงข้ามกับทางออกพอดี" }
+    {
+      "code": "prep_mu",
+      "pair": [
+        "prep",
+        "mu"
+      ],
+      "title": "15 ปี",
+      "body": "การบริหารค่ายที่สมบูรณ์แบบ สายตุนคุมกฎกติกาและเสบียง ส่วนสายมูคุมขวัญกำลังใจและเยียวยาผู้คน ทั้งสองคนบริหารคนละส่วนและอุดช่องโหว่ซึ่งกันและกัน"
+    },
+    {
+      "code": "prep_live",
+      "pair": [
+        "prep",
+        "live"
+      ],
+      "title": "10 ปี",
+      "body": "สมดุลที่ยอดเยี่ยม สายตุนรักษาร่างกายให้อยู่รอดด้วยเสบียง สายไลฟ์สดรักษาจิตวิญญาณด้วยการสื่อสารและการบันทึกเรื่องราว เป็นทีมที่สามารถสร้างชุมชนที่มีทั้งความมั่นคงและอารยธรรม"
+    },
+    {
+      "code": "prep_prep",
+      "pair": [
+        "prep",
+        "prep"
+      ],
+      "title": "8 ปี",
+      "body": "สองนักจัดการทรัพยากรมาอยู่ด้วยกัน ค่ายมีระบบบัญชีและคลังสินค้าเข้มงวดที่สุด แต่ทั้งคู่ขัดแย้งกันเองเรื่องการปันส่วน หวงของจนไม่ยอมนำอุปกรณ์ออกมาใช้ในยามฉุกเฉิน"
+    },
+    {
+      "code": "prep_chill",
+      "pair": [
+        "prep",
+        "chill"
+      ],
+      "title": "5 ปี",
+      "body": "ทีมที่ประหยัดทรัพยากรที่สุด สายตุนหาของและคำนวณการใช้ สายชิลใช้ทรัพยากรน้อยและไม่เคยบ่นหรือสร้างดราม่า รอดได้นานในสภาวะที่อาหารขาดแคลนสุดขีด"
+    },
+    {
+      "code": "prep_line",
+      "pair": [
+        "prep",
+        "line"
+      ],
+      "title": "3 ปี",
+      "body": "สายเสมอเป็นคนเขียนแปลนและวิเคราะห์ความเสี่ยงทั้งหมด ส่วนสายตุนจะเป็นคนบีบให้สายเสมอเลิกคิดแล้วเริ่มลงมือสร้าง ป้อมปราการจะแข็งแกร่งมากแต่อาจทะเลาะกันบ่อยเรื่องความล่าช้า"
+    },
+    {
+      "code": "mu_mu",
+      "pair": [
+        "mu",
+        "mu"
+      ],
+      "title": "1 ปี",
+      "body": "กลุ่มผู้รอดชีวิตกลายเป็นสำนักปฏิบัติธรรมดิสโทเปีย มีพิธีกรรมใหม่และใช้ความเชื่อเยียวยากันได้ลึกซึ้ง แต่ทั้งคู่อาจเชื่อลางสังหรณ์ร่วมกันจนเมินสัญญาณเตือนภัยตามหลักเหตุผล"
+    },
+    {
+      "code": "live_line",
+      "pair": [
+        "live",
+        "line"
+      ],
+      "title": "1 ปี",
+      "body": "ทีมเก็บข้อมูลและวิเคราะห์ สายไลฟ์สดหาข่าวสารและสัมภาษณ์ผู้คน สายเสมอเอาข้อมูลมาวิเคราะห์ความเป็นไปได้ เป็นกุนซือที่ดี แต่อาจตายเพราะวิเคราะห์สถานการณ์อยู่นานจนหนีไม่ทัน"
+    },
+    {
+      "code": "live_chill",
+      "pair": [
+        "live",
+        "chill"
+      ],
+      "title": "6 เดือน",
+      "body": "ทีมนี้เข้ากันได้ดีในแง่ของความสงบทางใจ คนนึงชอบสังเกต อีกคนนึงชอบอยู่นิ่งๆ ไม่มีความขัดแย้ง แต่ขาดคนที่มีแรงขับในการออกไปเสี่ยงหาทรัพยากรใหม่ๆ"
+    },
+    {
+      "code": "live_live",
+      "pair": [
+        "live",
+        "live"
+      ],
+      "title": "4 เดือน",
+      "body": "ค่ายกลายเป็นศูนย์กระจายข่าวและสตูดิโอสารคดี ทั้งคู่แย่งกันตั้งคำถามและถกเถียงปรัชญา แต่ค่ายขาดกำลังคนออกไปเสี่ยงภัยหาทรัพยากร"
+    },
+    {
+      "code": "live_mu",
+      "pair": [
+        "live",
+        "mu"
+      ],
+      "title": "3 เดือน",
+      "body": "ทีมที่เต็มไปด้วยศิลปะ ปรัชญา และศรัทธา เป็นที่พึ่งทางใจให้ทุกคนในค่ายได้ดีเยี่ยม แต่ไม่มีใครถนัดการคำนวณทรัพยากรหรือการป้องกันตัว หากอยู่กันลำพังจะตกเป็นเหยื่อได้ง่าย"
+    },
+    {
+      "code": "mu_line",
+      "pair": [
+        "mu",
+        "line"
+      ],
+      "title": "2 เดือน",
+      "body": "ความขัดแย้งเชิงปรัชญา สายมูใช้ลางสังหรณ์และสัญชาตญาณในการตัดสินใจแบบฉับพลัน ส่วนสายเสมอต้องการหลักฐานและแผนผังที่ชัดเจนก่อนก้าวเดิน มักจะขัดแย้งกันเองจนระบบการทำงานชะงักงัน"
+    },
+    {
+      "code": "chill_mu",
+      "pair": [
+        "chill",
+        "mu"
+      ],
+      "title": "45 วัน",
+      "body": "การปล่อยวางขั้นสูงสุด เผชิญหน้ากับความตายหรือวิกฤตด้วยความสงบ ไม่มีการโทษกัน ไม่มีการตื่นตระหนก แต่มีแนวโน้มจะยอมรับความตายอย่างสงบหากเสบียงหมด แทนที่จะดิ้นรนสู้"
+    },
+    {
+      "code": "chill_chill",
+      "pair": [
+        "chill",
+        "chill"
+      ],
+      "title": "21 วัน",
+      "body": "บรรยากาศเงียบสงบประนีประนอมขั้นสูงสุด ต่างคนต่างประหยัดพลังงานด้วยการนอนมองเพดานซากตึก ไร้ซึ่งความก้าวหน้าหรือการดิ้นรนเอาชีวิตรอดอย่างสิ้นเชิง"
+    },
+    {
+      "code": "chill_line",
+      "pair": [
+        "chill",
+        "line"
+      ],
+      "title": "14 วัน",
+      "body": "สายเสมอขอเวลาวิเคราะห์เส้นทาง 3 วัน สายชิลขอนอนรอพักแรง สรุปคือไม่มีใครริเริ่มลงมือทำ ความเฉื่อยชาและความลังเลมารวมกัน ทำให้พลาดโอกาสทองในการเอาชีวิตรอดเสมอ"
+    },
+    {
+      "code": "line_line",
+      "pair": [
+        "line",
+        "line"
+      ],
+      "title": "10 วัน",
+      "body": "หายนะแห่งการประวิงเวลา คนหนึ่งออกแบบระบบ อีกคนรื้อหาจุดบกพร่อง ทั้งคู่วิเคราะห์จนประชุมยืดเยื้อข้ามสัปดาห์ ไม่มีการตัดสินใจเกิดขึ้นก่อนภัยคุกคามจะมาถึง"
+    }
   ],
-
   "fallback_result": "line_line",
-
+  "appearance": {
+    "images": {
+      "kv-intro": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/buddy_demo/kv-intro.png"
+    }
+  },
   "rules": {
     "invite_ttl_hours": 48,
     "require_friend": false,
     "max_pairs_per_user_per_day": 5,
     "allow_self_pair": false
   },
-
   "messages": {
     "invite": {
       "template": "invite_v1",
       "slots": {
         "title": "{inviter} ชวนคุณมาตอบควิซโลกแตก",
-        "body": "ตอบ 6 ข้อ แล้วดูว่าเราสองคนรอดกี่วัน",
+        "body": "ตอบ 5 ข้อ แล้วดูว่าเราสองคนรอดกี่วัน",
         "cta": "ตอบเลย"
       }
     },
@@ -178,5 +492,135 @@
         "cta": "เริ่มเลย"
       }
     }
+  },
+  "group": {
+    "enabled": true,
+    "result_mode": "match",
+    "min_members": 2,
+    "reward_members": 5,
+    "max_members": 5,
+    "overflow_mode": "rolling",
+    "batch_size": 5,
+    "result_locks_at": 0,
+    "archetypes": [
+      {
+        "code": "perfect_ecosystem",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-dna.png",
+        "title": "ค่ายสมดุลสมบูรณ์แบบ",
+        "primary_text": "20 ปี+ (ฟื้นฟูอารยธรรมมนุษย์ได้เลย)",
+        "body": "ค่ายในอุดมคติที่ระบบหมุนเวียนเพอร์เฟกต์ สายตุน สายเสมอ สายไลฟ์สด สายมู สายชิล ทุกคนสอดรับกันจนค่ายทำงานราบรื่นเหมือนนาฬิกาสวิส",
+        "min_group_size": 5,
+        "condition": {
+          "has_axes": [
+            "mu",
+            "prep",
+            "live",
+            "chill",
+            "line"
+          ],
+          "has_mode": "all",
+          "max_distinct": 5
+        },
+        "fallback": true
+      },
+      {
+        "code": "quartermaster_oligarchy",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-backpack.png",
+        "title": "ระบอบคณาธิปไตยเสบียง",
+        "primary_text": "10 ปี (รอดชัวร์ แต่อยู่แบบไร้ชีวิตชีวา)",
+        "body": "ทุนนิยมขั้นสุดยอด ทุกอย่างตีค่าเป็นแคลอรี่ ค่ายรวยทรัพยากรและกำแพงแข็งที่สุด แต่ชีวิตตึงเครียด ใครไม่มีประโยชน์... ไม่ได้กินข้าว",
+        "min_group_size": 3,
+        "condition": {
+          "has_axes": [
+            "prep"
+          ],
+          "has_mode": "any",
+          "min_members_with_axis": 3
+        }
+      },
+      {
+        "code": "theocratic_state",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-pendulum.png",
+        "title": "รัฐอิสระแห่งศรัทธา",
+        "primary_text": "1-2 ปี (รอดมาได้เพราะปาฏิหาริย์ล้วนๆ)",
+        "body": "ค่ายตัดสินใจด้วยดวงและฤกษ์ยาม คนในค่ายสงบใจไม่กลัวตาย แต่ระบบกายภาพอ่อนแอ หากศัตรูบุกตอนกาลกิณีก็คือวงแตก",
+        "min_group_size": 3,
+        "condition": {
+          "has_axes": [
+            "mu"
+          ],
+          "has_mode": "any",
+          "min_members_with_axis": 3
+        }
+      },
+      {
+        "code": "truman_show",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-mic.png",
+        "title": "เรียลลิตี้โชว์วันสิ้นโลก",
+        "primary_text": "6 เดือน (ตายเพราะประมาทและหิวแสง)",
+        "body": "คอนเทนต์ต้องเดินหน้า! ค่ายเต็มคนช่างสังเกตชอบบันทึก บรรยากาศเหมือนงานเทศกาลตลอดเวลา แต่อาจเผลอทำสิ่งอันตรายเพื่อได้สตอรี่",
+        "min_group_size": 3,
+        "condition": {
+          "has_axes": [
+            "live"
+          ],
+          "has_mode": "any",
+          "min_members_with_axis": 3
+        }
+      },
+      {
+        "code": "sloth_commune",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-hammock.png",
+        "title": "คอมมูนสโลว์ไลฟ์",
+        "primary_text": "3 เดือน (อดตายอย่างสงบและมีศิลปะ)",
+        "body": "ทุกคนเห็นพ้องว่า 'เดี๋ยวพรุ่งนี้ค่อยทำ' บรรยากาศเหมือนรีสอร์ตร้าง ทุกคนนอนประหยัดพลังงาน เมื่อเสบียงหมดก็ไม่มีใครยอมลุกไปหา",
+        "min_group_size": 3,
+        "condition": {
+          "has_axes": [
+            "chill"
+          ],
+          "has_mode": "any",
+          "min_members_with_axis": 3
+        }
+      },
+      {
+        "code": "bureaucracy_of_delay",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-table.png",
+        "title": "สภาแห่งการประวิงเวลา",
+        "primary_text": "14 วัน (ตายพร้อมพิมพ์เขียวในมือ)",
+        "body": "ทรัพยากรแน่น แผนงานเพียบ แต่ไม่มีใครตอกตะปูสักตัว! ใช้สมองเยอะที่สุดแต่ผลลัพธ์เป็นศูนย์ มักโดนภัยพิบัติกวาดขณะกำลังประชุมโหวต",
+        "min_group_size": 3,
+        "condition": {
+          "has_axes": [
+            "line"
+          ],
+          "has_mode": "any",
+          "min_members_with_axis": 3
+        },
+        "fallback": true
+      },
+      {
+        "code": "civil_war_camp",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-fire.png",
+        "title": "สภาสงครามเย็น",
+        "primary_text": "1 ปี (รอดได้แต่บรรยากาศอึดอัดมาก)",
+        "body": "ค่ายแบ่ง 2 ขั้วอำนาจชัดเจน ทุกการตัดสินใจถูกคัดค้านจากอีกฝั่ง ค่ายขยับตัวช้า คนที่เป็นเศษ 1 คนกลายเป็นตัวแปรชี้ขาดเสมอ",
+        "min_group_size": 2,
+        "condition": {
+          "is_balanced": true,
+          "max_distinct": 2
+        }
+      },
+      {
+        "code": "chaotic_republic",
+        "symbol_url": "https://qcggwkdxjtwaesesehnw.supabase.co/storage/v1/object/public/campaign-assets/duo-quiz/symbols/symbol-dice.png",
+        "title": "พันธมิตรเสียงแตก",
+        "primary_text": "3-5 ปี (รอดแบบทุลักทุเล ทะเลาะกันไปช่วยกันไป)",
+        "body": "ผู้นำต้องปวดหัวกับสมาชิกอินดี้ที่คิดต่างตลอด กฎระเบียบไม่ค่อยศักดิ์สิทธิ์ แต่ความหลากหลายช่วยเอาตัวรอดเฉพาะหน้าได้ดีแบบงงๆ",
+        "min_group_size": 2,
+        "fallback": true
+      }
+    ],
+    "fallback_archetype": "chaotic_republic"
   }
 }

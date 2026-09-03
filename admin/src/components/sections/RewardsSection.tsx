@@ -133,7 +133,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
                 style={{ border: '1px solid #E5E5E3', borderRadius: 8, padding: '14px 16px', marginBottom: 10, background: '#FAFAF9' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
                     Milestone {i + 1}
                   </span>
                   <button
@@ -146,7 +146,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Key (a-z, _)</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Key (a-z, _)</div>
                     <input
                       type="text"
                       value={m.key}
@@ -156,7 +156,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
                     />
                   </div>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>ต้องครบกี่คู่</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>ต้องครบกี่คู่</div>
                     <input
                       type="number"
                       value={m.trigger_pairs}
@@ -167,7 +167,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
                     />
                   </div>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Label</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Label</div>
                     <input
                       type="text"
                       value={m.label}
@@ -177,7 +177,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
                     />
                   </div>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Icon (emoji)</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Icon (emoji)</div>
                     <input
                       type="text"
                       value={m.icon || ''}
@@ -190,7 +190,7 @@ export default function RewardsSection({ rewards, onChange }: Props) {
                 </div>
 
                 <div style={{ marginTop: 10 }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Reward Pool</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 4 }}>Reward Pool</div>
                   {poolsLoading ? (
                     <div style={{ fontSize: 12, color: '#9B9B98' }}>กำลังโหลด pools...</div>
                   ) : pools.length === 0 ? (

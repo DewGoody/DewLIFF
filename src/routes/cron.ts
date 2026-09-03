@@ -5,6 +5,7 @@ import { scoreAnswers, dominantAxis } from '../engine/buddyQuiz.js';
 import { pushMessage } from '../services/line.js';
 import { env } from '../env.js';
 import type { Answer } from '../config/schema.js';
+import { computeDailyRollup } from '../services/analytics.js';
 
 export const cronRouter = Router();
 
@@ -35,7 +36,7 @@ async function sendF06Reminder(
 
   const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
   const copy = (cfg as any).copy ?? {};
-  const primary = cfg.brand.primary || '#E8354F';
+  const primary = (cfg.appearance as any)?.colors?.primary || cfg.brand.primary || '#E8354F';
   const liffBase = env().LIFF_URL ?? '';
   const liffUrl = `${liffBase}?campaignId=${campaignId}`;
 
@@ -187,7 +188,7 @@ async function sendGroupIncompleteReminder(
 
   const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
   const copy = (cfg as Record<string, unknown>).copy as Record<string, string> ?? {};
-  const primary = cfg.brand.primary || '#E8354F';
+  const primary = (cfg.appearance as any)?.colors?.primary || cfg.brand.primary || '#E8354F';
   const liffBase = env().LIFF_URL ?? '';
   const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
 
@@ -310,4 +311,25 @@ cronRouter.get('/expire-pairs', async (req, res) => {
 
   console.log(`Expired ${count} pair(s)`);
   res.json({ ok: true, expired: count });
+});
+
+// ── Daily analytics rollup ────────────────────────────────────────────
+// Aggregates yesterday's events into daily_rollups for fast dashboard queries.
+// Run at 00:30 UTC daily via Vercel cron.
+
+cronRouter.get('/rollup-daily', async (req, res) => {
+  if (!checkCronAuth(req, res)) return;
+
+  // Compute yesterday in UTC
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const date = yesterday.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+
+  try {
+    const processed = await computeDailyRollup(date);
+    console.log(`Daily rollup for ${date}: ${processed} campaign(s) processed`);
+    res.json({ ok: true, date, processed });
+  } catch (err) {
+    console.error('Daily rollup failed:', err);
+    res.status(500).json({ error: String(err) });
+  }
 });

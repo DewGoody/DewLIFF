@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Campaign Config Playground</title>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&family=Bangers&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Bai Jamjuree',sans-serif;background:#F0EBE0;color:#1C1A17;min-height:100vh}
+.topbar{background:#1C1A17;color:#F5E14B;padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.topbar-title{font-family:Bangers,cursive;font-size:22px;letter-spacing:.06em;flex:1}
+.topbar-tag{font:700 11px 'Bai Jamjuree',sans-serif;letter-spacing:.1em;background:#F5E14B;color:#1C1A17;padding:3px 9px;border-radius:4px}
+.btn-export{height:38px;padding:0 16px;border:2px solid #F5E14B;border-radius:8px;background:transparent;color:#F5E14B;font:700 13px 'Bai Jamjuree',sans-serif;cursor:pointer;transition:all .15s}
+.btn-export:hover{background:#F5E14B;color:#1C1A17}
+.btn-save{height:38px;padding:0 18px;border:2px solid #F5E14B;border-radius:8px;background:#F5E14B;color:#1C1A17;font:700 13px 'Bai Jamjuree',sans-serif;cursor:pointer;box-shadow:3px 3px 0 rgba(245,225,75,.4)}
+.btn-save:hover{opacity:.85}
+.container{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+.section{background:#FFFDF6;border:2.5px solid #1C1A17;border-radius:16px;margin-bottom:20px;overflow:hidden}
+.section-header{padding:14px 18px;background:#1C1A17;color:#FFFDF6;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.section-header h2{font:700 15px 'Bai Jamjuree',sans-serif;letter-spacing:.06em;flex:1}
+.section-header .toggle{font-size:12px;color:rgba(255,253,246,.5);transition:transform .2s}
+.section-header.open .toggle{transform:rotate(180deg)}
+.section-body{padding:18px}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font:700 11px 'Bai Jamjuree',sans-serif;letter-spacing:.08em;color:rgba(28,26,23,.5);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;border:2px solid #1C1A17;border-radius:8px;padding:9px 12px;font:500 14px 'Bai Jamjuree',sans-serif;color:#1C1A17;background:#FFFDF6;outline:none;transition:border-color .15s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#E8354F}
+.field textarea{resize:vertical;min-height:70px}
+.field input[type="color"]{padding:4px 8px;height:40px;cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* Questions */
+.q-card{border:2.5px solid #1C1A17;border-radius:12px;background:#FFFDF6;margin-bottom:12px;overflow:hidden}
+.q-card-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F0EBE0;border-bottom:2px solid #1C1A17}
+.q-num{font-family:Bangers,cursive;font-size:16px;background:#1C1A17;color:#F5E14B;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0}
+.q-card-header input{flex:1;border:none;background:transparent;font:700 14px 'Bai Jamjuree',sans-serif;color:#1C1A17;outline:none}
+.q-del{background:none;border:none;cursor:pointer;color:rgba(28,26,23,.4);font-size:18px;line-height:1;padding:0 4px;flex-shrink:0}
+.q-del:hover{color:#E8354F}
+.q-options{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.opt-row{display:flex;align-items:center;gap:8px}
+.opt-key{width:26px;height:26px;border-radius:50%;border:2px solid #1C1A17;background:#FFFDF6;display:flex;align-items:center;justify-content:center;font-family:Bangers,cursive;font-size:13px;flex-shrink:0}
+.opt-row input{flex:1;border:2px solid rgba(28,26,23,.25);border-radius:7px;padding:7px 10px;font:500 13px 'Bai Jamjuree',sans-serif;outline:none;background:#FFFDF6}
+.opt-row input:focus{border-color:#1C1A17}
+.opt-del{background:none;border:none;cursor:pointer;color:rgba(28,26,23,.3);font-size:16px;line-height:1;padding:0;flex-shrink:0}
+.opt-del:hover{color:#E8354F}
+.btn-add-opt{background:none;border:2px dashed rgba(28,26,23,.3);border-radius:7px;padding:6px 12px;font:600 12px 'Bai Jamjuree',sans-serif;color:rgba(28,26,23,.4);cursor:pointer;width:100%;text-align:left;margin-top:2px}
+.btn-add-opt:hover{border-color:#1C1A17;color:#1C1A17}
+.btn-add-q{width:100%;padding:12px;border:2.5px dashed rgba(28,26,23,.3);border-radius:12px;background:transparent;font:700 14px 'Bai Jamjuree',sans-serif;color:rgba(28,26,23,.45);cursor:pointer;margin-top:4px}
+.btn-add-q:hover{border-color:#1C1A17;color:#1C1A17;background:#F0EBE0}
+/* Axis */
+.axis-card{border:2px solid #1C1A17;border-radius:10px;padding:14px;margin-bottom:10px;background:#FFFDF6}
+.axis-badge{display:inline-flex;align-items:center;gap:6px;background:#F5E14B;border:2px solid #1C1A17;border-radius:6px;padding:3px 10px;font:700 12px 'Bai Jamjuree',sans-serif;margin-bottom:12px}
+/* Copy */
+.copy-group{border-top:2px dashed rgba(28,26,23,.15);padding-top:14px;margin-top:14px}
+.copy-group:first-child{border-top:none;padding-top:0;margin-top:0}
+.copy-group-label{font:700 10px 'Bai Jamjuree',sans-serif;letter-spacing:.12em;color:rgba(28,26,23,.4);margin-bottom:10px}
+.hint{font:500 11px 'Bai Jamjuree',sans-serif;color:rgba(28,26,23,.4);margin-top:3px}
+/* Export panel */
+.export-panel{background:#1C1A17;border-radius:16px;padding:20px;color:#FFFDF6;display:flex;flex-direction:column;gap:12px}
+.export-panel h3{font:700 15px 'Bai Jamjuree',sans-serif;letter-spacing:.06em;color:#F5E14B}
+.export-panel p{font:500 13px/1.6 'Bai Jamjuree',sans-serif;color:rgba(255,253,246,.65)}
+.export-btns{display:flex;gap:10px}
+.btn-full{flex:1;height:48px;border:2.5px solid;border-radius:10px;font:700 15px 'Bai Jamjuree',sans-serif;cursor:pointer}
+.btn-full-yellow{background:#F5E14B;color:#1C1A17;border-color:#F5E14B;box-shadow:3px 4px 0 rgba(245,225,75,.35)}
+.btn-full-outline{background:transparent;color:#FFFDF6;border-color:rgba(255,253,246,.4)}
+.btn-full-outline:hover{background:rgba(255,253,246,.08)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">CAMPAIGN PLAYGROUND</div>
+  <div class="topbar-tag">CONFIG EDITOR</div>
+  <button class="btn-export" onclick="exportJSON()">Export JSON</button>
+  <button class="btn-save" onclick="saveHTML()">บันทึก HTML</button>
+</div>
+
+<div class="container">
+
+  <!-- BRAND -->
+  <div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <h2>BRAND & MODE</h2>
+      <span class="toggle">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="grid2">
+        <div class="field">
+          <label>Campaign Name</label>
+          <input id="brand_name" placeholder="APOCALYPSE SQUAD">
+        </div>
+        <div class="field">
+          <label>Mode</label>
+          <select id="mode">
+            <option value="duo">Duo Quiz</option>
+            <option value="solo">Solo Quiz</option>
+            <option value="team">Team Quiz</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label>Primary Color</label>
+          <input id="brand_primary" type="color" value="#E8354F">
+        </div>
+        <div class="field">
+          <label>Logo URL</label>
+          <input id="brand_logo_url" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label>KV Image URL (Intro)</label>
+          <input id="brand_kv_image_url" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <h2>QUESTIONS</h2>
+      <span class="toggle">▼</span>
+    </div>
+    <div class="section-body">
+      <div id="questions-list"></div>
+      <button class="btn-add-q" onclick="addQuestion()">+ เพิ่มคำถาม</button>
+    </div>
+  </div>
+
+  <!-- AXES -->
+  <div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <h2>AXES / RESULT TYPES</h2>
+      <span class="toggle">▼</span>
+    </div>
+    <div class="section-body">
+      <div id="axes-list"></div>
+    </div>
+  </div>
+
+  <!-- COPY -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>COPY (ข้อความ)</h2>
+      <span class="toggle">▼</span>
+    </div>
+    <div class="section-body" style="display:none">
+
+      <div class="copy-group">
+        <div class="copy-group-label">INTRO</div>
+        <div class="grid2">
+          <div class="field">
+            <label>intro_body</label>
+            <textarea id="copy_intro_body" placeholder="คุณกับเพื่อนจะรอดกี่วันถ้าโลกแตกพรุ่งนี้?..."></textarea>
+          </div>
+          <div class="field">
+            <label>intro_cta (ปุ่มเริ่ม)</label>
+            <input id="copy_intro_cta" placeholder="เริ่มตอบ">
+            <div class="hint">default: เริ่มตอบ</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>intro_note (ใต้ปุ่ม)</label>
+          <input id="copy_intro_note" placeholder="ครบ 3 คู่ลุ้นคูปอง">
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">INVITED (DUO/TEAM)</div>
+        <div class="grid2">
+          <div class="field">
+            <label>invited_body</label>
+            <textarea id="copy_invited_body" placeholder="ชวนคุณมาดูว่า..."></textarea>
+          </div>
+          <div class="field">
+            <label>invited_body_bold</label>
+            <input id="copy_invited_body_bold" placeholder="ถ้าโลกแตกพรุ่งนี้ เราสองคนจะรอดกี่วัน">
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>invite_cta (ปุ่มตอบ)</label>
+            <input id="copy_invite_cta" placeholder="ตอบให้{ชื่อเพื่อน}">
+          </div>
+          <div class="field">
+            <label>view_campaign_cta</label>
+            <input id="copy_view_campaign_cta" placeholder="ดูแคมเปญก่อน">
+          </div>
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">RESULT</div>
+        <div class="grid3">
+          <div class="field">
+            <label>result_share_btn</label>
+            <input id="copy_result_share_btn" placeholder="อวดผลให้คนอื่น">
+          </div>
+          <div class="field">
+            <label>result_retry_btn</label>
+            <input id="copy_result_retry_btn" placeholder="ลองทำอีกครั้ง">
+          </div>
+          <div class="field">
+            <label>result_invite_btn</label>
+            <input id="copy_result_invite_btn" placeholder="ชวนอีกคน">
+          </div>
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">SOLO SHARE</div>
+        <div class="grid2">
+          <div class="field">
+            <label>solo_share_title</label>
+            <input id="copy_solo_share_title" placeholder="การ์ดนี้จะถูกส่งเข้าแชท">
+          </div>
+          <div class="field">
+            <label>solo_share_send (ปุ่ม LINE)</label>
+            <input id="copy_solo_share_send" placeholder="ส่งผ่าน LINE">
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>solo_share_hint</label>
+            <input id="copy_solo_share_hint" placeholder="เลือกเพื่อนหรือกลุ่มปลายทางในหน้าต่อไป">
+          </div>
+          <div class="field">
+            <label>solo_share_back</label>
+            <input id="copy_solo_share_back" placeholder="ไปหน้าสรุปผลรวม">
+          </div>
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">PAIR RESULT</div>
+        <div class="grid2">
+          <div class="field">
+            <label>pair_result_badge</label>
+            <input id="copy_pair_result_badge" placeholder="คู่นี้รอดได้">
+          </div>
+          <div class="field">
+            <label>pair_share_cta</label>
+            <input id="copy_pair_share_cta" placeholder="แชร์การ์ดคู่นี้">
+          </div>
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">TEAM</div>
+        <div class="grid2">
+          <div class="field">
+            <label>team_invite_body</label>
+            <textarea id="copy_team_invite_body" placeholder="ชวนคุณมาเข้าทีม..."></textarea>
+          </div>
+          <div class="field">
+            <label>team_answer_first_cta</label>
+            <input id="copy_team_answer_first_cta" placeholder="ตอบก่อนเข้าทีม">
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>team_full_title</label>
+            <input id="copy_team_full_title" placeholder="TEAM COMPLETE!">
+          </div>
+          <div class="field">
+            <label>team_full_cta</label>
+            <input id="copy_team_full_cta" placeholder="เปิดผลทีม →">
+          </div>
+          <div class="field">
+            <label>team_full_push (notification)</label>
+            <input id="copy_team_full_push" placeholder="ทีมของคุณครบ N คนแล้ว...">
+          </div>
+        </div>
+      </div>
+
+      <div class="copy-group">
+        <div class="copy-group-label">GROUP / SHARE</div>
+        <div class="grid3">
+          <div class="field">
+            <label>group_invite_cta</label>
+            <input id="copy_group_invite_cta" placeholder="ชวนเพิ่ม · ยังว่างอีก N คน">
+          </div>
+          <div class="field">
+            <label>group_share_cta_complete</label>
+            <input id="copy_group_share_cta_complete" placeholder="จัดทีมของคุณเอง">
+          </div>
+          <div class="field">
+            <label>group_join_cta</label>
+            <input id="copy_group_join_cta" placeholder="มาเข้าทีมนี้">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="export-panel">
+    <h3>EXPORT</h3>
+    <p>Export JSON เพื่อนำไปใส่ใน CMS · หรือ บันทึก HTML เพื่อแชร์ให้คนอื่นมาแก้ต่อได้</p>
+    <div class="export-btns">
+      <button class="btn-full btn-full-yellow" onclick="exportJSON()">Export JSON</button>
+      <button class="btn-full btn-full-outline" onclick="saveHTML()">บันทึก HTML (แชร์ต่อได้)</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── DEFAULT DATA ────────────────────────────────────────────────────────────
+const DEFAULT_QUESTIONS = [
+  { id:'q1', text:'ไฟดับทั้งเมือง 3 วันแล้ว สิ่งแรกที่คุณทำคือ?', options:[
+    {id:'a',label:'เดินไปดูว่าเพื่อนบ้านเป็นไงบ้าง'},
+    {id:'b',label:'จัดของใส่กระเป๋าให้ครบก่อน'},
+    {id:'c',label:'ทำแผนที่ 3 วันข้างหน้าไว้เลย'},
+    {id:'d',label:'นอนต่อ เดี๋ยวมันก็ติด'},
+    {id:'e',label:'ไลฟ์สดก่อนแบตหมด'},
+  ]},
+  { id:'q2', text:'ทีมเหลืออาหารแค่ 1 วัน คุณทำอะไร?', options:[
+    {id:'a',label:'แบ่งปันเท่าๆ กันให้หมด'},
+    {id:'b',label:'หาวิธีหาอาหารเพิ่ม'},
+    {id:'c',label:'จัดอันดับว่าใครต้องการมากสุด'},
+    {id:'d',label:'ปล่อยให้ทุกคนตัดสินใจเอง'},
+    {id:'e',label:'ไลฟ์สดขอรับบริจาค'},
+  ]},
+];
+
+const DEFAULT_AXES = [
+  {id:'chiller',  label:'สายปลง',    label_en:'Chiller',    short:'ปลง',  image_url:''},
+  {id:'mystic',   label:'สายดวง',    label_en:'Mystic',     short:'ดวง',  image_url:''},
+  {id:'influencer',label:'สายไลฟ์สด',label_en:'Influencer', short:'ไลฟ์', image_url:''},
+  {id:'prepper',  label:'สายแบกของ', label_en:'Prepper',    short:'แบก',  image_url:''},
+  {id:'analyst',  label:'สายวางแผน', label_en:'Analyst',    short:'แผน',  image_url:''},
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let questions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+let axes = JSON.parse(JSON.stringify(DEFAULT_AXES));
+
+// ─── PREFILL (from saved HTML) ────────────────────────────────────────────
+if (window.__PREFILL__) {
+  const p = window.__PREFILL__;
+  if (p.questions) questions = p.questions;
+  if (p.axes) axes = p.axes;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.__PREFILL__) applyPrefill(window.__PREFILL__);
+  renderQuestions();
+  renderAxes();
+});
+
+function applyPrefill(p) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  set('brand_name', p.brand?.name);
+  set('brand_primary', p.brand?.primary);
+  set('brand_logo_url', p.brand?.logo_url);
+  set('brand_kv_image_url', p.brand?.kv_image_url);
+  set('mode', p.mode);
+  const copy = p.copy || {};
+  Object.entries(copy).forEach(([k, v]) => set('copy_' + k, v));
+}
+
+// ─── SECTION TOGGLE ──────────────────────────────────────────────────────────
+function toggleSection(header) {
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.style.display = body.style.display === 'none' ? '' : 'none';
+}
+
+// ─── QUESTIONS ───────────────────────────────────────────────────────────────
+const KEYS = ['A','B','C','D','E','F','G','H'];
+
+function renderQuestions() {
+  const el = document.getElementById('questions-list');
+  el.innerHTML = questions.map((q, qi) => `
+    <div class="q-card" id="qcard-${qi}">
+      <div class="q-card-header">
+        <div class="q-num">${qi + 1}</div>
+        <input
+          value="${esc(q.text)}"
+          placeholder="พิมพ์คำถามตรงนี้..."
+          onchange="questions[${qi}].text=this.value"
+          oninput="questions[${qi}].text=this.value"
+        >
+        <button class="q-del" onclick="deleteQuestion(${qi})" title="ลบคำถาม">✕</button>
+      </div>
+      <div class="q-options" id="opts-${qi}">
+        ${q.options.map((opt, oi) => optHTML(qi, oi, opt)).join('')}
+        <button class="btn-add-opt" onclick="addOption(${qi})">+ เพิ่มตัวเลือก</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function optHTML(qi, oi, opt) {
+  return `<div class="opt-row" id="opt-${qi}-${oi}">
+    <div class="opt-key">${KEYS[oi] || (oi+1)}</div>
+    <input
+      value="${esc(opt.label)}"
+      placeholder="ตัวเลือก ${KEYS[oi] || (oi+1)}..."
+      onchange="questions[${qi}].options[${oi}].label=this.value"
+      oninput="questions[${qi}].options[${oi}].label=this.value"
+    >
+    ${oi >= 2 ? `<button class="opt-del" onclick="deleteOption(${qi},${oi})" title="ลบ">✕</button>` : '<span style="width:20px"></span>'}
+  </div>`;
+}
+
+function addQuestion() {
+  const n = questions.length + 1;
+  questions.push({ id: 'q' + n, text: '', options: [
+    {id:'a',label:''},{id:'b',label:''},{id:'c',label:''},{id:'d',label:''},{id:'e',label:''},
+  ]});
+  renderQuestions();
+  // scroll to new question
+  setTimeout(() => {
+    const el = document.getElementById('qcard-' + (questions.length - 1));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+}
+
+function deleteQuestion(qi) {
+  if (questions.length <= 1) return alert('ต้องมีอย่างน้อย 1 คำถาม');
+  if (!confirm('ลบคำถามข้อที่ ' + (qi + 1) + '?')) return;
+  questions.splice(qi, 1);
+  questions.forEach((q, i) => q.id = 'q' + (i + 1));
+  renderQuestions();
+}
+
+function addOption(qi) {
+  if (questions[qi].options.length >= 8) return;
+  const n = questions[qi].options.length;
+  const id = String.fromCharCode(97 + n); // a,b,c...
+  questions[qi].options.push({ id, label: '' });
+  renderQuestions();
+}
+
+function deleteOption(qi, oi) {
+  if (questions[qi].options.length <= 2) return;
+  questions[qi].options.splice(oi, 1);
+  renderQuestions();
+}
+
+// ─── AXES ────────────────────────────────────────────────────────────────────
+function renderAxes() {
+  const el = document.getElementById('axes-list');
+  el.innerHTML = axes.map((ax, i) => `
+    <div class="axis-card">
+      <div class="axis-badge">สาย ${i + 1}</div>
+      <div class="grid3">
+        <div class="field">
+          <label>Thai Label</label>
+          <input value="${esc(ax.label)}" placeholder="สายแบกของ"
+            oninput="axes[${i}].label=this.value">
+        </div>
+        <div class="field">
+          <label>English ID / label_en</label>
+          <input value="${esc(ax.label_en||'')}" placeholder="Prepper"
+            oninput="axes[${i}].label_en=this.value">
+        </div>
+        <div class="field">
+          <label>Short (2-3 ตัว)</label>
+          <input value="${esc(ax.short||'')}" placeholder="แบก" style="max-width:100px"
+            oninput="axes[${i}].short=this.value">
+        </div>
+      </div>
+      <div class="field">
+        <label>Image URL (axis card)</label>
+        <input value="${esc(ax.image_url||'')}" placeholder="https://..."
+          oninput="axes[${i}].image_url=this.value">
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── COLLECT STATE ────────────────────────────────────────────────────────────
+function collectConfig() {
+  const get = id => (document.getElementById(id)||{}).value || '';
+
+  // copy keys
+  const copyKeys = [
+    'intro_body','intro_cta','intro_note',
+    'invited_body','invited_body_bold','invite_cta','view_campaign_cta',
+    'result_share_btn','result_retry_btn','result_invite_btn',
+    'solo_share_title','solo_share_send','solo_share_hint','solo_share_back',
+    'pair_result_badge','pair_share_cta',
+    'team_invite_body','team_answer_first_cta','team_full_title','team_full_cta','team_full_push',
+    'group_invite_cta','group_share_cta_complete','group_join_cta',
+  ];
+  const copy = {};
+  copyKeys.forEach(k => { const v = get('copy_' + k); if (v) copy[k] = v; });
+
+  return {
+    brand: {
+      name: get('brand_name') || undefined,
+      primary: get('brand_primary') || undefined,
+      logo_url: get('brand_logo_url') || undefined,
+      kv_image_url: get('brand_kv_image_url') || undefined,
+    },
+    mode: get('mode') || 'duo',
+    copy: Object.keys(copy).length ? copy : undefined,
+    questions: questions.filter(q => q.text || q.options.some(o => o.label)),
+    axes: axes,
+  };
+}
+
+// ─── EXPORT JSON ─────────────────────────────────────────────────────────────
+function exportJSON() {
+  const config = collectConfig();
+  const json = JSON.stringify(config, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (config.brand?.name || 'campaign').replace(/\s+/g, '-').toLowerCase() + '-config.json';
+  a.click();
+}
+
+// ─── SAVE HTML ───────────────────────────────────────────────────────────────
+function saveHTML() {
+  const config = collectConfig();
+  const prefillScript = `<script>window.__PREFILL__=${JSON.stringify(config)}<\/script>`;
+  let html = document.documentElement.outerHTML;
+  // Remove any existing prefill script
+  html = html.replace(/<script>window\.__PREFILL__[\s\S]*?<\/script>/g, '');
+  // Inject before </head>
+  html = html.replace('</head>', prefillScript + '</head>');
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const name = (config.brand?.name || 'campaign').replace(/\s+/g, '-').toLowerCase();
+  a.download = name + '-playground.html';
+  a.click();
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db/client.js';
 import { CampaignConfig } from '../config/schema.js';
 import { clearCache } from '../config/loader.js';
+import { adminForceGroupComplete } from '../services/group.js';
 
 export const adminRouter = Router();
 
@@ -62,9 +63,10 @@ adminRouter.post('/campaigns', async (req, res, next) => {
     }
 
     // Create with minimal default config
+    const campaignType = (req.body.type === 'group' ? 'group' : 'buddy_quiz') as 'buddy_quiz' | 'group';
     const defaultConfig = {
       id,
-      type: 'buddy_quiz',
+      type: campaignType,
       mode: mode || 'pair',
       version: 1,
       brand: { name: id, primary: '#FF3D8B', surface: '#1B1430', on_surface: '#FFF3E4' },
@@ -138,7 +140,7 @@ adminRouter.post('/campaigns', async (req, res, next) => {
 
     await db().from('campaigns').insert({
       id,
-      type: 'buddy_quiz',
+      type: campaignType,
       status: 'draft',
       current_version: 1,
     });
@@ -161,6 +163,7 @@ adminRouter.get('/campaign/:id', async (req, res, next) => {
   try {
     const id = req.params.id as string;
 
+    // Query base columns (always present) then try draft_version separately
     const { data: campaign, error: campErr } = await db()
       .from('campaigns')
       .select('id, type, status, current_version')
@@ -172,11 +175,23 @@ adminRouter.get('/campaign/:id', async (req, res, next) => {
       return;
     }
 
+    // Try to get draft_version — column may not exist on older DBs
+    const { data: draftRow } = await db()
+      .from('campaigns')
+      .select('draft_version')
+      .eq('id', id)
+      .single();
+
+    const draftVersion: number | null = (draftRow as { draft_version?: number | null } | null)?.draft_version ?? null;
+
+    // If there's a draft, load that for the admin editor; otherwise load current (published) version
+    const editorVersion = draftVersion ?? campaign.current_version;
+
     const { data: version, error: verErr } = await db()
       .from('campaign_versions')
       .select('config, version, published_at')
       .eq('campaign_id', id)
-      .eq('version', campaign.current_version)
+      .eq('version', editorVersion)
       .single();
 
     if (verErr || !version) {
@@ -190,6 +205,7 @@ adminRouter.get('/campaign/:id', async (req, res, next) => {
         type: campaign.type,
         status: campaign.status,
         currentVersion: campaign.current_version,
+        draftVersion: draftVersion,
       },
       config: version.config,
     });
@@ -197,6 +213,27 @@ adminRouter.get('/campaign/:id', async (req, res, next) => {
     next(err);
   }
 });
+
+// Helper: try to read/write draft_version, silently ignore if column missing
+async function getDraftVersion(id: string): Promise<number | null> {
+  try {
+    const { data } = await db()
+      .from('campaigns')
+      .select('draft_version')
+      .eq('id', id)
+      .single();
+    return (data as { draft_version?: number | null } | null)?.draft_version ?? null;
+  } catch {
+    return null;
+  }
+}
+async function setDraftVersion(id: string, version: number | null): Promise<void> {
+  try {
+    await db().from('campaigns').update({ draft_version: version }).eq('id', id);
+  } catch {
+    // column may not exist — ignore
+  }
+}
 
 // PUT /api/admin/campaign/:id — save config (creates new version)
 adminRouter.put('/campaign/:id', async (req, res, next) => {
@@ -235,7 +272,7 @@ adminRouter.put('/campaign/:id', async (req, res, next) => {
 
       await db().from('campaigns').insert({
         id,
-        type: 'buddy_quiz',
+        type: parsed.data.type,
         status: 'live',
         current_version: newVersion,
       });
@@ -248,19 +285,28 @@ adminRouter.put('/campaign/:id', async (req, res, next) => {
       });
 
       clearCache();
-      res.json({ ok: true, version: newVersion, created: true });
+      res.json({ ok: true, version: newVersion, created: true, isDraft: false });
       return;
     }
 
-    // Insert new version (immutable — never update existing versions)
-    const newVersion = campaign.current_version + 1;
+    // Derive new version from actual max in versions table to avoid
+    // duplicate-key errors when current_version is stale (e.g. rapid saves).
+    const { data: maxVerRow } = await db()
+      .from('campaign_versions')
+      .select('version')
+      .eq('campaign_id', id)
+      .order('version', { ascending: false })
+      .limit(1)
+      .single();
+    const newVersion = (maxVerRow?.version ?? campaign.current_version) + 1;
     const configWithVersion = { ...configRaw, version: newVersion };
 
+    // Save as DRAFT — published_at is null, does NOT affect live LIFF
     const { error: insertErr } = await db().from('campaign_versions').insert({
       campaign_id: id,
       version: newVersion,
       config: configWithVersion,
-      published_at: new Date().toISOString(),
+      published_at: null,
     });
 
     if (insertErr) {
@@ -268,15 +314,58 @@ adminRouter.put('/campaign/:id', async (req, res, next) => {
       return;
     }
 
-    // Bump current_version on campaign
-    await db()
+    // Update draft_version only — current_version (live) stays unchanged
+    await setDraftVersion(id, newVersion);
+
+    // Do NOT clearCache() — live config did not change
+
+    res.json({ ok: true, version: newVersion, isDraft: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/campaign/:id/publish — publish the current draft
+adminRouter.post('/campaign/:id/publish', async (req, res, next) => {
+  try {
+    const id = req.params.id as string;
+
+    const { data: campaign, error: campErr } = await db()
       .from('campaigns')
-      .update({ current_version: newVersion })
-      .eq('id', id);
+      .select('id, current_version')
+      .eq('id', id)
+      .single();
+
+    if (campErr || !campaign) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Campaign not found' } });
+      return;
+    }
+
+    const draftVersion = await getDraftVersion(id);
+    if (draftVersion == null) {
+      res.status(400).json({ error: { code: 'NO_DRAFT', message: 'No draft to publish' } });
+      return;
+    }
+
+    // Mark the draft version as published
+    const { error: verErr } = await db()
+      .from('campaign_versions')
+      .update({ published_at: new Date().toISOString() })
+      .eq('campaign_id', id)
+      .eq('version', draftVersion);
+
+    if (verErr) {
+      res.status(500).json({ error: { code: 'UPDATE_FAILED', message: verErr.message } });
+      return;
+    }
+
+    // Promote draft to current_version and clear draft_version
+    await db().from('campaigns').update({ current_version: draftVersion }).eq('id', id);
+    await setDraftVersion(id, null);
 
     clearCache();
 
-    res.json({ ok: true, version: newVersion });
+    res.json({ ok: true, version: draftVersion });
   } catch (err) {
     next(err);
   }
@@ -304,6 +393,17 @@ adminRouter.put('/campaign/:id/status', async (req, res, next) => {
     }
 
     res.json({ ok: true, status });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// POST /api/admin/group/:id/force-complete — push group-complete card regardless of member count (testing)
+adminRouter.post('/group/:id/force-complete', async (req, res, next) => {
+  try {
+    const result = await adminForceGroupComplete(req.params.id);
+    res.json(result);
   } catch (err) {
     next(err);
   }

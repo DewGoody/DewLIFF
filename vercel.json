@@ -10,7 +10,10 @@
     {
       "src": "api/og.ts",
       "use": "@vercel/node",
-      "config": { "maxLambdaSize": "50mb" }
+      "config": {
+        "maxLambdaSize": "50mb",
+        "includeFiles": ["api/fonts/**", "public/og-frames/**"]
+      }
     },
     {
       "src": "public/**",
@@ -26,17 +29,25 @@
     { "src": "/admin/assets/(.*)", "dest": "/public/admin-app/assets/$1" },
     { "src": "/admin", "dest": "/public/admin-app/index.html" },
     { "src": "/admin/(.*)", "dest": "/public/admin-app/index.html" },
+    { "src": "/landingpage/assets/(.*)", "dest": "/public/landing-app/assets/$1" },
+    { "src": "/landingpage", "dest": "/public/landing-app/index.html" },
+    { "src": "/landingpage/(.*)", "dest": "/public/landing-app/index.html" },
+    { "src": "/join", "dest": "/public/join.html" },
     { "src": "/demo", "dest": "/public/demo.html" },
+    { "src": "/b2b-demo", "dest": "/public/b2b-demo.html" },
+    { "src": "/campaign-playground", "dest": "/public/campaign-playground.html" },
     { "src": "/liff-edit", "dest": "/public/liff-edit.html" },
     { "src": "/liff-app/(.*)", "dest": "/public/liff-app/$1" },
     { "src": "/liff-app", "dest": "/public/liff-app/index.html" },
     { "src": "/(.*\\.(html|js|css|png|jpg|svg|ico))", "dest": "/public/$1" },
+    { "src": "/", "dest": "/public/landing-app/index.html" },
     { "src": "/(.*)", "dest": "/public/liff-app/index.html" }
   ],
   "crons": [
     { "path": "/api/cron/expire-pairs",            "schedule": "0 0 * * *" },
     { "path": "/api/cron/remind-waiting",           "schedule": "0 1 * * *" },
-    { "path": "/api/cron/remind-incomplete-groups", "schedule": "0 2 * * *" }
+    { "path": "/api/cron/remind-incomplete-groups", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/rollup-daily",             "schedule": "30 0 * * *" }
   ],
   "headers": [
     {

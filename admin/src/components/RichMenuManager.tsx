@@ -87,16 +87,16 @@ function CreateDialog({ onClose, onCreate }: CreateDialogProps) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ID (slug)</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ID (slug)</div>
             <input
               value={id}
               onChange={(e) => setId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
               placeholder="main, campaign_hub, settings"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'DM Mono',monospace", outline: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: 'none' }}
             />
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ชื่อเมนู</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>ชื่อเมนู</div>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -105,13 +105,13 @@ function CreateDialog({ onClose, onCreate }: CreateDialogProps) {
             />
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>Alias ID (LINE)</div>
-            <div style={{ padding: '9px 12px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'DM Mono',monospace", background: '#F7F7F5', color: '#5C5C58' }}>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 5 }}>Alias ID (LINE)</div>
+            <div style={{ padding: '9px 12px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'JetBrains Mono',monospace", background: '#F7F7F5', color: '#5C5C58' }}>
               {aliasId || '—'}
             </div>
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>Layout</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 8 }}>Layout</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
               {LAYOUTS.map((l) => (
                 <button
@@ -124,7 +124,7 @@ function CreateDialog({ onClose, onCreate }: CreateDialogProps) {
                   }}
                 >
                   <LayoutThumb cols={l.cols} rows={l.rows} selected={layout === l.id} />
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: layout === l.id ? '#fff' : '#111' }}>{l.label}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: layout === l.id ? '#fff' : '#111' }}>{l.label}</span>
                 </button>
               ))}
             </div>
@@ -210,7 +210,7 @@ function GridPreview({ layout, areas, selectedCell, onCellClick }: GridPreviewPr
               outlineOffset: -2,
             }}
           >
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#9B9B98' }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: '#9B9B98' }}>
               {cell}
             </span>
             <span style={{ fontSize: 11, fontWeight: 600, color: '#111', textAlign: 'center', wordBreak: 'break-all' }}>
@@ -218,7 +218,7 @@ function GridPreview({ layout, areas, selectedCell, onCellClick }: GridPreviewPr
             </span>
             {area && (
               <span style={{
-                fontFamily: "'DM Mono',monospace", fontSize: 8, letterSpacing: '.04em', textTransform: 'uppercase',
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 8, letterSpacing: '.04em', textTransform: 'uppercase',
                 padding: '2px 5px', border: '1px solid #E5E5E3', background: '#fff', color: '#5C5C58',
               }}>
                 {area.action.type}
@@ -249,14 +249,14 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
 
   return (
     <div style={{ border: '1px solid #111', background: '#FAFAF9', padding: '16px 16px 18px' }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 12 }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98', marginBottom: 12 }}>
         เซลล์ {cell} — แก้ไข
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Label */}
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Label</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Label</div>
           <input
             value={area.label}
             onChange={(e) => update({ label: e.target.value })}
@@ -266,14 +266,14 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
 
         {/* Action type */}
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Action type</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Action type</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {(['uri', 'message', 'postback', 'richmenuswitch'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => updateAction({ type: t })}
                 style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: 10.5, padding: '5px 10px',
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, padding: '5px 10px',
                   border: '1px solid ' + (area.action.type === t ? '#111' : '#E5E5E3'),
                   background: area.action.type === t ? '#111' : '#fff',
                   color: area.action.type === t ? '#fff' : '#5C5C58',
@@ -289,7 +289,7 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
         {/* Conditional fields */}
         {area.action.type === 'uri' && (
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>URL</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>URL</div>
             <input
               value={area.action.uri || ''}
               onChange={(e) => updateAction({ uri: e.target.value })}
@@ -301,7 +301,7 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
 
         {area.action.type === 'message' && (
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>ข้อความที่ส่ง</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>ข้อความที่ส่ง</div>
             <input
               value={area.action.text || ''}
               onChange={(e) => updateAction({ text: e.target.value })}
@@ -314,16 +314,16 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
         {area.action.type === 'postback' && (
           <>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Data</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Data</div>
               <input
                 value={area.action.data || ''}
                 onChange={(e) => updateAction({ data: e.target.value })}
                 placeholder="action=open&menu=main"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'DM Mono',monospace", outline: 'none' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: 'none' }}
               />
             </div>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Display text (optional)</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Display text (optional)</div>
               <input
                 value={area.action.displayText || ''}
                 onChange={(e) => updateAction({ displayText: e.target.value })}
@@ -337,7 +337,7 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
         {area.action.type === 'richmenuswitch' && (
           <>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>เปลี่ยนไปเมนู</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>เปลี่ยนไปเมนู</div>
               {otherMenus.length === 0 ? (
                 <div style={{ fontSize: 12.5, color: '#9B9B98', padding: '8px 10px', border: '1px solid #E5E5E3', background: '#F7F7F5' }}>
                   ยังไม่มีเมนูอื่น — สร้างเมนูเพิ่มก่อน
@@ -357,12 +357,12 @@ function CellEditor({ cell, area, allMenus, currentMenuId, onChange }: CellEdito
               <div style={{ fontSize: 11.5, color: '#9B9B98', marginTop: 5 }}>→ richMenuAliasId: {area.action.richMenuAliasId || '—'}</div>
             </div>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Switch data</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Switch data</div>
               <input
                 value={area.action.switchData || ''}
                 onChange={(e) => updateAction({ switchData: e.target.value })}
                 placeholder="switch_to_main"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'DM Mono',monospace", outline: 'none' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #E5E5E3', fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: 'none' }}
               />
             </div>
           </>
@@ -527,7 +527,7 @@ export default function RichMenuManager() {
         >
           ← แคมเปญ
         </button>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>Krob · Host Console</span>
         <span style={{ width: 1, height: 16, background: '#E5E5E3' }} />
         <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.015em' }}>Rich Menu Manager</span>
         <div style={{ flex: 1 }} />
@@ -545,7 +545,7 @@ export default function RichMenuManager() {
           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 28px', borderBottom: '1px solid #E5E5E3', fontSize: 13,
           background: noteError ? 'rgba(230,59,46,.08)' : 'rgba(22,163,74,.08)',
         }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: noteError ? '#E63B2E' : '#16A34A' }}>
             {noteError ? 'Error' : 'OK'}
           </span>
           <span>{note}</span>
@@ -600,29 +600,29 @@ export default function RichMenuManager() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 13.5, fontWeight: 600 }}>{menu.name}</span>
                         {menu.is_default && (
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', padding: '2px 6px', background: '#111', color: '#fff' }}>default</span>
+                          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', padding: '2px 6px', background: '#111', color: '#fff' }}>default</span>
                         )}
                       </div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: '#9B9B98', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{menu.alias_id}</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, color: '#9B9B98', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{menu.alias_id}</div>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#5C5C58' }}>{menu.layout}</span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#5C5C58' }}>{menu.size}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#5C5C58' }}>{menu.layout}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#5C5C58' }}>{menu.size}</span>
                     {isDeployed ? (
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.06)', color: '#16A34A' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #16A34A', background: 'rgba(22,163,74,.06)', color: '#16A34A' }}>
                         เผยแพร่แล้ว
                       </span>
                     ) : (
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#9B9B98' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, padding: '2px 7px', border: '1px solid #E5E5E3', background: '#F7F7F5', color: '#9B9B98' }}>
                         แบบร่าง
                       </span>
                     )}
                   </div>
 
                   {isDeployed && (
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: '#9B9B98', marginBottom: 8 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, color: '#9B9B98', marginBottom: 8 }}>
                       {fmt(menu.deployed_at)}
                     </div>
                   )}
@@ -664,7 +664,7 @@ export default function RichMenuManager() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontSize: 15, fontWeight: 700 }}>{selected.name}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: '#9B9B98', marginTop: 2 }}>{selected.alias_id}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, color: '#9B9B98', marginTop: 2 }}>{selected.alias_id}</div>
                   </div>
                   <button
                     onClick={handleSave}
@@ -683,12 +683,12 @@ export default function RichMenuManager() {
 
                 {/* Section A: ข้อมูลทั่วไป */}
                 <div style={{ border: '1px solid #E5E5E3' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
                     A — ข้อมูลทั่วไป
                   </div>
                   <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>ชื่อเมนู</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>ชื่อเมนู</div>
                       <input
                         value={selected.name}
                         onChange={(e) => handleFieldChange({ name: e.target.value })}
@@ -696,14 +696,14 @@ export default function RichMenuManager() {
                       />
                     </div>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Alias ID</div>
-                      <div style={{ padding: '9px 12px', border: '1px solid #E5E5E3', background: '#F7F7F5', fontFamily: "'DM Mono',monospace", fontSize: 13, color: '#5C5C58' }}>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 4 }}>Alias ID</div>
+                      <div style={{ padding: '9px 12px', border: '1px solid #E5E5E3', background: '#F7F7F5', fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: '#5C5C58' }}>
                         {selected.alias_id}
                       </div>
                       <div style={{ fontSize: 11.5, color: '#9B9B98', marginTop: 4 }}>LINE ใช้ชื่อนี้ในการ switch</div>
                     </div>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 8 }}>Layout</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#9B9B98', marginBottom: 8 }}>Layout</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
                         {LAYOUTS.map((l) => (
                           <button
@@ -716,8 +716,8 @@ export default function RichMenuManager() {
                             }}
                           >
                             <LayoutThumb cols={l.cols} rows={l.rows} selected={selected.layout === l.id} />
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: selected.layout === l.id ? '#fff' : '#111' }}>{l.label}</span>
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: selected.layout === l.id ? 'rgba(255,255,255,.6)' : '#9B9B98' }}>{l.size}</span>
+                            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: selected.layout === l.id ? '#fff' : '#111' }}>{l.label}</span>
+                            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: selected.layout === l.id ? 'rgba(255,255,255,.6)' : '#9B9B98' }}>{l.size}</span>
                           </button>
                         ))}
                       </div>
@@ -727,7 +727,7 @@ export default function RichMenuManager() {
 
                 {/* Section B: Tap Areas */}
                 <div style={{ border: '1px solid #E5E5E3' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
                     B — ตั้งค่า Tap Area
                   </div>
                   <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -753,12 +753,12 @@ export default function RichMenuManager() {
 
                 {/* Section C: Deploy */}
                 <div style={{ border: '1px solid #E5E5E3' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E5E3', fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B9B98' }}>
                     C — Deploy
                   </div>
                   <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div style={{ fontSize: 13, color: '#5C5C58', lineHeight: 1.6 }}>
-                      กดปุ่ม Deploy เพื่อส่งเมนูขึ้น LINE — ระบบจะสร้าง rich menu และผูก alias <span style={{ fontFamily: "'DM Mono',monospace" }}>{selected.alias_id}</span> ให้อัตโนมัติ
+                      กดปุ่ม Deploy เพื่อส่งเมนูขึ้น LINE — ระบบจะสร้าง rich menu และผูก alias <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{selected.alias_id}</span> ให้อัตโนมัติ
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -792,13 +792,13 @@ export default function RichMenuManager() {
                     {(selected.line_id || deployResult) && (
                       <div style={{ border: '1px solid #16A34A', background: 'rgba(22,163,74,.06)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#16A34A' }}>เผยแพร่แล้ว</span>
+                          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#16A34A' }}>เผยแพร่แล้ว</span>
                           <span style={{ fontSize: 12.5, color: '#5C5C58' }}>{fmt(selected.deployed_at)}</span>
                         </div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
+                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
                           LINE ID: {selected.line_id || deployResult}
                         </div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
+                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, color: '#5C5C58' }}>
                           Alias: {selected.alias_id}
                         </div>
                       </div>

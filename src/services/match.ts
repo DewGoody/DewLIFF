@@ -7,12 +7,11 @@
 import { db } from '../db/client.js';
 import { getConfig } from '../config/loader.js';
 import { toPublicConfig, toPublicResult } from '../config/public.js';
-import { validateAnswers, resolvePair, scoreAnswers, dominantAxis } from '../engine/buddyQuiz.js';
+import { validateAnswers, resolvePair, resolveSolo, scoreAnswers, dominantAxis } from '../engine/buddyQuiz.js';
 import { pushMessage } from './line.js';
 import { getProfile } from './line.js';
-import { writeResultToLineKit } from './lineKitClient.js';
 import { logEvent } from './events.js';
-import { getAppBaseUrl } from '../env.js';
+import { logAnalyticsEvent, upsertParticipant, hashParticipant } from './analytics.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 import type { Answer } from '../config/schema.js';
 
@@ -63,10 +62,24 @@ export async function saveUserAnswers(
   if (ansErr) throw new Error(`Failed to save answers: ${ansErr.message}`);
 
   logEvent({ userId, type: 'quiz_done', campaignId, meta: { mode: 'save_answers' } });
+  logAnalyticsEvent({ userId, campaignId, type: 'quiz_done', tier: 'solo', configVersion: campaign.current_version }).catch(() => {});
+  hashParticipant(userId, campaignId).then(hash =>
+    upsertParticipant({ campaignId, participantHash: hash, status: 'started', source: 'organic' })
+  ).catch(() => {});
 
-  // Compute new axis scores (needed both for return value and cascade updates)
-  const scores = scoreAnswers(cfg, answers);
-  const myAxis = dominantAxis(cfg, scores);
+  // Compute result — branch on quiz mode
+  let myAxis: string;
+  let scores: Record<string, number>;
+
+  if (cfg.mode === 'mbti') {
+    const outcome = resolveSolo(cfg, answers);
+    myAxis = outcome.typeCode;
+    scores = outcome.scores;
+  } else {
+    scores = scoreAnswers(cfg, answers);
+    myAxis = dominantAxis(cfg, scores);
+  }
+
   const myAxisDef = cfg.axes.find((a) => a.id === myAxis);
 
   // ── Cascade: update group_members rows for this user (fire-and-forget) ──────
@@ -76,9 +89,12 @@ export async function saveUserAnswers(
   );
 
   // ── Cascade: recompute all completed pairs involving this user (fire-and-forget) ─
-  cascadePairResultUpdate(userId, campaignId, answers, cfg).catch((e) =>
-    console.warn('[saveAnswers] pair cascade failed:', e),
-  );
+  // Solo/MBTI mode has no pairs — skip. Group mode can have pairs via matchAndCompute.
+  if (cfg.mode === 'pair' || cfg.mode === 'group') {
+    cascadePairResultUpdate(userId, campaignId, answers, cfg).catch((e) =>
+      console.warn('[saveAnswers] pair cascade failed:', e),
+    );
+  }
 
   const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
   const inviterUrl = `${liffBase}?inviterId=${userId}&campaignId=${campaignId}`;
@@ -241,10 +257,14 @@ export async function getInviterProfile(inviterId: string, campaignId?: string):
           .eq('campaign_id', campaignId);
         if (ansRows && ansRows.length > 0) {
           const answers: Answer[] = ansRows.map((r) => ({ questionId: r.question_id, optionId: r.option_id }));
-          const scores = scoreAnswers(cfg, answers);
-          const axisId = dominantAxis(cfg, scores);
+          let axisId: string;
+          if (cfg.mode === 'mbti') {
+            axisId = resolveSolo(cfg, answers).typeCode;
+          } else {
+            axisId = dominantAxis(cfg, scoreAnswers(cfg, answers));
+          }
           const axisDef = cfg.axes.find((a) => a.id === axisId);
-          archLabel = axisDef?.label;
+          archLabel = axisDef?.label ?? axisId;
           archEn = (axisDef as any)?.label_en;
         }
       }
@@ -279,6 +299,8 @@ export type MatchResult = {
   result: ReturnType<typeof toPublicResult>;
   axisMe: string;
   axisBuddy: string;
+  axisMeId?: string;
+  axisBuddyId?: string;
   axisMeShort?: string;
   axisBuddyShort?: string;
   resultRank?: number;
@@ -431,6 +453,27 @@ export async function matchAndCompute(
 
   logEvent({ userId: bUserId, type: 'pair_done', pairId: pair.id, campaignId, meta: { result_code: outcome.result.code } });
 
+  // Analytics: log pair_done for B, track B's referral via inviterId
+  logAnalyticsEvent({
+    userId: bUserId, campaignId, type: 'pair_done',
+    tier: 'pair', refUserId: inviterId, source: 'invite',
+    configVersion: campaign.current_version,
+    payload: { result_code: outcome.result.code },
+  }).catch(() => {});
+  // Update participants for both A (invited B → increment) and B (completed)
+  Promise.all([
+    hashParticipant(inviterId, campaignId).then(hash =>
+      upsertParticipant({ campaignId, participantHash: hash, incrementInvitesSent: true })
+    ),
+    hashParticipant(bUserId, campaignId).then(hash =>
+      upsertParticipant({
+        campaignId, participantHash: hash,
+        status: 'completed', resultId: outcome.result.code, source: 'invite',
+        refParticipant: undefined, // set async below
+      })
+    ),
+  ]).catch(() => {});
+
   const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
 
   // Push to B: result card
@@ -448,61 +491,18 @@ export async function matchAndCompute(
     liffBase,
   });
 
-  // Also tell LineKit both players' results — server-to-server, doesn't touch
-  // KimLIFF's own DB write or trust model, and must never break the push/response below.
-  const lineKitPayloadBase = {
-    source: 'buddy_quiz_match',
-    campaignId,
-    pairId: pair.id,
-    resultCode: outcome.result.code,
-    resultTitle: outcome.result.title,
-    scores: { a: outcome.scoresA, b: outcome.scoresB, combined: outcome.combined },
-  };
-  const lineKitWrites: Promise<void>[] = [
-    writeResultToLineKit(bUserId, {
-      ...lineKitPayloadBase,
-      axisMe: bAxisMe,
-      axisBuddy: bAxisBuddy,
-    }, pair.id).catch((e) => console.error('LineKit write-back failed (B):', e)),
-    writeResultToLineKit(inviterId, {
-      ...lineKitPayloadBase,
-      axisMe: outcome.axisA,
-      axisBuddy: outcome.axisB,
-    }, pair.id).catch((e) => console.error('LineKit write-back failed (A):', e)),
-  ];
-
   // B sees result immediately in LIFF — no push needed for B.
-  // A gets F-04 notification — UNLESS this match came from a group join flow,
-  // in which case A already received a group-update push (no need to double-notify).
-  // Await everything below before returning — on Vercel, work left running after the
-  // response is sent can be frozen mid-flight, so the push (when sent) and the LineKit
-  // write-backs (which never throw on their own) all have to finish inside this call.
-  let pushSentToInviter = false;
-  if (!opts?.fromGroup) {
-    const [pushAResult] = await Promise.allSettled([
-      pushMessage(inviterId, partnerAnsweredCard),
-      ...lineKitWrites,
-    ]);
-    pushSentToInviter = pushAResult.status === 'fulfilled';
-    if (pushSentToInviter) {
-      logEvent({ userId: inviterId, type: 'push_sent', pairId: pair.id, campaignId });
-    } else {
-      console.error('Push to A failed:', (pushAResult as PromiseRejectedResult).reason);
-    }
-  } else {
-    await Promise.allSettled(lineKitWrites);
-  }
-
-  // If push to A failed (not a follower), provide a share URL B can use to notify A manually
-  const inviterShareUrl = pushSentToInviter
-    ? undefined
-    : `${liffBase}?campaignId=${campaignId}&pairId=${pair.id}`;
+  // A is expected to see results when B shares back — no OA push sent.
+  const pushSentToInviter = false;
+  const inviterShareUrl = `${liffBase}?campaignId=${campaignId}&pairId=${pair.id}`;
 
   return {
     pairId: pair.id,
     result: toPublicResult(outcome.result),
     axisMe: cfg.axes.find((a) => a.id === bAxisMe)?.label || bAxisMe,
     axisBuddy: cfg.axes.find((a) => a.id === bAxisBuddy)?.label || bAxisBuddy,
+    axisMeId: bAxisMe,
+    axisBuddyId: bAxisBuddy,
     axisMeShort: (cfg.axes.find((a) => a.id === bAxisMe) as any)?.short,
     axisBuddyShort: (cfg.axes.find((a) => a.id === bAxisBuddy) as any)?.short,
     resultRank: outcome.result.rank,
@@ -551,10 +551,7 @@ function liffPairUrl(liffBase: string, campaignId: string, pairId: string): stri
   return `${liffBase}?campaignId=${campaignId}&pairId=${pairId}`;
 }
 
-// DewLIFF is its own separate Vercel deployment from KimLIFF's — never hardcode
-// KimLIFF's own domain here. getAppBaseUrl() self-configures to whichever domain
-// this project is actually deployed to (see src/env.ts).
-const OG_BASE = `${getAppBaseUrl()}/api/og`;
+const OG_BASE = process.env.OG_BASE_URL || 'https://laan-kijjakam.vercel.app/api/og';
 
 function buildMatchResultCard(
   cfg: Parameters<typeof toPublicConfig>[0],
@@ -703,6 +700,7 @@ export interface MySummaryResult {
   myArchetypeEn?: string;
   myArchetypeOrder?: string;
   myArchetypeShort?: string;
+  myArchetypeImage?: string;
   archStats?: { bestPartnerLabel: string; bestSurvival: string; worstPartnerLabel: string; worstSurvival: string };
   shareUrl: string;
   pairs: PairSummaryEntry[];
@@ -728,14 +726,26 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
   if (!ansRows || ansRows.length === 0) throw new NotFoundError('User has not answered yet');
 
   const myAnswers: Answer[] = ansRows.map((r) => ({ questionId: r.question_id, optionId: r.option_id }));
-  const scores = scoreAnswers(cfg, myAnswers);
-  const myAxisId = dominantAxis(cfg, scores);
-  const myAxisDef = cfg.axes.find((a) => a.id === myAxisId);
+
+  let myAxisId: string;
+  let myAxisDef: typeof cfg.axes[number] | undefined;
+  let soloResult: typeof cfg.results[number] | undefined;
+
+  if (cfg.mode === 'mbti') {
+    const outcome = resolveSolo(cfg, myAnswers);
+    myAxisId = outcome.typeCode;
+    soloResult = outcome.result;
+    myAxisDef = undefined;
+  } else {
+    const scores = scoreAnswers(cfg, myAnswers);
+    myAxisId = dominantAxis(cfg, scores);
+    myAxisDef = cfg.axes.find((a) => a.id === myAxisId);
+  }
 
   const liffBase = (process.env.LIFF_URL || `https://liff.line.me/2011037337-KlqFK4LM`).trim();
 
-  // Compute archStats from config results
-  const myResultsRanked = cfg.results
+  // Compute archStats from config results (pair mode only)
+  const myResultsRanked = cfg.mode !== 'pair' ? [] : cfg.results
     .filter(r => r.pair && (r.pair[0] === myAxisId || r.pair[1] === myAxisId) && r.rank !== undefined)
     .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
 
@@ -834,8 +844,9 @@ export async function getMySummary(userId: string, campaignId: string): Promise<
 
   return {
     myArchetype: myAxisId,
-    myArchetypeLabel: myAxisDef?.label || myAxisId,
-    myArchetypeBody: myAxisDef?.body,
+    myArchetypeLabel: soloResult?.title ?? myAxisDef?.label ?? myAxisId,
+    myArchetypeBody: soloResult?.body ?? myAxisDef?.body,
+    myArchetypeImage: soloResult?.image_url,
     myArchetypeEn: (myAxisDef as any)?.label_en,
     myArchetypeOrder: (myAxisDef as any)?.order,
     myArchetypeShort: (myAxisDef as any)?.short,
@@ -857,6 +868,7 @@ export async function setDisplayName(userId: string, displayName: string): Promi
 // ── My unlocked group archetype symbols ─────────────────────────────
 
 export async function getMySymbols(userId: string, campaignId: string): Promise<string[]> {
+  // All groups this user belongs to
   const { data: memberships } = await db()
     .from('group_members')
     .select('group_id')
@@ -866,6 +878,7 @@ export async function getMySymbols(userId: string, campaignId: string): Promise<
 
   const groupIds = memberships.map((m) => m.group_id as string);
 
+  // Any locked group in this campaign unlocks the symbol for all its members
   const { data: groups } = await db()
     .from('groups')
     .select('locked_archetype_code')

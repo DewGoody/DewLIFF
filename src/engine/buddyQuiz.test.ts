@@ -1,14 +1,5 @@
-import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-
-// DewLIFF fork: src/index.ts is the only place that normally calls loadEnv() —
-// this test file is run standalone (not through index.ts), and config/loader.ts
-// reaches into db() -> env() as soon as getConfig() runs below, so env() throws
-// "loadEnv() has not been called yet" without this. Falls back to the JSON file
-// in campaigns/ once the (deliberately unreachable, local-only) Supabase call fails.
-import { loadEnv } from '../env.js';
-loadEnv();
 
 import { getConfig, validateAll } from '../config/loader.js';
 import { toPublicConfig } from '../config/public.js';

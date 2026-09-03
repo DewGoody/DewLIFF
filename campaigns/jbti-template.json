@@ -1,0 +1,353 @@
+{
+  "id": "jbti",
+  "type": "buddy_quiz",
+  "mode": "mbti",
+  "version": 1,
+  "brand": {
+    "name": "JBTI",
+    "primary": "#F5820A",
+    "surface": "#1A0F00",
+    "on_surface": "#FFF3E0"
+  },
+  "copy": {
+    "intro_quiz_label": "JBTI · 8 ข้อ",
+    "intro_body": "ตอบ 8 ข้อ รู้ว่าคุณเป็นสายเจไหน",
+    "intro_cta": "เริ่มตอบ",
+    "intro_note": "รู้ผลทันที",
+    "share_btn": "↗ แชร์ผล"
+  },
+  "axes": [
+    {
+      "id": "strict",
+      "label": "ระดับความเคร่ง",
+      "group_weight": 10,
+      "poles": ["K", "F"]
+    },
+    {
+      "id": "style",
+      "label": "สไตล์อาหาร",
+      "group_weight": 10,
+      "poles": ["C", "R"]
+    },
+    {
+      "id": "social",
+      "label": "ความสังคม",
+      "group_weight": 10,
+      "poles": ["S", "L"]
+    },
+    {
+      "id": "motive",
+      "label": "แรงจูงใจ",
+      "group_weight": 10,
+      "poles": ["T", "H"]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "kicker": "01",
+      "text": "[คำถามเกี่ยวกับความเคร่ง vs ผ่อนปรนในการกินเจ]",
+      "options": [
+        {
+          "id": "q1a",
+          "label": "[ตัวเลือก — เคร่ง]",
+          "scores": { "strict": 2, "style": 0, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q1b",
+          "label": "[ตัวเลือก — ผ่อนปรน]",
+          "scores": { "strict": -2, "style": 0, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q1c",
+          "label": "[ตัวเลือก — ทำอาหารเอง]",
+          "scores": { "strict": 0, "style": 2, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q1d",
+          "label": "[ตัวเลือก — ซื้อ/ร้าน]",
+          "scores": { "strict": 0, "style": -2, "social": 0, "motive": 0 }
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "kicker": "02",
+      "text": "[คำถามเกี่ยวกับสไตล์อาหาร ทำเองหรือซื้อ]",
+      "options": [
+        {
+          "id": "q2a",
+          "label": "[ตัวเลือก — ทำเอง]",
+          "scores": { "strict": 0, "style": 2, "social": 1, "motive": 0 }
+        },
+        {
+          "id": "q2b",
+          "label": "[ตัวเลือก — ซื้อร้านประจำ]",
+          "scores": { "strict": 0, "style": -2, "social": -1, "motive": 0 }
+        },
+        {
+          "id": "q2c",
+          "label": "[ตัวเลือก — ชวนเพื่อน]",
+          "scores": { "strict": 0, "style": 0, "social": 2, "motive": 0 }
+        },
+        {
+          "id": "q2d",
+          "label": "[ตัวเลือก — กินคนเดียว]",
+          "scores": { "strict": 0, "style": 0, "social": -2, "motive": 0 }
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "kicker": "03",
+      "text": "[คำถามเกี่ยวกับแรงจูงใจ ประเพณีหรือสุขภาพ]",
+      "options": [
+        {
+          "id": "q3a",
+          "label": "[ตัวเลือก — ประเพณี/ศรัทธา]",
+          "scores": { "strict": 1, "style": 0, "social": 0, "motive": 2 }
+        },
+        {
+          "id": "q3b",
+          "label": "[ตัวเลือก — สุขภาพ]",
+          "scores": { "strict": -1, "style": 0, "social": 0, "motive": -2 }
+        },
+        {
+          "id": "q3c",
+          "label": "[ตัวเลือก — เคร่งมาก]",
+          "scores": { "strict": 2, "style": 0, "social": 0, "motive": 1 }
+        },
+        {
+          "id": "q3d",
+          "label": "[ตัวเลือก — ผ่อนปรน]",
+          "scores": { "strict": -2, "style": 0, "social": 0, "motive": -1 }
+        }
+      ]
+    },
+    {
+      "id": "q4",
+      "kicker": "04",
+      "text": "[คำถามเกี่ยวกับความสังคม ชวนคนหรือเงียบๆ]",
+      "options": [
+        {
+          "id": "q4a",
+          "label": "[ตัวเลือก — ชวนเพื่อน]",
+          "scores": { "strict": 0, "style": 0, "social": 2, "motive": 1 }
+        },
+        {
+          "id": "q4b",
+          "label": "[ตัวเลือก — ไม่ชวน/กินคนเดียว]",
+          "scores": { "strict": 0, "style": 0, "social": -2, "motive": -1 }
+        },
+        {
+          "id": "q4c",
+          "label": "[ตัวเลือก — ประเพณี]",
+          "scores": { "strict": 0, "style": 0, "social": 1, "motive": 2 }
+        },
+        {
+          "id": "q4d",
+          "label": "[ตัวเลือก — สุขภาพ/ทันสมัย]",
+          "scores": { "strict": 0, "style": 0, "social": -1, "motive": -2 }
+        }
+      ]
+    },
+    {
+      "id": "q5",
+      "kicker": "05",
+      "text": "[คำถามที่ 5 — ครอสมิติที่ต้องการ]",
+      "options": [
+        {
+          "id": "q5a",
+          "label": "[ตัวเลือก A]",
+          "scores": { "strict": 2, "style": 1, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q5b",
+          "label": "[ตัวเลือก B]",
+          "scores": { "strict": -2, "style": -1, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q5c",
+          "label": "[ตัวเลือก C]",
+          "scores": { "strict": 0, "style": 0, "social": 2, "motive": 1 }
+        },
+        {
+          "id": "q5d",
+          "label": "[ตัวเลือก D]",
+          "scores": { "strict": 0, "style": 0, "social": -2, "motive": -1 }
+        }
+      ]
+    },
+    {
+      "id": "q6",
+      "kicker": "06",
+      "text": "[คำถามที่ 6 — ครอสมิติที่ต้องการ]",
+      "options": [
+        {
+          "id": "q6a",
+          "label": "[ตัวเลือก A]",
+          "scores": { "strict": 1, "style": 2, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q6b",
+          "label": "[ตัวเลือก B]",
+          "scores": { "strict": -1, "style": -2, "social": 0, "motive": 0 }
+        },
+        {
+          "id": "q6c",
+          "label": "[ตัวเลือก C]",
+          "scores": { "strict": 0, "style": 0, "social": 1, "motive": 2 }
+        },
+        {
+          "id": "q6d",
+          "label": "[ตัวเลือก D]",
+          "scores": { "strict": 0, "style": 0, "social": -1, "motive": -2 }
+        }
+      ]
+    },
+    {
+      "id": "q7",
+      "kicker": "07",
+      "text": "[คำถามที่ 7 — ครอสมิติที่ต้องการ]",
+      "options": [
+        {
+          "id": "q7a",
+          "label": "[ตัวเลือก A]",
+          "scores": { "strict": 2, "style": 0, "social": 1, "motive": 0 }
+        },
+        {
+          "id": "q7b",
+          "label": "[ตัวเลือก B]",
+          "scores": { "strict": -2, "style": 0, "social": -1, "motive": 0 }
+        },
+        {
+          "id": "q7c",
+          "label": "[ตัวเลือก C]",
+          "scores": { "strict": 0, "style": 1, "social": 0, "motive": 2 }
+        },
+        {
+          "id": "q7d",
+          "label": "[ตัวเลือก D]",
+          "scores": { "strict": 0, "style": -1, "social": 0, "motive": -2 }
+        }
+      ]
+    },
+    {
+      "id": "q8",
+      "kicker": "08",
+      "text": "[คำถามที่ 8 — ครอสมิติที่ต้องการ]",
+      "options": [
+        {
+          "id": "q8a",
+          "label": "[ตัวเลือก A]",
+          "scores": { "strict": 0, "style": 2, "social": 0, "motive": 1 }
+        },
+        {
+          "id": "q8b",
+          "label": "[ตัวเลือก B]",
+          "scores": { "strict": 0, "style": -2, "social": 0, "motive": -1 }
+        },
+        {
+          "id": "q8c",
+          "label": "[ตัวเลือก C]",
+          "scores": { "strict": 1, "style": 0, "social": 2, "motive": 0 }
+        },
+        {
+          "id": "q8d",
+          "label": "[ตัวเลือก D]",
+          "scores": { "strict": -1, "style": 0, "social": -2, "motive": 0 }
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "code": "kcst",
+      "title": "KCST — [ชื่อสาย]",
+      "body": "[เคร่ง · ทำเอง · ชวนเพื่อน · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "kcsh",
+      "title": "KCSH — [ชื่อสาย]",
+      "body": "[เคร่ง · ทำเอง · ชวนเพื่อน · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "kclt",
+      "title": "KCLT — [ชื่อสาย]",
+      "body": "[เคร่ง · ทำเอง · คนเดียว · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "kclh",
+      "title": "KCLH — [ชื่อสาย]",
+      "body": "[เคร่ง · ทำเอง · คนเดียว · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "krst",
+      "title": "KRST — [ชื่อสาย]",
+      "body": "[เคร่ง · ซื้อ/ร้าน · ชวนเพื่อน · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "krsh",
+      "title": "KRSH — [ชื่อสาย]",
+      "body": "[เคร่ง · ซื้อ/ร้าน · ชวนเพื่อน · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "krlt",
+      "title": "KRLT — [ชื่อสาย]",
+      "body": "[เคร่ง · ซื้อ/ร้าน · คนเดียว · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "krlh",
+      "title": "KRLH — [ชื่อสาย]",
+      "body": "[เคร่ง · ซื้อ/ร้าน · คนเดียว · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "fcst",
+      "title": "FCST — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ทำเอง · ชวนเพื่อน · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "fcsh",
+      "title": "FCSH — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ทำเอง · ชวนเพื่อน · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "fclt",
+      "title": "FCLT — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ทำเอง · คนเดียว · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "fclh",
+      "title": "FCLH — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ทำเอง · คนเดียว · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "frst",
+      "title": "FRST — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ซื้อ/ร้าน · ชวนเพื่อน · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "frsh",
+      "title": "FRSH — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ซื้อ/ร้าน · ชวนเพื่อน · สุขภาพ] คำอธิบายสายนี้"
+    },
+    {
+      "code": "frlt",
+      "title": "FRLT — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ซื้อ/ร้าน · คนเดียว · ประเพณี] คำอธิบายสายนี้"
+    },
+    {
+      "code": "frlh",
+      "title": "FRLH — [ชื่อสาย]",
+      "body": "[ผ่อนปรน · ซื้อ/ร้าน · คนเดียว · สุขภาพ] คำอธิบายสายนี้"
+    }
+  ],
+  "fallback_result": "frsh",
+  "rules": {
+    "invite_ttl_hours": 48,
+    "require_friend": false,
+    "max_pairs_per_user_per_day": 50,
+    "allow_self_pair": false
+  },
+  "messages": {}
+}

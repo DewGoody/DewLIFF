@@ -4,7 +4,7 @@
   --line: #E5E5E3; --line2: #F0F0EE; --elevated: #F7F7F5;
   --sans: 'DM Sans', 'Noto Sans Thai', sans-serif;
   --thai: 'Noto Sans Thai', 'DM Sans', sans-serif;
-  --mono: 'DM Mono', monospace;
+  --mono: 'JetBrains Mono', monospace;
   --red: #E63B2E; --blue: #2563EB; --green: #16A34A; --yellow: #F5B800;
 }
 body { font-family: var(--thai); color: var(--text); background: var(--bg); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }

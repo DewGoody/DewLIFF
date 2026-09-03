@@ -4,7 +4,6 @@ import { toPublicConfig, toPublicResult } from '../config/public.js';
 import { validateAnswers, scoreAnswers, resolveSolo } from '../engine/buddyQuiz.js';
 import { logEvent } from './events.js';
 import { sendResultCard } from './push.js';
-import { writeResultToLineKit } from './lineKitClient.js';
 import { BadRequestError, NotFoundError, ConflictError } from '../errors/index.js';
 import type { Answer } from '../config/schema.js';
 
@@ -140,22 +139,6 @@ export async function submitSoloAnswers(
   sendResultCard(userId, session.campaign_id, outcome.result, {
     typeCode: outcome.typeCode,
   }).catch((e) => console.error('Solo result card push failed:', e));
-
-  // Also tell LineKit this player's result — server-to-server, doesn't touch
-  // KimLIFF's own DB write or trust model, and must never break the response above.
-  // Awaited (not fire-and-forget): on Vercel, work left running after the response
-  // is sent can be frozen mid-flight before the fetch ever completes — writeResultToLineKit
-  // never throws, so awaiting it costs a little latency but no reliability.
-  await writeResultToLineKit(userId, {
-    source: 'buddy_quiz_solo',
-    campaignId: session.campaign_id,
-    sessionId,
-    resultCode: outcome.result.code,
-    resultTitle: outcome.result.title,
-    typeCode: outcome.typeCode,
-    poles: outcome.poles,
-    scores: outcome.scores,
-  }, sessionId).catch((e) => console.error('LineKit write-back failed:', e));
 
   return {
     status: 'completed',

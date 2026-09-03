@@ -8,11 +8,11 @@ export async function fetchCampaigns(): Promise<CampaignMeta[]> {
   return res.json();
 }
 
-export async function createCampaign(id: string, mode: 'pair' | 'solo'): Promise<{ ok: boolean; id: string }> {
+export async function createCampaign(id: string, mode: string, type: string = 'buddy_quiz'): Promise<{ ok: boolean; id: string }> {
   const res = await fetch(BASE + '/api/admin/campaigns', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, mode }),
+    body: JSON.stringify({ id, mode, type }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'Create failed');
@@ -31,7 +31,7 @@ export async function fetchCampaign(id: string): Promise<{ campaign: CampaignMet
 export async function saveCampaign(
   id: string,
   config: CampaignConfig
-): Promise<{ ok: boolean; version: number }> {
+): Promise<{ ok: boolean; version: number; isDraft: boolean }> {
   const res = await fetch(BASE + '/api/admin/campaign/' + id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -45,6 +45,16 @@ export async function saveCampaign(
     }
     throw new Error(err?.message || 'Save failed');
   }
+  return data;
+}
+
+export async function publishCampaign(id: string): Promise<{ ok: boolean; version: number }> {
+  const res = await fetch(BASE + '/api/admin/campaign/' + id + '/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message || 'Publish failed');
   return data;
 }
 
@@ -340,8 +350,77 @@ export async function fetchRewardCodes(id: string, page = 1): Promise<{ codes: u
   return res.json();
 }
 
-export async function fetchPoolStats(id: string): Promise<{ pool: unknown; stats: { total_codes: number; available_codes: number; total_claims: number } }> {
+export async function fetchPoolStats(id: string): Promise<{ pool: unknown; stats: { total_codes: number; available_codes: number; total_claims: number }; triggers: unknown[] }> {
   const res = await fetch(BASE + '/api/admin/rewards/pools/' + id);
   if (!res.ok) throw new Error('Failed to load pool stats');
   return res.json();
+}
+
+// ── Reward Triggers ──
+
+export async function fetchPoolTriggers(poolId: string): Promise<{ triggers: unknown[] }> {
+  const res = await fetch(BASE + '/api/admin/rewards/pools/' + poolId + '/triggers');
+  if (!res.ok) throw new Error('Failed to load triggers');
+  return res.json();
+}
+
+export async function createRewardTrigger(poolId: string, data: Record<string, unknown>): Promise<unknown> {
+  const res = await fetch(BASE + '/api/admin/rewards/pools/' + poolId + '/triggers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error((json as { error?: string }).error || 'Create failed');
+  return json;
+}
+
+export async function updateRewardTrigger(triggerId: string, data: Record<string, unknown>): Promise<unknown> {
+  const res = await fetch(BASE + '/api/admin/rewards/triggers/' + triggerId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error((json as { error?: string }).error || 'Update failed');
+  return json;
+}
+
+export async function deleteRewardTrigger(triggerId: string): Promise<void> {
+  const res = await fetch(BASE + '/api/admin/rewards/triggers/' + triggerId, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Delete failed');
+}
+
+// ── Reward Claims ──
+
+export async function fetchRewardClaims(params?: {
+  campaign_id?: string;
+  pool_id?: string;
+  delivery_status?: string;
+  status?: string;
+}): Promise<{ claims: unknown[] }> {
+  const q = new URLSearchParams();
+  if (params?.campaign_id)    q.set('campaign_id', params.campaign_id);
+  if (params?.pool_id)        q.set('pool_id', params.pool_id);
+  if (params?.delivery_status) q.set('delivery_status', params.delivery_status);
+  if (params?.status)         q.set('status', params.status);
+  const res = await fetch(BASE + '/api/admin/rewards/claims?' + q.toString());
+  if (!res.ok) throw new Error('Failed to load claims');
+  return res.json();
+}
+
+export async function updateRewardClaim(id: string, data: {
+  delivery_status?: string;
+  tracking_number?: string;
+  admin_note?: string;
+  status?: string;
+}): Promise<unknown> {
+  const res = await fetch(BASE + '/api/admin/rewards/claims/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error((json as { error?: string }).error || 'Update failed');
+  return json;
 }

@@ -16,8 +16,14 @@ export interface GroupArchetype {
   title: string;
   /** Pre-set main display text shown on group result screen (e.g. "รอดได้ 40 วัน") */
   primary_text?: string;
+  /** Small eyebrow text shown above title on result card */
+  eyebrow?: string;
   body: string;
   image_url?: string;
+  /** OG share image, ideally 1200×630 */
+  og_image_url?: string;
+  /** Share message text */
+  share_text?: string;
   /** Small symbol/icon shown in F-08 unlock push */
   symbol_url?: string;
   min_group_size: number;
@@ -40,7 +46,7 @@ export interface GroupFormula {
 
 export interface GroupConfig {
   enabled: boolean;
-  result_mode: 'score' | 'match';
+  result_mode: 'score' | 'match' | 'manual';
   min_members: number;
   reward_members: number;
   max_members: number;
@@ -56,7 +62,7 @@ export interface AppearanceConfig {
   accent?: string;
   theme?: 'dark' | 'light';
   font?: 'editorial' | 'friendly' | 'system';
-  texture?: boolean;
+  texture?: string;
   kv_treatment?: 'illustration' | 'photo' | 'flat';
   radius?: number;
   intro_layout?: 'kv55' | 'fullbleed' | 'compact';
@@ -75,6 +81,39 @@ export interface AppearanceConfig {
   transition?: 'fade' | 'slide' | 'rise' | 'none';
   easing?: 'soft' | 'snappy' | 'linear';
   images?: Record<string, string>;
+  og_frames?: {
+    solo?: Record<string, string>;
+    pair?: string;
+    group?: string;
+  };
+  og_zones?: {
+    solo?: { text_x?: number; title_y?: number; label_y?: number; body_y_start?: number };
+    pair?: { badge_x?: number; badge_y?: number; body_y_start?: number };
+    group?: { badge_x?: number; badge_y?: number; body_y_start?: number };
+  };
+  // Full theme token system
+  colors?: {
+    primary?: string; on_primary?: string; surface?: string; on_surface?: string;
+    muted?: string; accent?: string; success?: string; danger?: string;
+    overlay?: string; background?: string; highlight?: string;
+  };
+  font_display?: string;
+  font_body?: string;
+  font_accent?: string;
+  font_display_url?: string;
+  font_body_url?: string;
+  font_scale?: number;
+  border_width?: number;
+  shadow?: 'none' | 'soft' | 'hard';
+  shadow_offset?: number;
+  tilt?: 'off' | 'subtle' | 'playful';
+  logo_url?: string;
+  logo_position?: 'top-left' | 'top-center' | 'hidden';
+  logo_height?: number;
+  // Holds both legacy style-preset strings and Layout Editor block arrays per screen key
+  screen_config?: Record<string, unknown>;
+  custom_css?: string;
+  notes?: string;
   liff_id?: string;
   oa_id?: string;
   share_mode?: 'picker' | 'url';
@@ -150,8 +189,8 @@ export interface RewardConfig {
 
 export interface CampaignConfig {
   id: string;
-  type: 'buddy_quiz';
-  mode: 'pair' | 'solo';
+  type: 'buddy_quiz' | 'group';
+  mode: 'pair' | 'solo' | 'mbti' | 'group';
   version: number;
   brand: Brand;
   copy: Record<string, string>;
@@ -171,6 +210,7 @@ export interface CampaignMeta {
   type: string;
   status: 'draft' | 'live' | 'ended';
   currentVersion: number;
+  draftVersion?: number | null;
   mode: string;
   brandName: string;
   createdAt?: string;
@@ -205,7 +245,10 @@ export interface EditorQuestion {
 export interface ResultEntry {
   title: string;
   body: string;
+  eyebrow?: string;
   image_url?: string;
+  og_image_url?: string;
+  share_text?: string;
   score_contribution?: number;
 }
 
@@ -213,8 +256,9 @@ export interface ResultEntry {
 export interface EditorState {
   axes: EditorAxis[];
   questions: EditorQuestion[];
-  results: Record<string, ResultEntry>; // key = pairKey(a,b)
+  results: Record<string, ResultEntry>; // key = pairKey(a,b) for pair/solo, type code for mbti
   fallback: ResultEntry;
+  fallbackCode?: string; // mbti mode only: which result code is the fallback
   brand: Brand;
   copy: Record<string, string>;
   rules: Rules;
@@ -223,7 +267,8 @@ export interface EditorState {
     invite_cta: string;
     partner_done_title: string;
   };
-  mode: 'pair' | 'solo';
+  mode: 'pair' | 'solo' | 'mbti' | 'group';
   rewards?: RewardConfig;
   group?: GroupConfig;
+  appearance?: AppearanceConfig;
 }

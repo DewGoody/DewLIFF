@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <title>LIFF Survivor Quiz — E2E Test Cases</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+body { font-family: 'DM Sans','Noto Sans Thai',system-ui,sans-serif; font-size:9pt; line-height:1.5; color:#1a1a1a; background:#fff; margin:0; padding:0; }
+h2 { font-size:13pt; font-weight:700; margin:28px 0 10px; border-bottom:2.5px solid #E8354F; padding-bottom:6px; }
+h3 { font-size:10.5pt; font-weight:700; margin:20px 0 6px; color:#333; }
+.content-body { max-width:1200px; margin:0 auto; padding:24px 36px 50px; }
+table { width:100%; border-collapse:collapse; margin:6px 0 20px; font-size:8.5pt; }
+thead th { background:#E8354F; color:#fff; font-weight:700; text-align:left; padding:6px 8px; border:1px solid #B5273D; }
+tbody td { padding:5px 8px; border:1px solid #ddd; vertical-align:top; }
+tbody tr:nth-child(even) td { background:#fdfaf9; }
+code { font-family:'DM Mono',monospace; font-size:7.5pt; background:#f5f0f0; padding:1px 3px; border-radius:2px; color:#7B1C2E; }
+.p-critical { background:#FEE2E2; color:#991B1B; font-weight:700; padding:1px 6px; border-radius:10px; font-size:7.5pt; white-space:nowrap; }
+.p-high     { background:#FEF3C7; color:#92400E; font-weight:700; padding:1px 6px; border-radius:10px; font-size:7.5pt; white-space:nowrap; }
+.p-medium   { background:#DBEAFE; color:#1E40AF; font-weight:600; padding:1px 6px; border-radius:10px; font-size:7.5pt; white-space:nowrap; }
+.p-low      { background:#F3F4F6; color:#6B7280; font-weight:600; padding:1px 6px; border-radius:10px; font-size:7.5pt; white-space:nowrap; }
+.steps { margin:0; padding-left:16px; }
+.steps li { margin-bottom:2px; }
+.info-box { background:#FFF5F5; border-left:4px solid #E8354F; padding:10px 14px; border-radius:0 6px 6px 0; margin:10px 0 16px; font-size:8.5pt; }
+/* Cover */
+.cover { background:linear-gradient(135deg,#E8354F 0%,#B5273D 45%,#7B1225 100%); color:#fff; padding:64px 48px 56px; min-height:280px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; }
+.cover-system { font-size:9pt; font-weight:600; letter-spacing:0.08em; opacity:.75; text-transform:uppercase; margin-bottom:10px; }
+.cover-title { font-size:36pt; font-weight:700; letter-spacing:-.5px; line-height:1.1; margin:0 0 8px; }
+.cover-subtitle { font-size:16pt; font-weight:500; opacity:.88; margin:0 0 6px; }
+.cover-org { font-size:10pt; opacity:.72; margin:0 0 28px; }
+.cover-meta { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:4px; }
+.cover-badge { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:4px 14px; border-radius:20px; font-size:9pt; font-weight:600; }
+/* Tabs */
+.tab-bar { display:flex; gap:4px; margin:20px 0 0; border-bottom:2px solid #E8354F; flex-wrap:wrap; }
+.tab-btn { padding:8px 18px; border:1px solid #ddd; border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; font-size:9pt; font-weight:600; background:#f5f0f0; color:#555; font-family:'DM Sans','Noto Sans Thai',sans-serif; transition:background .15s; }
+.tab-btn:hover { background:#fde8ea; }
+.tab-btn.active { background:#E8354F; color:#fff; border-color:#E8354F; }
+.tab-panel { display:none; padding-top:16px; }
+.tab-panel.active { display:block; }
+/* Interactive UAT */
+.result-sel { width:100%; border:1.5px solid #ddd; border-radius:4px; padding:3px 4px; font-size:7.5pt; font-family:'DM Sans','Noto Sans Thai',sans-serif; background:#fff; cursor:pointer; outline:none; color:#444; }
+.result-sel:focus { border-color:#E8354F; }
+.result-sel.sel-pass { border-color:#10B981; background:#D1FAE5; color:#065F46; font-weight:700; }
+.result-sel.sel-fail { border-color:#EF4444; background:#FEE2E2; color:#991B1B; font-weight:700; }
+.result-sel.sel-skip { border-color:#9CA3AF; background:#F3F4F6; color:#6B7280; font-weight:600; }
+.note-ta { width:100%; border:1px solid #ddd; border-radius:3px; font-size:7.5pt; font-family:'DM Sans','Noto Sans Thai',sans-serif; padding:3px 5px; min-height:36px; resize:vertical; box-sizing:border-box; }
+.note-ta:focus { outline:none; border-color:#E8354F; }
+/* Sticky bar */
+#uat-bar { position:sticky; top:0; z-index:500; background:#1a0508; color:#fff; padding:6px 20px; display:flex; align-items:center; gap:10px; box-shadow:0 2px 12px rgba(0,0,0,.35); flex-wrap:wrap; }
+.sb-item { display:flex; flex-direction:column; align-items:center; min-width:36px; }
+.sb-lbl { font-size:6pt; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.5); font-family:'DM Mono',monospace; }
+.sb-val { font-size:10pt; font-weight:700; line-height:1.2; }
+.sb-pass { color:#34D399; } .sb-fail { color:#F87171; } .sb-skip { color:#9CA3AF; } .sb-none { color:#FBBF24; }
+.sb-div { width:1px; height:24px; background:rgba(255,255,255,.12); }
+#uat-tester { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:4px; padding:4px 8px; color:#fff; font-size:8pt; font-family:'DM Sans','Noto Sans Thai',sans-serif; width:130px; }
+#uat-tester::placeholder { color:rgba(255,255,255,.35); }
+#uat-save { background:#E8354F; color:#fff; border:none; border-radius:6px; padding:7px 16px; font-size:8.5pt; font-weight:700; cursor:pointer; font-family:'DM Sans','Noto Sans Thai',sans-serif; margin-left:auto; }
+#uat-save:hover { background:#b5273d; }
+/* Progress bar mini */
+.progress-wrap { height:4px; background:rgba(255,255,255,.12); border-radius:2px; width:80px; margin-top:3px; }
+.progress-fill { height:100%; border-radius:2px; background:#34D399; transition:width .3s; }
+@page { size:A4 landscape; margin:10mm; }
+@media print {
+  .content-body { padding:0; max-width:100%; }
+  h2 { break-after:avoid; }
+  table { break-inside:auto; font-size:7.5pt; }
+  tr { break-inside:avoid; }
+  .page-break { break-before:page; }
+  .tab-panel { display:block !important; }
+  .tab-bar { display:none; }
+  #uat-bar { display:none !important; }
+  .result-sel { border:none !important; background:transparent !important; font-weight:700; }
+  .note-ta { border:none !important; background:transparent !important; resize:none !important; }
+}
+  </style>
+</head>
+<body>
+
+<!-- ═══ COVER ═══ -->
+<div class="cover">
+  <div style="position:absolute;top:-80px;right:-80px;opacity:.1;pointer-events:none"><svg width="320" height="320" viewBox="0 0 320 320"><circle cx="160" cy="160" r="155" fill="none" stroke="#fff" stroke-width="22"/><circle cx="160" cy="160" r="115" fill="none" stroke="#fff" stroke-width="18"/><circle cx="160" cy="160" r="75" fill="none" stroke="#fff" stroke-width="16"/></svg></div>
+  <div class="cover-system">Codera Solutions &mdash; LINE LIFF Application</div>
+  <div class="cover-title">LIFF Survivor Quiz</div>
+  <div class="cover-subtitle">End-to-End Test Cases</div>
+  <div class="cover-org">Personality Quiz · Pair Matching · Group &amp; Rewards</div>
+  <div class="cover-meta">
+    <span class="cover-badge">69 Test Cases</span>
+    <span class="cover-badge">5 Flows</span>
+    <span class="cover-badge">React 18 · TypeScript · LINE LIFF SDK</span>
+    <span class="cover-badge">27/08/2026</span>
+  </div>
+</div>
+
+<div class="content-body">
+
+<!-- ═══ SUMMARY ═══ -->
+<h2>สรุป Test Cases</h2>
+<table>
+  <thead><tr><th>Flow / Module</th><th style="text-align:center">Critical</th><th style="text-align:center">High</th><th style="text-align:center">Medium</th><th style="text-align:center">Low</th><th style="text-align:center">รวม</th></tr></thead>
+  <tbody>
+    <tr><td><b>Auth &amp; Flow A — เริ่มเล่น (Inviter)</b></td><td style="text-align:center">6</td><td style="text-align:center">8</td><td style="text-align:center">0</td><td style="text-align:center">3</td><td style="text-align:center"><b>17</b></td></tr>
+    <tr><td><b>Flow B — ผู้รับ Invite (Invitee)</b></td><td style="text-align:center">3</td><td style="text-align:center">3</td><td style="text-align:center">0</td><td style="text-align:center">2</td><td style="text-align:center"><b>8</b></td></tr>
+    <tr><td><b>Flow C — Group Join</b></td><td style="text-align:center">3</td><td style="text-align:center">5</td><td style="text-align:center">0</td><td style="text-align:center">1</td><td style="text-align:center"><b>9</b></td></tr>
+    <tr><td><b>Rewards &amp; Symbol Collection</b></td><td style="text-align:center">5</td><td style="text-align:center">8</td><td style="text-align:center">0</td><td style="text-align:center">2</td><td style="text-align:center"><b>16</b></td></tr>
+    <tr><td><b>Sharing, Error Handling &amp; Preview Mode</b></td><td style="text-align:center">6</td><td style="text-align:center">10</td><td style="text-align:center">0</td><td style="text-align:center">4</td><td style="text-align:center"><b>20</b></td></tr>
+    <tr style="background:#FDE8EA"><td><b>รวม</b></td><td style="text-align:center"><b>22</b></td><td style="text-align:center"><b>33</b></td><td style="text-align:center"><b>0</b></td><td style="text-align:center"><b>12</b></td><td style="text-align:center"><b>69</b></td></tr>
+  </tbody>
+</table>
+
+<!-- ═══ TABS ═══ -->
+<div class="tab-bar">
+  <button class="tab-btn active"  onclick="switchTab('tab-a',this)">🎮 เริ่มเล่น (Auth &amp; Flow A)</button>
+  <button class="tab-btn"        onclick="switchTab('tab-b',this)">📨 รับ Invite (Flow B)</button>
+  <button class="tab-btn"        onclick="switchTab('tab-c',this)">👥 Group Join (Flow C)</button>
+  <button class="tab-btn"        onclick="switchTab('tab-r',this)">🏆 Rewards &amp; Symbols</button>
+  <button class="tab-btn"        onclick="switchTab('tab-s',this)">📤 Sharing, Errors &amp; Preview</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB A — Auth & Flow A
+══════════════════════════════════════════ -->
+<div id="tab-a" class="tab-panel active">
+
+  <div class="info-box">
+    <b>Actor:</b> ผู้เล่นคนแรก (Inviter) — เปิด LIFF URL โดยตรง, ยังไม่มี inviterId หรือ groupId ใน URL<br>
+    <b>Pre-condition ร่วม:</b> ทดสอบใน LINE app เท่านั้น (ไม่ใช่ external browser)
+  </div>
+
+  <h2>TC-AUTH: Authentication &amp; Initialization</h2>
+  <h3>A — Login &amp; Environment Check</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>AUTH-001</code></td>
+        <td><b>เปิดใน LINE app — ยังไม่ได้ login</b></td>
+        <td>User ยังไม่ได้ login LINE</td>
+        <td><ol class="steps"><li>เปิด LIFF URL ใน LINE app</li></ol></td>
+        <td><code>liff.login()</code> ถูกเรียก → redirect ไปหน้า LINE login</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-002</code></td>
+        <td><b>เปิดใน external browser</b></td>
+        <td>User เปิด URL ใน Safari/Chrome</td>
+        <td><ol class="steps"><li>Copy LIFF URL ไปวางใน browser ธรรมดา</li></ol></td>
+        <td>แสดงหน้า "เปิดในแอป LINE" พร้อมปุ่มสีเขียว → กดแล้ว redirect ไป <code>liff.line.me/...</code></td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-003</code></td>
+        <td><b>ยังไม่ได้ add OA เป็นเพื่อน</b></td>
+        <td>Login แล้ว แต่ <code>friendFlag = false</code></td>
+        <td><ol class="steps"><li>เปิด LIFF URL ปกติ</li><li>ผ่าน login แล้ว</li></ol></td>
+        <td>แสดงหน้า FriendGate → ปุ่ม "เพิ่มเพื่อน OA" → กด "เพิ่มแล้ว?" → check friendship → ถ้า true → reload ต่อ</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-004</code></td>
+        <td><b>getFriendship() throw error (API issue)</b></td>
+        <td><code>getFriendship()</code> ส่ง exception (ไม่ใช่ friendFlag=false)</td>
+        <td><ol class="steps"><li>Mock ให้ <code>getFriendship()</code> throw Error</li></ol></td>
+        <td>App allow ผ่านได้ ไม่ block user → <code>console.warn</code> ออก → โหลด flow ปกติ</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-005</code></td>
+        <td><b>campaignId ใน liff.state (query string)</b></td>
+        <td>URL: <code>?liff.state=%2F%3FcampaignId%3Dtest123</code></td>
+        <td><ol class="steps"><li>เปิด URL ที่ encode campaignId ใน liff.state</li></ol></td>
+        <td><code>parseCampaignId()</code> decode ถูกต้อง → ใช้ <code>test123</code> ในทุก API call</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-006</code></td>
+        <td><b>campaignId ใน liff.state (hash)</b></td>
+        <td>URL: <code>#liff.state=...campaignId%3Dtest456</code></td>
+        <td><ol class="steps"><li>เปิด URL ที่ encode campaignId ใน hash</li></ol></td>
+        <td><code>resolveParams()</code> decode จาก hash ได้ถูกต้อง → ใช้ <code>test456</code></td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>AUTH-007</code></td>
+        <td><b>ไม่มี campaignId ในทุก source</b></td>
+        <td>URL ล้วนๆ ไม่มี params</td>
+        <td><ol class="steps"><li>เปิด LIFF URL ล้วนๆ</li></ol></td>
+        <td>Fallback เป็น <code>'buddy_demo'</code> → โหลด campaign buddy_demo ปกติ</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>TC-A: Flow A — Quiz คนแรก (Inviter)</h2>
+  <h3>B — ทำ Quiz ครั้งแรก</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>A-001</code></td>
+        <td><b>Happy path — ทำ quiz จบครั้งแรก</b></td>
+        <td>Login แล้ว, OA friend, ยังไม่เคยตอบ</td>
+        <td><ol class="steps"><li>เปิด LIFF URL (ไม่มี inviterId/groupId)</li><li>หน้า Intro โหลด</li><li>กดปุ่มเริ่ม</li><li>ตอบคำถามทุกข้อ</li><li>หน้า Matching animation แสดง</li></ol></td>
+        <td><code>POST /api/quiz/save-answers</code> → <code>GET /api/quiz/my-summary</code> → Summary พร้อม archetype card + pair list + invite CTA</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-002</code></td>
+        <td><b>กลับมาเปิดใหม่ — ตอบแล้ว</b></td>
+        <td>User ตอบ campaign นี้แล้ว</td>
+        <td><ol class="steps"><li>เปิด LIFF URL ใหม่ (ไม่มี params พิเศษ)</li></ol></td>
+        <td><code>GET /api/quiz/my-answers</code> → answered=true → ข้าม Intro → โหลด Summary โดยตรง</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-003</code></td>
+        <td><b>Back ระหว่างตอบคำถาม</b></td>
+        <td>อยู่ที่คำถามข้อ 3 (index 2)</td>
+        <td><ol class="steps"><li>กดปุ่ม Back</li></ol></td>
+        <td>กลับไปคำถามข้อ 2, answers[] ที่ตอบไปยังคงอยู่</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-004</code></td>
+        <td><b>Back ที่คำถามแรก — ไม่มี inviterId</b></td>
+        <td>อยู่คำถามข้อแรก, ไม่มี pendingInviterId</td>
+        <td><ol class="steps"><li>กดปุ่ม Back</li></ol></td>
+        <td>กลับหน้า Intro</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-005</code></td>
+        <td><b>Back ที่คำถามแรก — มี inviterId</b></td>
+        <td>อยู่คำถามข้อแรก, มี <code>pendingInviterId</code></td>
+        <td><ol class="steps"><li>กดปุ่ม Back</li></ol></td>
+        <td>กลับหน้า <b>Invited</b> (ไม่ใช่ Intro)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-006</code></td>
+        <td><b>save-answers fail → retry กลับข้อสุดท้าย</b></td>
+        <td>ตอบคำถามข้อสุดท้ายแล้ว</td>
+        <td><ol class="steps"><li>Mock <code>POST /api/quiz/save-answers</code> → 500</li><li>กด Submit</li><li>แสดงหน้า Error</li><li>กดปุ่ม Retry</li></ol></td>
+        <td>กลับไปคำถามข้อสุดท้าย พร้อม answers เดิม (ยกเว้น answer สุดท้ายที่ถูก pop ออก)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-007</code></td>
+        <td><b>Demo mode</b></td>
+        <td>กดปุ่ม Demo</td>
+        <td><ol class="steps"><li>กดปุ่ม Demo</li><li>ตอบคำถามทุกข้อ</li></ol></td>
+        <td><code>POST /api/quiz/start</code> (demo:true) → <code>POST /api/quiz/answer</code> → popup result → กลับ <b>Intro</b> (ไม่ใช่ Summary)</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-008</code></td>
+        <td><b>my-answers check fail — ไม่ block flow</b></td>
+        <td><code>GET /api/quiz/my-answers</code> throw error</td>
+        <td><ol class="steps"><li>Mock my-answers ให้ fail</li></ol></td>
+        <td>console.warn ออก → App แสดงหน้า Intro ปกติ ไม่ crash</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-009</code></td>
+        <td><b>pairId ใน URL → popup แสดงครั้งเดียว</b></td>
+        <td>URL มี <code>?pairId=xxx</code>, pair status = completed</td>
+        <td><ol class="steps"><li>เปิด URL ที่มี pairId</li><li>Summary โหลด + popup ผลคู่แสดง</li><li>ปิด popup</li><li>กดกลับแล้วเปิด Summary ใหม่</li></ol></td>
+        <td>Popup แสดงครั้งแรก → ปิดแล้ว <code>initialPopup=null</code> → เข้า Summary อีกครั้ง ไม่มี popup</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>A-010</code></td>
+        <td><b>PairResult screen — ปุ่ม "ดูผลคู่แบบเต็ม"</b></td>
+        <td>อยู่หน้า PairResult (กดดูผลจาก pair log)</td>
+        <td><ol class="steps"><li>กดดูผลคู่จาก pair list</li><li>ดูปุ่มใน footer</li></ol></td>
+        <td>ปุ่มแรก label = "ดูผลคู่แบบเต็ม" (สีแดง), ปุ่มที่สอง "จับคู่กับฉันดู · ตอบ 1 นาที" (secondary) พร้อม inviterId ใน URI</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div><!-- /tab-a -->
+
+<!-- ══════════════════════════════════════════
+     TAB B — Flow B: Invitee
+══════════════════════════════════════════ -->
+<div id="tab-b" class="tab-panel">
+
+  <div class="info-box">
+    <b>Actor:</b> ผู้รับ Invite (Invitee / B) — กดลิงก์ที่ A ส่งมาทาง LINE<br>
+    <b>URL pattern:</b> <code>?inviterId=&lt;userA_id&gt;&amp;campaignId=&lt;xxx&gt;</code><br>
+    <b>Pre-condition ร่วม:</b> Login แล้ว, เป็น OA friend
+  </div>
+
+  <h2>TC-B: Flow B — Invitee (กดลิงก์ invite จากเพื่อน)</h2>
+  <h3>A — Happy Path &amp; Auto-Match</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>B-001</code></td>
+        <td><b>Happy path — B ยังไม่เคยตอบ</b></td>
+        <td>URL มี <code>inviterId=userA</code>, B ยังไม่ตอบ</td>
+        <td><ol class="steps"><li>เปิด URL</li><li>หน้า Invited แสดง avatar + ชื่อ A + archetype A</li><li>กดเริ่ม</li><li>ตอบคำถามทุกข้อ</li></ol></td>
+        <td>Matching animation → <code>POST /api/quiz/match</code> (inviterId: A) → Summary พร้อม popup: survival title, body, ชื่อ A, axis ทั้งสอง</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-002</code></td>
+        <td><b>B ตอบแล้ว — auto-match ข้ามคำถาม</b></td>
+        <td>URL มี <code>inviterId=userA</code>, <code>my-answers.answered=true</code></td>
+        <td><ol class="steps"><li>เปิด URL</li></ol></td>
+        <td>ข้ามหน้า Invited/Question → Matching animation → <code>POST /api/quiz/match</code> → Summary + popup</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-003</code></td>
+        <td><b>Self-invite — B กดลิงก์ของตัวเอง</b></td>
+        <td>inviterId = B's own userId</td>
+        <td><ol class="steps"><li>เปิด URL ที่ inviterId ตรงกับ userId ของตัวเอง</li><li>ตอบคำถาม (ถ้ายังไม่ตอบ)</li></ol></td>
+        <td>match API return error "ตัวเอง" → App โหลด Summary (ถ้ามี) หรือกลับ Intro — ไม่ crash</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>B — Edge Cases &amp; Error</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>B-004</code></td>
+        <td><b>inviterId ไม่มีในระบบ</b></td>
+        <td><code>GET /api/quiz/inviter/{id}</code> return 404</td>
+        <td><ol class="steps"><li>เปิด URL ที่ inviterId ไม่ valid</li></ol></td>
+        <td><code>showError('ลิงก์ไม่ถูกต้อง', ...)</code> → แสดงหน้า Error</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-005</code></td>
+        <td><b>OA push fail → B ส่ง Flex card เอง</b></td>
+        <td>match return <code>{ pushSentToInviter: false, inviterShareUrl: '...' }</code></td>
+        <td><ol class="steps"><li>B ตอบครบ</li><li>match สำเร็จ แต่ push ล้มเหลว</li></ol></td>
+        <td><code>liff.shareTargetPicker()</code> ถูกเรียกอัตโนมัติ พร้อม Flex card: 2 axis cards, survival title, axis boxes (A gray / B yellow), footer CTA. altText ≤ 400 ตัวอักษร</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-006</code></td>
+        <td><b>Push fail + inviterShareUrl ว่าง</b></td>
+        <td><code>{ pushSentToInviter: false, inviterShareUrl: undefined }</code></td>
+        <td><ol class="steps"><li>B ตอบครบ, match สำเร็จ</li></ol></td>
+        <td><b>ไม่</b> เรียก shareTargetPicker → ไปหน้า Summary ปกติ</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-007</code></td>
+        <td><b>Auto-match fail — error อื่น (ไม่ใช่ self)</b></td>
+        <td>B ตอบแล้ว, match throw error ที่ไม่มีคำว่า "ตัวเอง"</td>
+        <td><ol class="steps"><li>Mock match API ให้ throw</li></ol></td>
+        <td>แสดงหน้า Invited ให้ B เริ่มใหม่ — ไม่ crash</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>B-008</code></td>
+        <td><b>inviterId encode ใน hash liff.state</b></td>
+        <td>URL: <code>#liff.state=...inviterId%3DuserA</code></td>
+        <td><ol class="steps"><li>เปิด URL</li></ol></td>
+        <td><code>resolveParams()</code> decode จาก hash ได้ → โหลดหน้า Invited พร้อมข้อมูล inviter</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div><!-- /tab-b -->
+
+<!-- ══════════════════════════════════════════
+     TAB C — Flow C: Group Join
+══════════════════════════════════════════ -->
+<div id="tab-c" class="tab-panel">
+
+  <div class="info-box">
+    <b>Actor:</b> สมาชิกกลุ่ม (C) — กดลิงก์ group share จากสมาชิกคนอื่น<br>
+    <b>URL pattern:</b> <code>?groupId=&lt;gXXX&gt;&amp;campaignId=&lt;xxx&gt;</code><br>
+    <b>Pre-condition ร่วม:</b> Login แล้ว, เป็น OA friend, campaign config โหลดสำเร็จ
+  </div>
+
+  <h2>TC-C: Flow C — Group Join</h2>
+  <h3>A — Join Flow หลัก</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>C-001</code></td>
+        <td><b>Happy path — C ยังไม่ตอบ + join group</b></td>
+        <td>URL มี <code>groupId</code>, C ยังไม่ตอบ, ยังไม่ใช่สมาชิก</td>
+        <td><ol class="steps"><li>เปิด URL</li><li>หน้า Invited (team mode) แสดง progress bar สมาชิก</li><li>กดเริ่ม</li><li>ตอบคำถามทุกข้อ</li></ol></td>
+        <td><code>POST /api/group/{gid}/join</code> → Matching animation กับ creator → background match สมาชิกคนอื่น → หน้า Group</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-002</code></td>
+        <td><b>C ตอบแล้ว — skip quiz, join โดยตรง</b></td>
+        <td>URL มี <code>groupId</code>, <code>answered=true</code>, C ไม่ใช่สมาชิก</td>
+        <td><ol class="steps"><li>เปิด URL</li><li>กดปุ่ม Start ใน Invited</li></ol></td>
+        <td>ข้ามหน้า Question → <code>POST /api/group/{gid}/join</code> → Matching → Group screen</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-003</code></td>
+        <td><b>C เป็นสมาชิกกลุ่มอยู่แล้ว</b></td>
+        <td>URL มี <code>groupId</code>, C อยู่ใน <code>members[]</code> แล้ว</td>
+        <td><ol class="steps"><li>เปิด URL</li></ol></td>
+        <td>Skip ทุกขั้นตอน → ถ้าตอบแล้วโหลด Summary → <code>setScreen('group')</code> โดยตรง ไม่ join ซ้ำ</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>B — Edge Cases</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>C-004</code></td>
+        <td><b>กลุ่มเต็ม — C เป็นสมาชิก</b></td>
+        <td><code>memberCount &ge; maxMembers</code>, C เป็นสมาชิก</td>
+        <td><ol class="steps"><li>เปิด URL</li></ol></td>
+        <td><code>setScreen('group')</code> โดยตรง ไม่แสดง Invited</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-005</code></td>
+        <td><b>กลุ่มเต็ม — C ไม่ใช่สมาชิก, ตอบแล้ว</b></td>
+        <td><code>groupIsFull=true</code>, C ไม่ใช่สมาชิก, C ตอบแล้ว</td>
+        <td><ol class="steps"><li>กดปุ่ม Start ใน Invited</li></ol></td>
+        <td>โหลด Summary → แสดงหน้า Summary (ไม่ join กลุ่ม)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-006</code></td>
+        <td><b>Batch matching — visible 1 คน, background ที่เหลือ</b></td>
+        <td>กลุ่มมี 3 สมาชิก, D เป็นคนเข้าใหม่</td>
+        <td><ol class="steps"><li>D เปิด group link</li><li>D join group</li></ol></td>
+        <td>Match กับ creator: แสดง Matching animation. Match กับคนอื่น: background. <code>POST /api/quiz/match</code> ถูกเรียก 3 ครั้ง → Group screen</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-007</code></td>
+        <td><b>GET /api/group/{gid} fail ตอน init</b></td>
+        <td>Group API throw error</td>
+        <td><ol class="steps"><li>Mock group API ให้ throw</li><li>เปิด URL ที่มี groupId</li></ol></td>
+        <td>App ไม่ crash → แสดงหน้า Invited ต่อได้ (groupInfo=null) — error ถูก catch เป็น non-critical</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-008</code></td>
+        <td><b>Rename group — creator เท่านั้น</b></td>
+        <td>User เป็น creator, อยู่หน้า Group</td>
+        <td><ol class="steps"><li>แก้ชื่อกลุ่มใน input</li><li>กด save</li></ol></td>
+        <td><code>PATCH /api/group/{gid}/name</code> → ชื่อกลุ่มอัปเดต. Non-creator: field เป็น read-only</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-009</code></td>
+        <td><b>Join return viewOnly: true</b></td>
+        <td>join return <code>{ ok:true, viewOnly:true }</code></td>
+        <td><ol class="steps"><li>C join group ขณะที่ตอบแล้ว</li></ol></td>
+        <td>ไม่แสดง Matching animation → ข้ามไป Group screen โดยตรง</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-010</code></td>
+        <td><b>Group survival time แสดงจาก primary_text</b></td>
+        <td>กลุ่มครบ 5 คน, archetype มี <code>primary_text</code></td>
+        <td><ol class="steps"><li>เปิดหน้า Group screen</li><li>ดู section "กลุ่มนี้อยู่รอดได้"</li></ol></td>
+        <td>แสดงระยะเวลา (เช่น "3 สัปดาห์") ตรงกันทุกสมาชิก ไม่แสดง "—"</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>C-011</code></td>
+        <td><b>F-03: OA push เมื่อกลุ่มครบ 5 คน</b></td>
+        <td>กลุ่มมี 4 คน, สมาชิกคนที่ 5 เพิ่งเข้า</td>
+        <td><ol class="steps"><li>สมาชิกคนที่ 5 join กลุ่ม</li><li>รอ OA push</li></ol></td>
+        <td>OA push Flex card ไปทุกคนใน group: มีชื่อกลุ่ม, archetype title, survival duration, CTA "ดูผลทีมแบบเต็ม"</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div><!-- /tab-c -->
+
+<!-- ══════════════════════════════════════════
+     TAB R — Rewards & Symbols
+══════════════════════════════════════════ -->
+<div id="tab-r" class="tab-panel">
+
+  <div class="info-box">
+    <b>Pre-condition ร่วม:</b> User ตอบ quiz แล้ว (อยู่หน้า Summary หรือ Group), campaign มี rewards enabled
+  </div>
+
+  <h2>TC-D: Rewards &amp; Milestones</h2>
+  <h3>A — Milestone &amp; Claim</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>D-001</code></td>
+        <td><b>Rewards — milestone ยังไม่ถึง</b></td>
+        <td>pairsDone=1, milestone <code>trigger_pairs=3</code></td>
+        <td><ol class="steps"><li>กดปุ่ม Rewards จาก Summary</li></ol></td>
+        <td><code>GET /api/quiz/rewards/my/{campaignId}</code> → progress bar (1/3) → ปุ่ม Claim <b>disabled</b></td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>D-002</code></td>
+        <td><b>Claim reward — ถึง milestone แล้ว</b></td>
+        <td>pairsDone=3, ยังไม่ได้ claim</td>
+        <td><ol class="steps"><li>เปิดหน้า Rewards</li><li>กดปุ่ม Claim</li></ol></td>
+        <td><code>POST /api/quiz/rewards/claim</code> → refresh → ปุ่มเปลี่ยนเป็น "รับแล้ว" พร้อม code หรือ voucher link</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>D-003</code></td>
+        <td><b>Claim แล้ว — กลับมาดูอีกครั้ง</b></td>
+        <td><code>claims[]</code> มี entry แล้ว</td>
+        <td><ol class="steps"><li>ปิด Rewards แล้วกลับเข้าใหม่</li></ol></td>
+        <td>ปุ่ม "รับแล้ว" + code แสดงทันที ไม่ต้องกดอีก</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>D-004</code></td>
+        <td><b>Rewards API fail — graceful fallback</b></td>
+        <td><code>GET /api/quiz/rewards/my/{campaignId}</code> throw</td>
+        <td><ol class="steps"><li>Mock API ให้ fail</li><li>กดปุ่ม Rewards</li></ol></td>
+        <td><code>rewardClaims=[]</code> (fallback) → ยังเปิดหน้า Rewards ได้ ไม่ crash</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>D-005</code></td>
+        <td><b>rewards.enabled = false</b></td>
+        <td><code>config.rewards.enabled=false</code></td>
+        <td><ol class="steps"><li>ดูหน้า Summary</li></ol></td>
+        <td>ปุ่ม Rewards ไม่แสดงบนหน้า Summary</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>D-006</code></td>
+        <td><b>ไม่มี milestones config — legacy card</b></td>
+        <td>rewards.enabled=true แต่ไม่มี <code>milestones[]</code></td>
+        <td><ol class="steps"><li>เปิดหน้า Rewards</li></ol></td>
+        <td>แสดง legacy card "ครบ 3 คู่ = ลุ้นรางวัล" แทน dynamic milestones</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>TC-E: Symbol Collection</h2>
+  <h3>B — Symbol Unlock</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>E-001</code></td>
+        <td><b>Share group → unlock symbol</b></td>
+        <td>อยู่หน้า Group, ยังไม่เคย share</td>
+        <td><ol class="steps"><li>กดปุ่ม Share กลุ่ม</li><li>เลือก chat ใน picker</li></ol></td>
+        <td><code>POST /api/group/{gid}/share</code> → <code>group_members.has_shared=true</code> → symbol ปลดล็อก, toast แสดง, F-08 push ส่งถึงคนนี้ (ถ้าเป็นคนแรก)</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-002</code></td>
+        <td><b>ครบทุก symbol → collector bonus</b></td>
+        <td>Unlock symbol ครบทุก archetype</td>
+        <td><ol class="steps"><li>เข้าหน้า Rewards</li><li>ดู symbol grid</li></ol></td>
+        <td>แสดง bonus reward (sticker pack / rich menu / certificate)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-003</code></td>
+        <td><b>Share group แล้ว กดอีกครั้ง</b></td>
+        <td><code>hasShared=true</code></td>
+        <td><ol class="steps"><li>กดปุ่ม Share กลุ่มอีกครั้ง</li></ol></td>
+        <td>เรียก shareTargetPicker ได้ → backend handle idempotency (ไม่ unlock ซ้ำ) — ไม่ crash</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-004</code></td>
+        <td><b>shareTargetPicker ถูก cancel</b></td>
+        <td>อยู่หน้า Group</td>
+        <td><ol class="steps"><li>กดปุ่ม Share</li><li>ปิด picker โดยไม่เลือก chat</li></ol></td>
+        <td>App ไม่ crash, silent fail — <code>POST /api/group/{gid}/share</code> ไม่ถูกเรียก</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-005</code></td>
+        <td><b>Symbol Collection screen — เข้าจาก Summary</b></td>
+        <td>อยู่หน้า Summary, <code>config.group.enabled=true</code></td>
+        <td><ol class="steps"><li>Scroll หา section "ทีมของฉัน"</li><li>กดปุ่ม "สะสมสัญลักษณ์"</li></ol></td>
+        <td>ไปหน้า SymbolCollection: แสดง grid 3 คอลัมน์ของ archetypes ทั้งหมด (non-fallback), header "N / M ดวง", progress bar</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-006</code></td>
+        <td><b>Symbol grid — ล็อก/ปลดล็อก visual</b></td>
+        <td>อยู่หน้า Symbol Collection, มี 1 symbol ที่ unlock</td>
+        <td><ol class="steps"><li>ดู grid</li><li>กด card ที่ปลดล็อก</li></ol></td>
+        <td>Unlocked: ภาพสี, ✓ badge, ชื่อ archetype, yellow bg. Locked: ภาพดำ (brightness 0), "???", gray bg. กด unlocked → popup detail title + body</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-007</code></td>
+        <td><b>Per-user tracking — ไม่กดแชร์ ไม่เห็น symbol</b></td>
+        <td>User B อยู่ในกลุ่มเดียวกับ User A ที่แชร์แล้ว, B ไม่เคยกดแชร์</td>
+        <td><ol class="steps"><li>Login เป็น User B</li><li>เปิดหน้า Symbol Collection</li></ol></td>
+        <td>Symbol ที่ A ปลดล็อก ไม่แสดงใน collection ของ B — B เห็นแค่ที่ตัวเองกดแชร์เท่านั้น</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-008</code></td>
+        <td><b>F-08 push — เฉพาะคนแรกที่แชร์</b></td>
+        <td>กลุ่มยังไม่เคยถูกแชร์ (locked_archetype_code = null)</td>
+        <td><ol class="steps"><li>User A กดแชร์กลุ่ม → success</li><li>User B (สมาชิกเดียวกัน) กดแชร์กลุ่มซ้ำ</li></ol></td>
+        <td>A: ได้รับ F-08 push card พร้อม symbol ใหม่ + ตัวนับ. B: symbol ปลดล็อกใน collection แต่ไม่ได้ F-08 push</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>E-009</code></td>
+        <td><b>F-08 CTA → เปิดหน้า symbols โดยตรง</b></td>
+        <td>User ได้รับ F-08 push card แล้ว</td>
+        <td><ol class="steps"><li>กดปุ่ม "ดูสัญลักษณ์ที่เหลือ" ใน F-08 card</li></ol></td>
+        <td>LIFF เปิดด้วย <code>?view=symbols</code> → โหลด Summary → redirect ไปหน้า Symbol Collection โดยตรง ไม่ต้องกดปุ่มใน Summary</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div><!-- /tab-r -->
+
+<!-- ══════════════════════════════════════════
+     TAB S — Sharing, Errors & Preview
+══════════════════════════════════════════ -->
+<div id="tab-s" class="tab-panel">
+
+  <div class="info-box">
+    <b>Scope:</b> LINE Flex Message sharing (F-01 ถึง F-10), Error handling (network/500/401/edge), Admin Preview Mode
+  </div>
+
+  <h2>TC-SHARE: Message Sharing (LINE Flex Cards)</h2>
+  <h3>A — Flex Card Content</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>SHARE-001</code></td>
+        <td><b>F-01: Duo Invite จาก Summary</b></td>
+        <td>อยู่หน้า Summary</td>
+        <td><ol class="steps"><li>กดปุ่ม Invite เพื่อน</li><li>เลือก chat ปลายทาง</li></ol></td>
+        <td>Flex card: KV hero image, ชื่อ inviter, archetype label, CTA "Match กับฉัน". URI มี <code>campaignId</code> + <code>inviterId</code> ถูกต้อง</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-002</code></td>
+        <td><b>F-02: Solo Share จาก Summary</b></td>
+        <td>อยู่หน้า Summary</td>
+        <td><ol class="steps"><li>กดปุ่ม Share ผลตัวเอง</li><li>เลือก chat</li></ol></td>
+        <td>Flex card: axis card image, archetype name (Thai + English), body text, CTA ไปที่ quiz URL</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-003</code></td>
+        <td><b>F-03: Pair Result Share จาก PairResult</b></td>
+        <td>อยู่หน้า PairResult</td>
+        <td><ol class="steps"><li>กดปุ่ม Share</li><li>เลือก chat</li></ol></td>
+        <td>OG image generate (<code>/api/og?type=pair&amp;...</code>) + Flex card: rank (X/15), reason, CTA "Invite to quiz"</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-004</code></td>
+        <td><b>F-10: Group Invite จาก Group screen</b></td>
+        <td>อยู่หน้า Group</td>
+        <td><ol class="steps"><li>กดปุ่ม Invite more</li><li>เลือก chat</li></ol></td>
+        <td>Flex card: fan cards สมาชิก (สูงสุด 5 คน), archetype result, CTA "Join group" พร้อม <code>groupId</code></td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-005</code></td>
+        <td><b>shareTargetPicker ไม่ใช่ใน LINE client</b></td>
+        <td><code>liff.isInClient()=false</code></td>
+        <td><ol class="steps"><li>กดปุ่ม Share ใดก็ตาม</li></ol></td>
+        <td>ปุ่ม disabled หรือ error toast — ไม่ crash, ไม่เรียก shareTargetPicker</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-006</code></td>
+        <td><b>altText เกิน 400 ตัวอักษร</b></td>
+        <td>inviterName ยาวมาก</td>
+        <td><ol class="steps"><li>B match กับ A (push fail scenario)</li></ol></td>
+        <td>altText ถูก <code>.slice(0,400)</code> → ไม่ overflow LINE API limit</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>SHARE-007</code></td>
+        <td><b>F-03: Group complete push card</b></td>
+        <td>กลุ่มเพิ่งครบ 5 คน (triggered by addPairsToGroup หรือ joinGroup)</td>
+        <td><ol class="steps"><li>เปิด LINE chat หลังสมาชิกคนที่ 5 join</li></ol></td>
+        <td>OA push Flex card (mega): hero = archetype image, body มี group name + "ทีมครบแล้ว!" badge + archetype title + survival text + N คนในทีม, CTA "ดูผลทีมแบบเต็ม"</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>TC-ERR: Error Handling &amp; Edge Cases</h2>
+  <h3>B — Error Messages &amp; Recovery</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>ERR-001</code></td>
+        <td><b>Network error ระหว่าง init</b></td>
+        <td>ไม่มีอินเทอร์เน็ต</td>
+        <td><ol class="steps"><li>เปิด app โดยไม่มีเน็ต</li></ol></td>
+        <td>"เครือข่ายมีปัญหา กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่" (ไม่แสดง "Failed to fetch")</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-002</code></td>
+        <td><b>500 Internal Server Error</b></td>
+        <td>API return 500</td>
+        <td><ol class="steps"><li>Mock API → 500</li><li>ทำ action ใดก็ตาม</li></ol></td>
+        <td>"เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง" (ไม่แสดง stack trace)</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-003</code></td>
+        <td><b>401 Unauthorized — token หมดอายุ</b></td>
+        <td>API return 401</td>
+        <td><ol class="steps"><li>เรียก API ใดก็ตาม</li></ol></td>
+        <td>"เซสชันหมดอายุ กรุณาเปิดลิงก์ใหม่" (ไม่แสดง "401 Unauthorized")</td>
+        <td><span class="p-critical">Critical</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-004</code></td>
+        <td><b>Error message technical / ยาว &gt; 80 chars</b></td>
+        <td>Error มี "undefined", "null", "Error:", หรือยาวกว่า 80 ตัวอักษร</td>
+        <td><ol class="steps"><li>Mock API ให้ return technical error</li></ol></td>
+        <td>"เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง" (ไม่แสดง raw string)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-005</code></td>
+        <td><b>ErrorScreen retry button</b></td>
+        <td>showError() ถูกเรียกพร้อม retryFn</td>
+        <td><ol class="steps"><li>แสดงหน้า Error</li><li>กดปุ่ม Retry</li></ol></td>
+        <td>retryFn ถูกเรียก → กลับไปสถานะก่อน error (เช่น กลับคำถามข้อสุดท้าย)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-006</code></td>
+        <td><b>pairId จาก push — ไม่ใช่ participant</b></td>
+        <td>URL มี <code>pairId</code>, user ไม่ได้อยู่ใน pair นั้น</td>
+        <td><ol class="steps"><li>เปิด URL ที่มี pairId ของคนอื่น</li></ol></td>
+        <td><code>GET /api/quiz/my-summary</code> fail → <code>setScreen('intro')</code> ไม่ crash</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-007</code></td>
+        <td><b>pairId จาก push — pair status = waiting</b></td>
+        <td><code>pair.status='waiting'</code></td>
+        <td><ol class="steps"><li>เปิด URL ที่มี pairId</li></ol></td>
+        <td>โหลด Summary ปกติ แต่ <b>ไม่</b> มี initialPopup (condition status==='completed' ไม่ผ่าน)</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-008</code></td>
+        <td><b>Create group fail</b></td>
+        <td><code>POST /api/group/create</code> throw</td>
+        <td><ol class="steps"><li>กดปุ่ม Create group จาก Summary</li></ol></td>
+        <td><code>showError('สร้างกลุ่มไม่สำเร็จ', ...)</code> → หน้า Error</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>ERR-009</code></td>
+        <td><b>handleViewPair — pair ยัง waiting</b></td>
+        <td>pair.status='waiting' ใน pair list</td>
+        <td><ol class="steps"><li>คลิก pair ที่ยังรออยู่</li></ol></td>
+        <td>API return status='waiting' → ไม่ navigate ไป PairResult — ไม่ crash</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>TC-PREV: Preview Mode (Admin Embed)</h2>
+  <h3>C — Admin iframe Preview</h3>
+  <table>
+    <thead><tr><th style="width:75px">TC ID</th><th style="width:185px">Test Case</th><th style="width:145px">Pre-condition</th><th>Steps</th><th style="width:200px">Expected Result</th><th style="width:60px">Priority</th><th style="width:65px">ผล</th><th style="width:110px">หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>PREV-001</code></td>
+        <td><b>Receive config จาก parent iframe</b></td>
+        <td>URL มี <code>?preview=1</code></td>
+        <td><ol class="steps"><li>Parent postMessage: <code>{ type:'preview_config', config:{...}, startScreen:'summary' }</code></li></ol></td>
+        <td>App apply config + theme → <code>setScreen('summary')</code>. Screen ที่ไม่ valid → fallback เป็น 'intro'</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>PREV-002</code></td>
+        <td><b>Skip real LIFF init ใน preview mode</b></td>
+        <td>URL มี <code>?preview=1</code></td>
+        <td><ol class="steps"><li>โหลด app</li></ol></td>
+        <td><code>liff.init()</code> <b>ไม่</b> ถูกเรียก, ไม่มี API call จริง, ไม่มี login redirect</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>PREV-003</code></td>
+        <td><b>Screen change ส่ง postMessage กลับ parent</b></td>
+        <td>Preview mode, app โหลดแล้ว</td>
+        <td><ol class="steps"><li>เปลี่ยน screen ใดก็ตาม</li></ol></td>
+        <td><code>window.parent.postMessage({ type:'preview_screen', screen }, '*')</code> ถูกส่งทุกครั้งที่ screen เปลี่ยน</td>
+        <td><span class="p-high">High</span></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><code>PREV-004</code></td>
+        <td><b>ตอบคำถามจบใน preview — ไม่เรียก API</b></td>
+        <td>Preview mode, อยู่หน้า Question</td>
+        <td><ol class="steps"><li>ตอบคำถามทุกข้อ</li></ol></td>
+        <td>ไม่เรียก API จริง → set mock summaryData → แสดงหน้า Summary ได้</td>
+        <td><span class="p-low">Low</span></td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div><!-- /tab-s -->
+
+</div><!-- /content-body -->
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  var p = document.getElementById(id); if(p) p.classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+</script>
+
+<script>
+(function(){
+  var ACCENT = '#E8354F';
+  var ACCENT_DARK = '#7B1225';
+
+  function getResultRows(){
+    var rows=[];
+    document.querySelectorAll('tbody tr').forEach(function(tr){
+      var pEl=tr.querySelector('.p-critical,.p-high,.p-medium,.p-low');
+      if(!pEl) return;
+      var pTd=pEl.closest('td');
+      var resTd=pTd?pTd.nextElementSibling:null;
+      var noteTd=resTd?resTd.nextElementSibling:null;
+      if(resTd) rows.push({tr:tr,pEl:pEl,resTd:resTd,noteTd:noteTd});
+    });
+    return rows;
+  }
+
+  function initInteractive(){
+    getResultRows().forEach(function(r){
+      var cell=r.resTd;
+      cell.innerHTML=''; cell.style.padding='4px'; cell.style.minWidth='72px';
+      var sel=document.createElement('select'); sel.className='result-sel';
+      sel.innerHTML='<option value="">— ผล —</option><option value="pass">Pass ✓</option><option value="fail">Fail ✗</option><option value="skip">Skip</option>';
+      sel.addEventListener('change',function(){
+        cell.dataset.sel=sel.value;
+        sel.className='result-sel'+(sel.value?' sel-'+sel.value:'');
+        updateBar();
+      });
+      cell.appendChild(sel);
+      if(r.noteTd){
+        r.noteTd.innerHTML=''; r.noteTd.style.padding='4px';
+        var ta=document.createElement('textarea'); ta.className='note-ta'; ta.placeholder='หมายเหตุ / bug...';
+        r.noteTd.appendChild(ta);
+      }
+    });
+  }
+
+  function countAll(){
+    var c={total:0,pass:0,fail:0,skip:0,none:0,byP:{Critical:{t:0,p:0,f:0,s:0,n:0},High:{t:0,p:0,f:0,s:0,n:0},Medium:{t:0,p:0,f:0,s:0,n:0},Low:{t:0,p:0,f:0,s:0,n:0}}};
+    getResultRows().forEach(function(r){
+      var p=r.pEl.classList.contains('p-critical')?'Critical':r.pEl.classList.contains('p-high')?'High':r.pEl.classList.contains('p-low')?'Low':'Medium';
+      var sel=r.resTd.dataset.sel||'';
+      c.total++; c.byP[p].t++;
+      if(sel==='pass'){c.pass++;c.byP[p].p++;}
+      else if(sel==='fail'){c.fail++;c.byP[p].f++;}
+      else if(sel==='skip'){c.skip++;c.byP[p].s++;}
+      else{c.none++;c.byP[p].n++;}
+    });
+    return c;
+  }
+
+  function updateBar(){
+    var c=countAll();
+    var el=function(id){return document.getElementById(id);};
+    el('sb-total')&&(el('sb-total').textContent=c.total);
+    el('sb-pass')&&(el('sb-pass').textContent=c.pass);
+    el('sb-fail')&&(el('sb-fail').textContent=c.fail);
+    el('sb-skip')&&(el('sb-skip').textContent=c.skip);
+    el('sb-none')&&(el('sb-none').textContent=c.none);
+    var pct=c.total>0?Math.round((c.pass+c.skip)/c.total*100):0;
+    var fill=document.getElementById('sb-progress-fill');
+    if(fill){fill.style.width=pct+'%'; fill.style.background=pct>=90?'#34D399':pct>=60?'#FBBF24':'#F87171';}
+    var pctEl=document.getElementById('sb-pct');
+    if(pctEl) pctEl.textContent=pct+'%';
+  }
+
+  function buildBar(){
+    var bar=document.createElement('div'); bar.id='uat-bar';
+    bar.innerHTML=
+      '<div class="sb-item"><span class="sb-lbl">ทั้งหมด</span><span class="sb-val" id="sb-total" style="color:#fff">0</span></div>'
+      +'<div class="sb-div"></div>'
+      +'<div class="sb-item"><span class="sb-lbl">Pass</span><span class="sb-val sb-pass" id="sb-pass">0</span></div>'
+      +'<div class="sb-item"><span class="sb-lbl">Fail</span><span class="sb-val sb-fail" id="sb-fail">0</span></div>'
+      +'<div class="sb-item"><span class="sb-lbl">Skip</span><span class="sb-val sb-skip" id="sb-skip">0</span></div>'
+      +'<div class="sb-item"><span class="sb-lbl">ยังไม่ทดสอบ</span><span class="sb-val sb-none" id="sb-none">0</span></div>'
+      +'<div class="sb-div"></div>'
+      +'<div style="display:flex;flex-direction:column;gap:2px;min-width:72px;">'
+        +'<span class="sb-lbl">Progress</span>'
+        +'<div class="progress-wrap"><div class="progress-fill" id="sb-progress-fill" style="width:0%"></div></div>'
+        +'<span style="font-size:7pt;color:rgba(255,255,255,.55);font-family:monospace;" id="sb-pct">0%</span>'
+      +'</div>'
+      +'<div class="sb-div"></div>'
+      +'<div style="display:flex;flex-direction:column;gap:3px;">'
+        +'<div style="font-size:6.5pt;color:rgba(255,255,255,.5);">ผู้ทดสอบ</div>'
+        +'<input id="uat-tester" type="text" placeholder="ชื่อผู้ทดสอบ..."/>'
+      +'</div>'
+      +'<button id="uat-save" onclick="saveUAT()">💾 บันทึกผล</button>';
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+
+  window.saveUAT = function(){
+    var tester=document.getElementById('uat-tester').value||'(ไม่ระบุ)';
+    var dt=new Date().toLocaleString('th-TH');
+    var rows=getResultRows();
+    var data=rows.map(function(r){
+      var p=r.pEl.classList.contains('p-critical')?'Critical':r.pEl.classList.contains('p-high')?'High':r.pEl.classList.contains('p-low')?'Low':'Medium';
+      var ta=r.noteTd?r.noteTd.querySelector('textarea'):null;
+      return{sel:r.resTd.dataset.sel||'',note:ta?ta.value:'',p:p};
+    });
+    var c=countAll();
+    var pr=c.total>0?Math.round(c.pass/c.total*100):0;
+    var prColor=pr>=90?'#065F46':pr>=70?'#92400E':'#991B1B';
+    var prBg=pr>=90?'#D1FAE5':pr>=70?'#FEF3C7':'#FEE2E2';
+
+    var clone=document.documentElement.cloneNode(true);
+    clone.querySelectorAll('script').forEach(function(s){s.remove();});
+    var b=clone.querySelector('#uat-bar'); if(b) b.remove();
+    clone.querySelectorAll('.tab-panel').forEach(function(p){p.style.display='block';});
+    clone.querySelectorAll('.tab-bar').forEach(function(tb){tb.style.display='none';});
+
+    var cRows=[];
+    clone.querySelectorAll('tbody tr').forEach(function(tr){
+      var pEl=tr.querySelector('.p-critical,.p-high,.p-medium,.p-low'); if(!pEl) return;
+      var pTd=pEl.closest('td'); var resTd=pTd?pTd.nextElementSibling:null; var noteTd=resTd?resTd.nextElementSibling:null;
+      if(resTd) cRows.push({resTd:resTd,noteTd:noteTd});
+    });
+    cRows.forEach(function(r,i){
+      var d=data[i]; if(!d) return;
+      var badge='<span style="color:#aaa;font-size:7.5pt;">—</span>';
+      if(d.sel==='pass') badge='<span style="display:inline-block;background:#D1FAE5;color:#065F46;font-weight:700;padding:2px 8px;border-radius:10px;font-size:7.5pt;">Pass ✓</span>';
+      else if(d.sel==='fail') badge='<span style="display:inline-block;background:#FEE2E2;color:#991B1B;font-weight:700;padding:2px 8px;border-radius:10px;font-size:7.5pt;">Fail ✗</span>';
+      else if(d.sel==='skip') badge='<span style="display:inline-block;background:#F3F4F6;color:#6B7280;font-weight:600;padding:2px 8px;border-radius:10px;font-size:7.5pt;">Skip</span>';
+      r.resTd.innerHTML=badge; r.resTd.style.textAlign='center'; r.resTd.style.padding='5px 8px';
+      if(r.noteTd){
+        var nt=d.note?'<span style="font-size:7.5pt;color:#444;">'+d.note.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</span>':'';
+        r.noteTd.innerHTML=nt;
+      }
+    });
+
+    var priRows=['Critical','High','Medium','Low'].map(function(lv){
+      var d=c.byP[lv]; if(!d||d.t===0) return'';
+      var pcls=lv==='Critical'?'p-critical':lv==='High'?'p-high':lv==='Medium'?'p-medium':'p-low';
+      var r2=d.t>0?Math.round(d.p/d.t*100):0;
+      var rc=r2>=90?'#065F46':r2>=70?'#92400E':'#991B1B';
+      return'<tr>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;"><span class="'+pcls+'">'+lv+'</span></td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;font-weight:600;">'+d.t+'</td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;color:#065F46;font-weight:700;">'+d.p+'</td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;color:#991B1B;font-weight:700;">'+(d.f||'—')+'</td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;color:#6B7280;">'+(d.s||'—')+'</td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;color:#92400E;">'+(d.n||'—')+'</td>'
+        +'<td style="padding:5px 8px;border:1px solid #ddd;text-align:center;font-weight:700;color:'+rc+';">'+r2+'%</td>'
+        +'</tr>';
+    }).join('');
+
+    var sumHTML=
+      '<div style="background:linear-gradient(135deg,#1a0508,#6b1225);color:#fff;padding:20px 24px;border-radius:8px;margin-bottom:20px;">'
+        +'<div style="font-family:monospace;font-size:8pt;color:#F87192;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">ผลการทดสอบ E2E — บันทึกโดย: '+tester+'</div>'
+        +'<div style="font-size:8pt;color:rgba(255,255,255,.45);margin-bottom:14px;">บันทึกเมื่อ: '+dt+'</div>'
+        +'<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;color:#fff;">'+c.total+'</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);">TC ทั้งหมด</div></div>'
+          +'<div style="width:1px;height:44px;background:rgba(255,255,255,.15);"></div>'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;color:#34D399;">'+c.pass+'</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);">Pass</div></div>'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;color:#F87171;">'+c.fail+'</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);">Fail</div></div>'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;color:#9CA3AF;">'+c.skip+'</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);">Skip</div></div>'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;color:#FBBF24;">'+c.none+'</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);">ยังไม่ทดสอบ</div></div>'
+          +'<div style="width:1px;height:44px;background:rgba(255,255,255,.15);"></div>'
+          +'<div style="text-align:center;"><div style="font-size:14pt;font-weight:700;padding:4px 12px;border-radius:8px;background:'+prBg+';color:'+prColor+';">'+pr+'%</div><div style="font-size:7.5pt;color:rgba(255,255,255,.5);margin-top:4px;">Pass Rate</div></div>'
+        +'</div>'
+      +'</div>'
+      +'<table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:8.5pt;">'
+        +'<thead><tr>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;">Priority</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">ทั้งหมด</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">Pass</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">Fail</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">Skip</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">ยังไม่ทดสอบ</th>'
+          +'<th style="background:#6b1225;color:#fff;padding:6px 8px;border:1px solid #B5273D;text-align:center;">Pass Rate</th>'
+        +'</tr></thead><tbody>'+priRows+'</tbody>'
+      +'</table>';
+
+    var sumDiv=document.createElement('div'); sumDiv.innerHTML=sumHTML;
+    var cb=clone.querySelector('.content-body'); if(cb) cb.insertBefore(sumDiv,cb.firstChild);
+    var t=clone.querySelector('title'); if(t) t.textContent=document.title+' — ผลการทดสอบ';
+
+    var html='<!DOCTYPE html>\n'+clone.outerHTML;
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url;
+    var fn=document.title.replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g,'_').replace(/__+/g,'_');
+    a.download=fn+'_Results_'+new Date().toISOString().slice(0,10)+'.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    setTimeout(function(){ alert('✓ บันทึกผลเรียบร้อย! ไฟล์ถูก download แล้ว'); }, 200);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    buildBar();
+    initInteractive();
+    updateBar();
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -32,7 +32,7 @@ export const AxisDef = z.object({
 /** One selectable answer. `scores` is PRIVATE — never sent to the client. */
 export const Option = z.object({
   id: Slug,
-  label: z.string().min(1).max(60),
+  label: z.string().min(1).max(200),
   scores: z.record(Slug, z.number().int().min(-5).max(5)),
 });
 
@@ -219,7 +219,7 @@ export const AppearanceConfig = z.object({
   accent: HexColor.optional(),
   theme: z.enum(['dark', 'light']).optional(),
   font: z.enum(['editorial', 'friendly', 'system']).optional(),
-  texture: z.boolean().optional(),
+  texture: z.enum(['none', 'paper']).optional(),
   kv_treatment: z.enum(['illustration', 'photo', 'flat']).optional(),
   radius: z.number().int().min(0).max(20).optional(),
   // Layout
@@ -241,6 +241,83 @@ export const AppearanceConfig = z.object({
   easing: z.enum(['soft', 'snappy', 'linear']).optional(),
   // Key Visuals
   images: z.record(z.string().url()).optional(),
+  // ── Full theme token system ─────────────────────────────────────────
+  // Color palette
+  colors: z.object({
+    primary:    z.string().max(40).optional(),
+    on_primary: z.string().max(40).optional(),
+    surface:    z.string().max(40).optional(),
+    on_surface: z.string().max(40).optional(),
+    muted:      z.string().max(40).optional(),
+    accent:     z.string().max(40).optional(),
+    success:    z.string().max(40).optional(),
+    danger:     z.string().max(40).optional(),
+    overlay:    z.string().max(40).optional(),
+    background: z.string().max(40).optional(),
+    highlight:  z.string().max(40).optional(),
+    accent_soft: z.string().max(40).optional(),
+    line_green:  z.string().max(40).optional(),
+  }).optional(),
+  // Typography
+  font_display:     z.string().max(80).optional(),   // font-family name
+  font_body:        z.string().max(80).optional(),
+  font_accent:      z.string().max(80).optional(),
+  font_display_url: z.string().max(300).optional(),  // woff2 URL
+  font_body_url:    z.string().max(300).optional(),
+  font_scale:       z.number().min(0.8).max(1.4).optional(),
+  // Shape
+  border_width:   z.number().min(0).max(8).optional(),
+  shadow:         z.enum(['none', 'soft', 'hard']).optional(),
+  shadow_offset:  z.number().int().min(0).max(12).optional(),
+  tilt:           z.enum(['off', 'subtle', 'playful']).optional(),
+  card_radius:       z.number().int().min(0).max(28).optional(),
+  progress_radius:   z.number().int().min(0).max(20).optional(),
+  axis_chip_radius:  z.number().int().min(0).max(28).optional(),
+  badge_radius:      z.number().int().min(0).max(20).optional(),
+  // Art Style (05)
+  art_shape: z.enum(['card', 'circle', 'square', 'wide', 'none']).optional(),
+  art_frame: z.enum(['outline', 'soft', 'flat']).optional(),
+  art_hero:  z.enum(['pair', 'single', 'band']).optional(),
+  group_hero_pattern: z.enum(['fan', 'grid']).optional(),
+  progress_style_loading:  z.enum(['default', 'compact', 'bar']).optional(),
+  progress_style_question: z.enum(['default', 'compact', 'bar']).optional(),
+  progress_style_matching: z.enum(['default', 'compact', 'bar']).optional(),
+  progress_style_group:    z.enum(['default', 'compact', 'bar']).optional(),
+  // Logo
+  logo_url:      z.string().max(400).optional(),
+  logo_position: z.enum(['top-left', 'top-center', 'hidden']).optional(),
+  logo_height:   z.number().int().min(16).max(64).optional(),
+  // Per-screen layout overrides — accepts both legacy string values and Layout Editor block objects
+  screen_config: z.record(z.unknown()).optional(),
+  // Custom CSS (max 4KB)
+  custom_css: z.string().max(4096).optional(),
+  // Campaign notes (internal)
+  notes: z.string().max(2000).optional(),
+  // OG / Share card frames (per card type; solo is per-axis)
+  og_frames: z.object({
+    solo: z.record(z.string().url()).optional(),  // axisId → frame PNG URL
+    pair: z.string().url().optional(),
+    group: z.string().url().optional(),
+  }).optional(),
+  // Text overlay zone overrides (pixel coords; fall back to hardcoded defaults when absent)
+  og_zones: z.object({
+    solo: z.object({
+      text_x:      z.number().int().min(0).max(2000).optional(),
+      title_y:     z.number().int().min(0).max(4000).optional(),
+      label_y:     z.number().int().min(0).max(4000).optional(),
+      body_y_start: z.number().int().min(0).max(4000).optional(),
+    }).optional(),
+    pair: z.object({
+      badge_x:     z.number().int().min(0).max(2000).optional(),
+      badge_y:     z.number().int().min(0).max(4000).optional(),
+      body_y_start: z.number().int().min(0).max(4000).optional(),
+    }).optional(),
+    group: z.object({
+      badge_x:     z.number().int().min(0).max(2000).optional(),
+      badge_y:     z.number().int().min(0).max(4000).optional(),
+      body_y_start: z.number().int().min(0).max(4000).optional(),
+    }).optional(),
+  }).optional(),
   // Integration
   liff_id: z.string().max(40).optional(),
   oa_id: z.string().max(60).optional(),
@@ -255,8 +332,8 @@ export type AppearanceConfig = z.infer<typeof AppearanceConfig>;
 export const CampaignConfig = z
   .object({
     id: Slug,
-    type: z.literal('buddy_quiz'),
-    mode: z.enum(['pair', 'solo']).default('pair'),
+    type: z.union([z.literal('buddy_quiz'), z.literal('group')]),
+    mode: z.enum(['pair', 'solo', 'mbti', 'group']).default('pair'),
     version: z.number().int().positive(),
 
     brand: z.object({
@@ -273,7 +350,7 @@ export const CampaignConfig = z
 
     axes: z.array(AxisDef).min(2).max(6),
     questions: z.array(Question).min(3).max(8),
-    results: z.array(ResultRule).min(2),
+    results: z.array(ResultRule).min(1),
     fallback_result: Slug,
 
     rules: z.object({
@@ -342,7 +419,7 @@ export const CampaignConfig = z
         path: ['fallback_result'],
       });
 
-    if (cfg.mode !== 'solo') {
+    if (cfg.mode === 'pair') {
       for (const key of ['invite', 'partner_done'] as const) {
         if (!cfg.messages[key])
           ctx.addIssue({ code: 'custom', message: `messages.${key} is required`, path: ['messages'] });

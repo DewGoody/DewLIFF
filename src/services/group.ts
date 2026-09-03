@@ -347,7 +347,7 @@ export async function joinGroup(
   const members = await getMembersForGroup(groupId);
   const total = members.length;
 
-  if (gcfg.overflow_mode === 'hard_cap' && total >= gcfg.max_members) {
+  if (total >= gcfg.max_members) {
     throw new BadRequestError('กลุ่มนี้เต็มแล้ว กรุณาสร้างกลุ่มใหม่');
   }
 
@@ -374,64 +374,114 @@ export async function joinGroup(
 
   const allMembers = [...members, { user_id: userId, top_axis: topAxis, axis_scores: axisScores, batch_no: batchNo, id: '', creator_picked: false, reward_claimed: false, joined_at: new Date().toISOString() }];
 
-  // When group reaches max_members → push F-03 completion card to all members
-  if (allMembers.length >= gcfg.max_members) {
-    pushGroupComplete(groupId, campaignId, cfg, allMembers).catch(() => {});
+  // Push F-03 completion card when a batch is complete
+  const isRolling = gcfg.overflow_mode === 'rolling' && gcfg.batch_size;
+  const batchSize = isRolling ? gcfg.batch_size! : gcfg.max_members;
+  const batchMembers = allMembers.filter(m => m.batch_no === batchNo);
+  if (batchMembers.length >= batchSize) {
+    pushGroupComplete(groupId, campaignId, cfg, batchMembers, group.name as string | null).catch(() => {});
   }
 
   return { ok: true, viewOnly: false, existingMemberIds: members.map(m => m.user_id) };
 }
 
-/** F-03: push group-complete card to ALL members when group reaches max_members */
+/** F-GRP: push group-complete card to ALL members when group reaches max_members */
 async function pushGroupComplete(
   groupId: string,
   campaignId: string,
   cfg: Awaited<ReturnType<typeof getConfig>>,
   members: Array<{ user_id: string; top_axis: string; axis_scores: Record<string, number>; batch_no: number; id: string; creator_picked: boolean; reward_claimed: boolean; joined_at: string }>,
+  groupName: string | null,
 ): Promise<void> {
   const gcfg = cfg.group!;
   const archetype = evaluateArchetype(gcfg, members);
-  const primary = cfg.brand.primary || '#E8354F';
+  const primary = (cfg.appearance as any)?.colors?.primary || cfg.brand.primary || '#E8354F';
   const liffBase = env().LIFF_URL ?? '';
   const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
   const copy = (cfg as Record<string, unknown>).copy as Record<string, string> ?? {};
 
-  const altText = archetype
-    ? `ทีมครบแล้ว! ${archetype.title} — ดูผลทีมวันสิ้นโลก`
-    : 'ทีมครบแล้ว! มาดูผลทีมกันเลย';
-
-  const bodyContents: Record<string, unknown>[] = [
-    {
-      type: 'box', layout: 'vertical', paddingAll: '4px', backgroundColor: '#F5E14B',
-      cornerRadius: '4px', width: '112px',
-      contents: [{ type: 'text', text: copy.F03_badge || 'ทีมครบแล้ว!', size: 'xs', weight: 'bold', color: '#1C1A17', align: 'center' }],
-    },
-  ];
-
-  if (archetype) {
-    bodyContents.push({ type: 'text', text: archetype.title, weight: 'bold', size: 'xxl', color: primary, wrap: true, margin: 'sm' });
-    if (archetype.primary_text) {
-      bodyContents.push({ type: 'text', text: `รอดได้ ${archetype.primary_text}`, size: 'md', color: '#555555', margin: 'xs' });
-    }
-    if (archetype.body) {
-      bodyContents.push({ type: 'text', text: archetype.body, size: 'sm', color: '#666666', wrap: true, margin: 'sm' });
-    }
-  } else {
-    bodyContents.push({ type: 'text', text: copy.F03_title || 'ทีมวันสิ้นโลกของคุณพร้อมแล้ว!', weight: 'bold', size: 'xl', color: primary, wrap: true, margin: 'sm' });
+  // Score for {days} replacement
+  let score: number | null = null;
+  if (gcfg.result_mode === 'score' && gcfg.formula) {
+    score = computeScore(gcfg, members, cfg.axes.length);
   }
-  bodyContents.push({ type: 'text', text: `${members.length} คนในทีม`, size: 'xs', color: '#888888', margin: 'md' });
+  const daysStr = archetype?.primary_text || (score != null ? String(score) : '');
 
+  // Title: FGRP_title copy key (with {days} sub) → archetype.title → fallback template
+  const titleText = copy.FGRP_title
+    ? copy.FGRP_title.replace('{days}', daysStr)
+    : (archetype?.title || 'ทีมนี้รอดได้ {days} วัน!').replace('{days}', daysStr);
+  const bodyText = archetype?.body || copy.FGRP_body || '';
+
+  // Axis lookup map for member grid
+  const axisMap = new Map(cfg.axes.map((a: { id: string; label?: string; image_url?: string }) => [a.id, a]));
+
+  // Member axis grid — up to 6 slots (5 members + "+N more" overflow)
+  const showMore = members.length > 5;
+  const totalSlots = showMore ? 6 : Math.min(members.length, 5);
+  const memberCards: Record<string, unknown>[] = Array.from({ length: totalSlots }).map((_, i) => {
+    if (showMore && i === 5) {
+      return {
+        type: 'box', layout: 'vertical', flex: 1, cornerRadius: '8px',
+        backgroundColor: 'rgba(28,26,23,.06)', paddingAll: '6px',
+        justifyContent: 'center', alignItems: 'center',
+        action: { type: 'uri', uri: groupUrl },
+        contents: [
+          { type: 'text', text: `+${members.length - 5}`, weight: 'bold', size: 'md', color: '#1C1A17', align: 'center' },
+          { type: 'text', text: 'ดูเพิ่ม', size: 'xxs', color: '#888888', align: 'center', margin: 'xs' },
+        ],
+      };
+    }
+    const m = members[i];
+    const axis = m ? axisMap.get(m.top_axis) : undefined;
+    const imgUrl = (axis as Record<string, unknown> | undefined)?.image_url as string | undefined;
+    const rawLabel = ((axis as Record<string, unknown> | undefined)?.label as string | undefined) || m?.top_axis || `สมาชิก ${i + 1}`;
+    const label = rawLabel.length > 10 ? rawLabel.slice(0, 9) + '…' : rawLabel;
+    return {
+      type: 'box', layout: 'vertical', flex: 1, cornerRadius: '8px', overflow: 'hidden',
+      contents: [
+        ...(imgUrl ? [{ type: 'image', url: imgUrl, size: 'full', aspectRatio: '4:5', aspectMode: 'cover' }] : []),
+        { type: 'text', text: label, size: 'xxs', color: '#555555', align: 'center', margin: 'xs', wrap: false },
+      ],
+    };
+  });
+
+  const row1 = memberCards.slice(0, 3);
+  const row2 = memberCards.slice(3, 6);
+
+  const nameLabel = groupName ? `ทีม "${groupName}" · ` : '';
+  const altText = `${nameLabel}${copy.FGRP_eyebrow || 'ผลทีมของคุณ'} · ${archetype?.title || titleText}`;
+
+  const bodyContents: Record<string, unknown>[] = [];
+  if (groupName) {
+    bodyContents.push({ type: 'text', text: `ทีม "${groupName}"`, size: 'xs', weight: 'bold', color: '#1C1A17' });
+  }
+  bodyContents.push({ type: 'text', text: copy.FGRP_eyebrow || 'ผลทีมของคุณ', size: 'xs', color: '#888888' });
+  bodyContents.push({ type: 'text', text: titleText, weight: 'bold', size: 'xxl', color: '#1C1A17', wrap: true });
+  if (bodyText) {
+    bodyContents.push({ type: 'text', text: bodyText, size: 'sm', color: '#555555', wrap: true, margin: 'sm' });
+  }
+  // Member grid
+  bodyContents.push({
+    type: 'box', layout: 'vertical', spacing: 'sm', margin: 'md',
+    contents: [
+      { type: 'box', layout: 'horizontal', spacing: 'sm', contents: row1 },
+      ...(row2.length > 0 ? [{ type: 'box', layout: 'horizontal', spacing: 'sm', contents: row2 }] : []),
+    ],
+  });
+
+  const heroUrl = archetype?.symbol_url || archetype?.image_url;
   const message = {
     type: 'flex',
     altText: altText.slice(0, 400),
     contents: {
       type: 'bubble',
       size: 'mega',
-      ...(archetype?.image_url ? { hero: { type: 'image', url: archetype.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
+      ...(heroUrl ? { hero: { type: 'image', url: heroUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
       body: { type: 'box', layout: 'vertical', paddingAll: '16px', spacing: 'sm', contents: bodyContents },
       footer: {
         type: 'box', layout: 'vertical',
-        contents: [{ type: 'button', action: { type: 'uri', label: copy.F03_cta || 'ดูผลทีมแบบเต็ม', uri: groupUrl }, style: 'primary', color: primary }],
+        contents: [{ type: 'button', action: { type: 'uri', label: copy.FGRP_cta || 'ดูผลทีม', uri: groupUrl }, style: 'primary', color: primary }],
       },
     },
   };
@@ -487,7 +537,7 @@ async function pushGroupUpdateToMember(
     altText: archetype ? `${joinerName} เข้าร่วมทีม · ${archetype.title} · ${newTotal} คน` : `${joinerName} เข้าร่วมทีม GRP-${shortId} แล้ว`,
     contents: {
       type: 'bubble',
-      ...(archetype?.image_url ? { hero: { type: 'image', url: archetype.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
+      ...((archetype?.symbol_url || archetype?.image_url) ? { hero: { type: 'image', url: archetype!.symbol_url || archetype!.image_url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } } : {}),
       body: { type: 'box', layout: 'vertical', paddingAll: '16px', contents: bodyContents },
       footer: {
         type: 'box', layout: 'vertical',
@@ -551,8 +601,10 @@ export async function getGroup(
       archetype: archetype ? {
         code: archetype.code,
         title: archetype.title,
+        primary_text: archetype.primary_text,
         body: archetype.body,
         image_url: archetype.image_url,
+        symbol_url: archetype.symbol_url,
         min_group_size: archetype.min_group_size,
         max_group_size: archetype.max_group_size,
         fallback: archetype.fallback,
@@ -777,6 +829,12 @@ export async function addPairsToGroup(
 
   if (toInsert.length) {
     await db().from('group_members').insert(toInsert);
+
+    // If group is now full, push F-03 completion card to all members
+    const allMembers = await getMembersForGroup(groupId);
+    if (allMembers.length >= cfg.group!.max_members) {
+      pushGroupComplete(groupId, campaignId, cfg, allMembers, group.name as string | null).catch(() => {});
+    }
   }
 
   return { added: toInsert.length };
@@ -855,9 +913,13 @@ export async function shareGroup(userId: string, groupId: string): Promise<{ sym
     .single();
   if (!membership) return { symbolCode: null };
 
-  // Already locked — return existing
+  // Already locked — mark this user as shared (adds symbol to their personal collection) but no F-08
   const existingCode = group.locked_archetype_code as string | null;
-  if (existingCode) return { symbolCode: existingCode };
+  if (existingCode) {
+    await db().from('group_members').update({ has_shared: true })
+      .eq('group_id', groupId).eq('user_id', userId);
+    return { symbolCode: existingCode };
+  }
 
   // Evaluate current archetype
   const { data: campaign } = await db()
@@ -879,7 +941,11 @@ export async function shareGroup(userId: string, groupId: string): Promise<{ sym
     .update({ locked_archetype_code: archetype.code, locked_at: new Date().toISOString() })
     .eq('id', groupId);
 
-  // F-08: push symbol-unlock notification to the sharer (fire-and-forget)
+  // Mark this user as the one who shared (first sharer)
+  await db().from('group_members').update({ has_shared: true })
+    .eq('group_id', groupId).eq('user_id', userId);
+
+  // F-08: push symbol-unlock notification to the first sharer only
   pushSymbolUnlockedToUser(userId, campaignId, groupId, cfg, archetype).catch(() => {});
 
   return { symbolCode: archetype.code };
@@ -893,14 +959,15 @@ async function pushSymbolUnlockedToUser(
   archetype: import('../config/schema.js').GroupArchetype,
 ): Promise<void> {
   const liffBase = env().LIFF_URL ?? '';
-  const groupUrl = `${liffBase}?campaignId=${campaignId}&groupId=${groupId}`;
+  const symbolsUrl = `${liffBase}?campaignId=${campaignId}&view=symbols`;
   const copy = (cfg as any).copy ?? {};
 
-  // Count how many distinct symbols the user has now (including the one just unlocked)
+  // Count how many distinct symbols the user has personally unlocked (has_shared = true)
   const { data: memberships } = await db()
     .from('group_members')
     .select('group_id')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .eq('has_shared', true);
   const groupIds = (memberships ?? []).map((m: any) => m.group_id as string);
   const { data: lockedGroups } = groupIds.length
     ? await db().from('groups').select('locked_archetype_code').in('id', groupIds)
@@ -976,7 +1043,7 @@ async function pushSymbolUnlockedToUser(
         type: 'box', layout: 'vertical', paddingAll: '12px',
         contents: [{
           type: 'button',
-          action: { type: 'uri', label: copy.F08_cta || 'ดูสัญลักษณ์ที่เหลือ', uri: groupUrl },
+          action: { type: 'uri', label: copy.F08_cta || 'ดูสัญลักษณ์ที่เหลือ', uri: symbolsUrl },
           style: 'primary', color: '#E8354F', height: 'sm',
         }],
       },
@@ -1005,4 +1072,20 @@ export async function renameGroup(userId: string, groupId: string, name: string)
     .update({ name })
     .eq('id', groupId);
   if (error) throw new Error(error.message);
+}
+
+/** Admin: force-push group-complete card regardless of member count (for testing) */
+export async function adminForceGroupComplete(groupId: string): Promise<{ pushed: number }> {
+  const group = await getGroupOrThrow(groupId);
+  const campaignId = group.campaign_id as string;
+  const { data: campaign } = await db()
+    .from('campaigns')
+    .select('current_version')
+    .eq('id', campaignId)
+    .single();
+  const cfg = await getConfig(campaignId, (campaign as Record<string, unknown>).current_version as number);
+  const members = await getMembersForGroup(groupId);
+  if (!members.length) throw new BadRequestError('Group has no members');
+  await pushGroupComplete(groupId, campaignId, cfg, members, group.name as string | null);
+  return { pushed: members.length };
 }

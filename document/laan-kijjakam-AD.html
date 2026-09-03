@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laan Kijjakam — Architecture & Design Document</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #111111;
+    --dim: #5C5C58;
+    --muted: #9B9B98;
+    --border: #E5E5E3;
+    --bg: #F7F7F5;
+    --blue: #2563EB;
+    --green: #16A34A;
+    --orange: #D97706;
+    --red: #DC2626;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', 'Noto Sans Thai', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--black);
+    background: #fff;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 72px 64px;
+    border-bottom: 3px solid var(--black);
+    page-break-after: always;
+  }
+  .cover-top { display: flex; flex-direction: column; gap: 6px; }
+  .cover-label { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .cover-title { font-size: 48px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; margin-top: 16px; }
+  .cover-sub { font-size: 18px; color: var(--dim); margin-top: 10px; font-weight: 400; }
+  .cover-meta { display: flex; flex-direction: column; gap: 8px; }
+  .cover-meta-row { display: flex; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .cover-meta-row span { color: var(--black); }
+  .cover-divider { width: 48px; height: 3px; background: var(--black); margin: 32px 0; }
+
+  /* ── TOC ── */
+  .toc-page {
+    padding: 64px;
+    page-break-after: always;
+  }
+  .toc-title { font-size: 13px; font-family: var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 32px; }
+  .toc-item { display: flex; align-items: baseline; gap: 0; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .toc-num { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 32px; flex-shrink: 0; }
+  .toc-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .toc-dots { flex: 1; border-bottom: 1px dotted var(--border); margin: 0 8px 4px; }
+  .toc-page-num { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .toc-section { margin-top: 24px; }
+  .toc-section-label { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; margin-top: 20px; }
+
+  /* ── Content pages ── */
+  .page {
+    padding: 56px 64px;
+    page-break-after: always;
+    min-height: 100vh;
+    position: relative;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── Section headers ── */
+  .sec-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .sec-title { font-size: 32px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 6px; }
+  .sec-sub { font-size: 14px; color: var(--dim); margin-bottom: 32px; line-height: 1.6; }
+  .sec-divider { width: 100%; height: 1px; background: var(--border); margin: 28px 0; }
+
+  h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; }
+  h4 { font-size: 13px; font-weight: 600; margin: 20px 0 8px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+  p { margin-bottom: 12px; color: var(--dim); font-size: 13px; line-height: 1.7; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; color: var(--dim); }
+  li { margin-bottom: 4px; font-size: 13px; }
+  strong { color: var(--black); font-weight: 600; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--black);
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.65;
+    overflow-x: auto;
+    margin: 16px 0;
+    white-space: pre;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--bg);
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12.5px; }
+  thead tr { background: var(--black); }
+  thead th { color: #fff; padding: 9px 12px; text-align: left; font-size: 11px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; font-weight: 500; }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:nth-child(even) { background: var(--bg); }
+  td { padding: 9px 12px; vertical-align: top; color: var(--dim); }
+  td:first-child { color: var(--black); font-family: var(--mono); font-size: 11.5px; font-weight: 500; }
+
+  /* ── Callout boxes ── */
+  .callout { padding: 14px 18px; margin: 16px 0; font-size: 13px; border-left: 3px solid; }
+  .callout.info { background: #EFF6FF; border-color: var(--blue); color: #1E40AF; }
+  .callout.warn { background: #FFFBEB; border-color: var(--orange); color: #92400E; }
+  .callout.tip  { background: #F0FDF4; border-color: var(--green); color: #14532D; }
+
+  /* ── Arch diagram ── */
+  .arch-box {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .arch-col { flex: 1; padding: 18px 16px; border-right: 1px solid var(--border); }
+  .arch-col:last-child { border-right: none; }
+  .arch-col-title { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .arch-col-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .arch-col-sub { font-size: 11.5px; color: var(--dim); }
+  .arch-arrow { display: flex; align-items: center; padding: 0 4px; color: var(--muted); font-size: 18px; }
+
+  /* ── Badge ── */
+  .badge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; padding: 3px 8px; border: 1px solid; margin-right: 4px; }
+  .badge.get    { border-color: var(--green); color: var(--green); }
+  .badge.post   { border-color: var(--blue);  color: var(--blue);  }
+  .badge.delete { border-color: var(--red);   color: var(--red);   }
+
+  /* ── Flow steps ── */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 16px 0; }
+  .flow-step { display: flex; gap: 16px; }
+  .flow-line { display: flex; flex-direction: column; align-items: center; }
+  .flow-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--black); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .flow-connector { width: 1px; background: var(--border); flex: 1; min-height: 16px; margin: 3px 0; }
+  .flow-content { padding: 4px 0 20px; }
+  .flow-label { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .flow-desc { font-size: 12.5px; color: var(--dim); }
+
+  /* ── DB table spec ── */
+  .db-table { margin: 20px 0; border: 1px solid var(--border); overflow: hidden; }
+  .db-table-header { background: var(--black); color: #fff; padding: 10px 14px; display: flex; gap: 12px; align-items: baseline; }
+  .db-table-name { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .db-table-desc { font-size: 12px; opacity: .65; }
+  .db-col { display: grid; grid-template-columns: 160px 120px 1fr; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12px; align-items: start; }
+  .db-col:last-child { border-bottom: none; }
+  .db-col:nth-child(even) { background: var(--bg); }
+  .db-col-name { font-family: var(--mono); font-size: 11.5px; color: var(--black); }
+  .db-col-type { font-family: var(--mono); font-size: 11px; color: var(--blue); }
+  .db-col-desc { color: var(--dim); }
+
+  /* ── Page footer ── */
+  .page-footer { position: absolute; bottom: 24px; left: 64px; right: 64px; display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+
+  /* ── Print ── */
+  @media print {
+    body { max-width: 100%; }
+    .cover { min-height: 100vh; }
+    .page { min-height: 100vh; }
+    pre { white-space: pre-wrap; }
+  }
+  @page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-label">Architecture &amp; Design Document · v1.0</div>
+    <div class="cover-title">Laan Kijjakam</div>
+    <div class="cover-sub">LINE Activity Quiz Platform — Config-Driven Campaign Engine</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <div class="cover-meta-row">เวอร์ชัน <span>1.0.0</span></div>
+      <div class="cover-meta-row">วันที่ <span>21 สิงหาคม 2569</span></div>
+      <div class="cover-meta-row">สถานะ <span>Phase 1 Complete · Phase 2 In Progress</span></div>
+      <div class="cover-meta-row">Repository <span>github.com/Pennoung/laan-kijjakam</span></div>
+      <div class="cover-meta-row">Production <span>laan-kijjakam.vercel.app</span></div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);max-width:480px;line-height:1.7">
+    เอกสารนี้อธิบาย architecture, data model, API contracts, และ business logic ของระบบ Laan Kijjakam สำหรับทีม developer ที่จะต่อยอดพัฒนาต่อ
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <div class="toc-title">สารบัญ</div>
+
+  <div class="toc-section-label">Overview</div>
+  <div class="toc-item"><div class="toc-num">01</div><div class="toc-name">System Overview &amp; Goals</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">02</div><div class="toc-name">Architecture Diagram</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">03</div><div class="toc-name">Tech Stack</div><div class="toc-dots"></div></div>
+
+  <div class="toc-section-label">Config System</div>
+  <div class="toc-item"><div class="toc-num">04</div><div class="toc-name">CampaignConfig Schema</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">05</div><div class="toc-name">Config Versioning &amp; Public Config</div><div class="toc-dots"></div></div>
+
+  <div class="toc-section-label">Features</div>
+  <div class="toc-item"><div class="toc-num">06</div><div class="toc-name">Pair Quiz Flow</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">07</div><div class="toc-name">Group Result System</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">08</div><div class="toc-name">Reward System</div><div class="toc-dots"></div></div>
+
+  <div class="toc-section-label">Data</div>
+  <div class="toc-item"><div class="toc-num">09</div><div class="toc-name">Database Schema</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">10</div><div class="toc-name">API Reference</div><div class="toc-dots"></div></div>
+
+  <div class="toc-section-label">Admin &amp; LIFF</div>
+  <div class="toc-item"><div class="toc-num">11</div><div class="toc-name">Admin Console</div><div class="toc-dots"></div></div>
+  <div class="toc-item"><div class="toc-num">12</div><div class="toc-name">LIFF App Screens</div><div class="toc-dots"></div></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     01 — SYSTEM OVERVIEW
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">01 — Overview</div>
+  <div class="sec-title">System Overview</div>
+  <div class="sec-sub">Laan Kijjakam คือ platform สำหรับสร้าง LINE Activity Quiz Campaign แบบ config-driven ไม่ต้อง deploy code ใหม่ทุกครั้งที่เปลี่ยนแคมเปญ</div>
+
+  <h3>เป้าหมายหลัก</h3>
+  <ul>
+    <li><strong>Config-driven</strong> — ทุกอย่างควบคุมจาก JSON config ที่ admin ตั้งผ่าน UI</li>
+    <li><strong>Multi-campaign</strong> — รองรับหลาย campaign_id ในระบบเดียว</li>
+    <li><strong>Viral loop</strong> — Pair quiz + Group result ออกแบบมาเพื่อแชร์ใน LINE</li>
+    <li><strong>Reward integration</strong> — แจก coupon code อัตโนมัติเมื่อถึง milestone</li>
+  </ul>
+
+  <h3>Use Cases หลัก</h3>
+  <table>
+    <thead><tr><th>Use Case</th><th>ตัวอย่าง</th><th>Feature ที่ใช้</th></tr></thead>
+    <tbody>
+      <tr><td>Pair Quiz</td><td>โลกแตกพรุ่งนี้ เรารอดกี่วัน</td><td>Pair mode + axis scoring</td></tr>
+      <tr><td>Group Result</td><td>กลุ่มเพื่อนรอดได้กี่วัน</td><td>Group score mode</td></tr>
+      <tr><td>Destination Match</td><td>ทีมนี้เหมาะเที่ยวไหน</td><td>Group match mode</td></tr>
+      <tr><td>Reward Campaign</td><td>ครบ 5 คู่ รับโค้ดส่วนลด</td><td>Milestone + Reward pool</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Roles ในระบบ</h3>
+  <ul>
+    <li><strong>Campaign Admin</strong> — ตั้งค่า config ผ่าน Admin Console</li>
+    <li><strong>End User</strong> — ตอบ quiz + ดูผลผ่าน LIFF ใน LINE</li>
+    <li><strong>Developer</strong> — maintain backend API, deploy, ดู logs</li>
+  </ul>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>01 · System Overview</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     02 — ARCHITECTURE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">02 — Architecture</div>
+  <div class="sec-title">Architecture Diagram</div>
+  <div class="sec-sub">ทุก component deploy บน Vercel ในรูปแบบ monorepo เดียว</div>
+
+  <div class="arch-box">
+    <div class="arch-col">
+      <div class="arch-col-title">Admin</div>
+      <div class="arch-col-name">Admin Console</div>
+      <div class="arch-col-sub">React 18 + Vite<br>Static Site<br>/admin/*</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-col">
+      <div class="arch-col-title">Backend</div>
+      <div class="arch-col-name">API Server</div>
+      <div class="arch-col-sub">Node.js + Express<br>Vercel Serverless<br>/api/*</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-col">
+      <div class="arch-col-title">Database</div>
+      <div class="arch-col-name">Supabase</div>
+      <div class="arch-col-sub">PostgreSQL<br>Row-level Security<br>Singapore (ap-southeast-1)</div>
+    </div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:var(--muted);margin:-8px 0 20px">LINE User เข้าผ่าน LIFF → API → DB</div>
+
+  <div class="arch-box">
+    <div class="arch-col">
+      <div class="arch-col-title">LINE</div>
+      <div class="arch-col-name">LIFF App</div>
+      <div class="arch-col-sub">React 18 + Vite<br>Static Site<br>/ (root)</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-col">
+      <div class="arch-col-title">Backend</div>
+      <div class="arch-col-name">API Server</div>
+      <div class="arch-col-sub">Same serverless<br>Auth via LINE userId<br>จาก LIFF SDK</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-col">
+      <div class="arch-col-title">Messaging</div>
+      <div class="arch-col-name">LINE Messaging API</div>
+      <div class="arch-col-sub">ส่ง Flex Message<br>Invite + Partner done<br>ผ่าน Webhook</div>
+    </div>
+  </div>
+
+  <h3>File Structure (Monorepo)</h3>
+  <pre>
+/
+├── api/
+│   └── index.ts          — Vercel serverless entry point
+├── src/
+│   ├── app.ts            — Express app setup
+│   ├── routes/           — API route handlers
+│   │   ├── config.ts     — Campaign config endpoints
+│   │   ├── answers.ts    — Quiz answer + scoring
+│   │   ├── pair.ts       — Pair invite/result
+│   │   ├── group.ts      — Group create/join/get/claim
+│   │   └── rewards.ts    — Milestone + coupon claim
+│   ├── services/         — Business logic
+│   │   ├── scoring.ts    — Axis score → archetype
+│   │   ├── group.ts      — Group evaluation logic
+│   │   └── rewards.ts    — Reward claim logic
+│   └── config/
+│       ├── schema.ts     — Zod schema (source of truth)
+│       └── public.ts     — PublicConfig (strips secrets)
+├── admin/                — Admin Console (React)
+├── liff/                 — LIFF App (React)
+├── public/
+│   ├── admin-app/        — Built admin (static)
+│   └── liff-app/         — Built LIFF (static)
+└── supabase/
+    └── migrations/       — SQL migrations
+  </pre>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>02 · Architecture</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     03 — TECH STACK
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">03 — Tech Stack</div>
+  <div class="sec-title">Tech Stack</div>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th>หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend — Admin</td><td>React + TypeScript + Vite</td><td>18 / 5 / 5.4</td><td>Static build → /public/admin-app</td></tr>
+      <tr><td>Frontend — LIFF</td><td>React + TypeScript + Vite</td><td>18 / 5 / 5.4</td><td>Static build → /public/liff-app</td></tr>
+      <tr><td>Backend</td><td>Node.js + Express</td><td>20 / 4</td><td>Vercel Serverless Function</td></tr>
+      <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>—</td><td>ap-southeast-1 (Singapore)</td></tr>
+      <tr><td>Schema Validation</td><td>Zod</td><td>3</td><td>Shared schema ทั้ง FE+BE</td></tr>
+      <tr><td>Deploy</td><td>Vercel</td><td>—</td><td>monorepo, vercel --prod CLI</td></tr>
+      <tr><td>LINE Integration</td><td>LIFF SDK + Messaging API</td><td>2</td><td>Auth + Flex Message</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Environment Variables ที่ต้องตั้ง</h3>
+  <table>
+    <thead><tr><th>Variable</th><th>ใช้ที่</th><th>ตัวอย่าง</th></tr></thead>
+    <tbody>
+      <tr><td>SUPABASE_URL</td><td>Backend</td><td>https://xxx.supabase.co</td></tr>
+      <tr><td>SUPABASE_SERVICE_KEY</td><td>Backend</td><td>eyJ...</td></tr>
+      <tr><td>LINE_CHANNEL_ACCESS_TOKEN</td><td>Backend</td><td>สำหรับ Messaging API</td></tr>
+      <tr><td>LINE_CHANNEL_SECRET</td><td>Backend</td><td>Webhook verification</td></tr>
+      <tr><td>VITE_LIFF_ID</td><td>LIFF build</td><td>1234567890-xxxxxxxx</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Deploy Process</h3>
+  <pre>
+# 1. Build admin
+cd admin && npm run build
+
+# 2. Build LIFF
+cd liff && npm run build
+
+# 3. Restore LIFF index.html (Vite overwrites it)
+#    — manual step: restore title + version-check script
+
+# 4. Bump version.json
+echo '{"v":"YYMMDD_x"}' > public/version.json
+
+# 5. Commit + push + deploy
+git add . && git commit -m "..." && git push origin main
+vercel --prod
+  </pre>
+
+  <div class="callout warn">
+    <strong>หมายเหตุ:</strong> GitHub webhook ถูก block โดย Vercel (commit email ไม่ match) — ต้อง deploy ด้วย <code>vercel --prod</code> CLI เสมอ และต้องใช้ email ที่ตรงกับ GitHub account
+  </div>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>03 · Tech Stack</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     04 — CONFIG SCHEMA
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">04 — Config System</div>
+  <div class="sec-title">CampaignConfig Schema</div>
+  <div class="sec-sub">Schema นิยามด้วย Zod ที่ <code>src/config/schema.ts</code> — ใช้ทั้ง backend validation และ admin TypeScript types</div>
+
+  <pre>
+CampaignConfig {
+  campaign_id: string           // unique slug e.g. "buddy_demo"
+  version: number               // auto-increment on save
+  mode: "pair" | "solo" | "guess" | "mbti"
+
+  axes: AxisDef[]               // แกนบุคลิก
+  questions: Question[]         // คำถาม + ตัวเลือก
+  results: ResultRule[]         // ผลลัพธ์คู่/solo
+  fallback_result: string       // code ของ ResultRule ที่ใช้ fallback
+
+  brand?: BrandConfig           // สี, ชื่อ, font
+  copy?: Record&lt;string,string&gt;  // ข้อความทุกจุด
+  rules?: RulesConfig           // invite TTL, max pairs/day
+  messages?: MessagesConfig     // Flex Message templates
+  rewards?: RewardsConfig       // milestones + pools
+  group?: GroupConfig           // group result (optional)
+  appearance?: AppearanceConfig // KV images, background
+}
+  </pre>
+
+  <h3>AxisDef</h3>
+  <pre>
+AxisDef {
+  id: string              // slug e.g. "prep"
+  label: string           // ชื่อที่โชว์ e.g. "สายเตรียมพร้อม"
+  color: string           // hex color
+  group_weight?: number   // น้ำหนักใน group score formula (0-100)
+}
+  </pre>
+
+  <h3>Question</h3>
+  <pre>
+Question {
+  text: string
+  options: QuestionOption[]
+}
+
+QuestionOption {
+  label: string
+  scores: Record&lt;axisId, number&gt;   // คะแนน +/- ต่อ axis
+}
+  </pre>
+
+  <h3>ResultRule</h3>
+  <pre>
+ResultRule {
+  code: string              // slug e.g. "mu_x_prep"
+  title: string             // ชื่อผลลัพธ์
+  body: string              // คำอธิบาย
+  image_url?: string
+  pair?: [axisId, axisId]   // pair mode: คู่ axis นี้ได้ผลนี้
+  score_contribution?: number  // group score mode: คะแนนที่คนนี้ให้กลุ่ม
+}
+  </pre>
+
+  <h3>GroupConfig</h3>
+  <pre>
+GroupConfig {
+  enabled: boolean
+  result_mode: "match" | "score"
+  min_members: number         // เริ่มดูผลได้
+  reward_members: number      // ถึงจุดนี้ถึงรับรางวัล
+  max_members: number         // เกินนี้ → overflow
+  overflow_mode: "hard_cap" | "rolling" | "creator_pick"
+  batch_size?: number         // rolling mode: คนต่อ batch
+  result_locks_at?: number    // ล็อคผลเมื่อถึง N คน
+  archetypes: GroupArchetype[]
+  fallback_archetype: string  // code ของ fallback
+}
+
+GroupArchetype {
+  code: string
+  title: string
+  body: string
+  image_url?: string
+  min_group_size: number      // tier เริ่มแสดงผลนี้
+  max_group_size?: number
+  condition?: GroupCondition  // เงื่อนไข (match mode)
+  min_score?: number          // ช่วงคะแนน (score mode)
+  max_score?: number
+  fallback?: boolean          // ผลสำรองเมื่อไม่มี match
+  reward_pool_id?: string
+}
+
+GroupCondition {
+  has_axes?: string[]         // ต้องมีคนสาย...
+  has_mode?: "any" | "all"
+  top_axes?: string[]         // axis ที่ครองเสียง
+  top_n?: number
+  is_balanced?: boolean       // กลุ่มสมดุล
+  dominant_threshold?: number // % สำหรับ is_balanced
+}
+  </pre>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>04 · CampaignConfig Schema</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     05 — CONFIG VERSIONING
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">05 — Config System</div>
+  <div class="sec-title">Config Versioning &amp; Public Config</div>
+
+  <h3>Versioning</h3>
+  <p>ทุกครั้งที่ admin save config → <code>version</code> เพิ่ม 1 อัตโนมัติ LIFF ดึง config ล่าสุดเสมอ ไม่มี rollback ใน Phase 1</p>
+
+  <h3>PublicConfig — การซ่อน secrets</h3>
+  <p>Backend แปลง CampaignConfig เป็น PublicConfig ก่อนส่งให้ LIFF เพื่อซ่อน field ที่ไม่ควรเห็น:</p>
+  <table>
+    <thead><tr><th>Field</th><th>CampaignConfig</th><th>PublicConfig</th></tr></thead>
+    <tbody>
+      <tr><td>reward_pool_id</td><td>✓ (uuid)</td><td>✗ ลบออก</td></tr>
+      <tr><td>reward codes</td><td>ไม่เก็บใน config</td><td>—</td></tr>
+      <tr><td>axis scores</td><td>✓</td><td>✓</td></tr>
+      <tr><td>group archetypes</td><td>✓ with pool id</td><td>✓ ไม่มี pool id</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Cache Busting</h3>
+  <p>LIFF bundle ถูก cache โดย LINE WebView — ใช้ version.json + localStorage เพื่อ force reload เมื่อ version เปลี่ยน</p>
+  <pre>
+// inline script ใน index.html ก่อน SDK โหลด
+fetch('/version.json?_=' + Date.now(), { cache: 'no-store' })
+  .then(r => r.json())
+  .then(d => {
+    const stored = localStorage.getItem('__lk_ver');
+    if (stored && stored !== d.v) {
+      localStorage.setItem('__lk_ver', d.v);
+      location.reload(true);
+    } else {
+      localStorage.setItem('__lk_ver', d.v);
+    }
+  });
+  </pre>
+
+  <div class="callout info">
+    <strong>สำคัญ:</strong> ทุกครั้งที่ build LIFF ด้วย Vite — ต้องอัปเดต <code>public/version.json</code> ด้วยค่าใหม่ (เช่น <code>{"v":"260821h"}</code>) และ restore <code>public/liff-app/index.html</code> title + script เพราะ Vite จะเขียนทับ
+  </div>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>05 · Config Versioning</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     06 — PAIR QUIZ FLOW
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">06 — Features</div>
+  <div class="sec-title">Pair Quiz Flow</div>
+  <div class="sec-sub">flow หลักของ platform — คน A ชวนคน B มาตอบแล้วดูผลร่วมกัน</div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">1</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">คน A เปิด LIFF</div>
+        <div class="flow-desc">GET /api/config/:id → โหลด CampaignConfig → แสดงหน้า Intro</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">2</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">A ตอบ quiz</div>
+        <div class="flow-desc">บันทึก answers ใน state → POST /api/answers → ได้ axis_scores + archetype → บันทึกลง quiz_answers</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">3</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">A สร้าง invite</div>
+        <div class="flow-desc">POST /api/pair/create → ได้ invite token → แชร์ลิงก์ <code>/?token=xxx</code> ผ่าน LINE Flex Message</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">4</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">คน B เปิดลิงก์</div>
+        <div class="flow-desc">LIFF ตรวจ token → แสดงชื่อ A + ปุ่ม "ตอบเลย" → B ตอบ quiz → POST /api/answers</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">5</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">คำนวณผลคู่</div>
+        <div class="flow-desc">ดู axis dominant ของ A และ B → หา ResultRule ที่ pair match → บันทึกลง pair_results</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">6</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">Push notification ไปหา A</div>
+        <div class="flow-desc">LINE Messaging API ส่ง Flex Message แจ้งว่า "B ตอบแล้ว มาดูผลกัน"</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot">7</div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-label">ดูผลคู่</div>
+        <div class="flow-desc">A และ B เปิด LIFF → GET /api/pair/:token → แสดง PairResult screen</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Axis Scoring Algorithm</h3>
+  <pre>
+// 1. รวมคะแนนตาม option ที่เลือก
+axis_scores = {}
+for each answer:
+  for each (axisId, score) in option.scores:
+    axis_scores[axisId] += score
+
+// 2. หา dominant axis (highest score)
+dominant = max(axis_scores)
+
+// 3. หา ResultRule ที่ pair ตรง
+result = results.find(r => r.pair includes [A.dominant, B.dominant])
+       ?? fallback_result
+  </pre>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>06 · Pair Quiz Flow</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     07 — GROUP RESULT
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">07 — Features</div>
+  <div class="sec-title">Group Result System</div>
+  <div class="sec-sub">ระบบดูผลลัพธ์แบบกลุ่ม สำหรับ viral sharing ใน LINE</div>
+
+  <h3>สองโหมด</h3>
+  <table>
+    <thead><tr><th>Mode</th><th>วิธีเลือกผล</th><th>ตัวอย่าง</th></tr></thead>
+    <tbody>
+      <tr><td>match</td><td>ดู axis composition ของกลุ่ม → เปรียบ GroupCondition → เลือก archetype ที่ match</td><td>กลุ่มนี้เหมาะเที่ยวบาหลี</td></tr>
+      <tr><td>score</td><td>sum(score_contribution ของทุกคน) → เทียบ min_score/max_score → เลือก tier</td><td>กลุ่มนี้รอดได้ 40 วัน</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Group Evaluation Algorithm (match mode)</h3>
+  <pre>
+function evaluateArchetype(members, archetypes, groupSize):
+  // เรียง archetype: min_group_size desc (เจาะจงสุดขึ้นก่อน)
+  eligible = archetypes
+    .filter(a => a.min_group_size &lt;= groupSize)
+    .filter(a => !a.max_group_size || a.max_group_size >= groupSize)
+    .sort((a,b) => b.min_group_size - a.min_group_size)
+
+  // หา non-fallback ที่ match ก่อน
+  for arch in eligible.filter(a => !a.fallback):
+    if matchesCondition(members, arch.condition):
+      return arch
+
+  // ถ้าไม่มี → ใช้ fallback
+  return eligible.find(a => a.fallback)
+
+function matchesCondition(members, condition):
+  if condition.has_axes:
+    axisPresentInGroup = members.map(m => m.dominant_axis)
+    if mode == "any": return condition.has_axes.some(a => axisPresentInGroup.includes(a))
+    if mode == "all": return condition.has_axes.every(a => axisPresentInGroup.includes(a))
+
+  if condition.top_axes:
+    groupAxisScores = sum(member.axis_scores) for each axis
+    topAxis = max(groupAxisScores)
+    return condition.top_axes.includes(topAxis)
+
+  if condition.is_balanced:
+    maxShare = max(axis%) across all axes
+    return maxShare &lt; condition.dominant_threshold (default 0.5)
+  </pre>
+
+  <h3>Group Score Algorithm (score mode)</h3>
+  <pre>
+groupScore = sum(member.archetype.score_contribution for each member)
+// score_contribution ตั้งใน Step 3 → ResultRule.score_contribution
+
+result = archetypes
+  .filter(a => !a.min_score || groupScore >= a.min_score)
+  .filter(a => !a.max_score || groupScore &lt;= a.max_score)
+  .find(a => !a.fallback) ?? fallbackArchetype
+  </pre>
+
+  <h3>Overflow Modes</h3>
+  <table>
+    <thead><tr><th>Mode</th><th>พฤติกรรม</th></tr></thead>
+    <tbody>
+      <tr><td>hard_cap</td><td>เมื่อกลุ่มเต็ม (= max_members) คนใหม่ join ไม่ได้</td></tr>
+      <tr><td>rolling</td><td>ทุก batch_size คน = 1 batch ใหม่ แต่ละ batch claim reward ได้อิสระ</td></tr>
+      <tr><td>creator_pick</td><td>creator เลือกได้ว่า slot ที่เหลือให้ใคร (Phase 2)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>07 · Group Result System</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     08 — REWARD SYSTEM
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">08 — Features</div>
+  <div class="sec-title">Reward System</div>
+
+  <h3>Reward Pool</h3>
+  <p>กลุ่มของโค้ด/URL ที่แจกจ่ายได้ สร้างผ่าน Admin Console</p>
+  <pre>
+RewardPool {
+  id: uuid
+  campaign_id: string
+  name: string
+  type: "coupon_code" | "url" | "text"
+  status: "active" | "exhausted" | "paused"
+}
+
+RewardCode {
+  id: uuid
+  pool_id: uuid
+  code: string       // ตัวโค้ด เช่น "LAAN20"
+  claimed: boolean
+  claimed_by?: string  // LINE userId
+  claimed_at?: timestamp
+}
+  </pre>
+
+  <h3>Milestone Reward (Pair-based)</h3>
+  <p>ผู้ใช้ครบ N คู่ → ได้รับโค้ดจาก pool อัตโนมัติ</p>
+  <pre>
+RewardMilestone {
+  key: string          // e.g. "pair_3"
+  trigger_pairs: number  // ครบ 3 คู่ trigger
+  reward_pool_id: string
+}
+  </pre>
+
+  <h3>Group Reward</h3>
+  <p>กลุ่มครบ reward_members คน → claim reward จาก pool ที่ผูกกับ GroupArchetype</p>
+
+  <h3>Claim Flow (Race-condition Safe)</h3>
+  <pre>
+POST /api/group/:id/claim
+
+1. ตรวจ group status + member count >= reward_members
+2. ตรวจ member ยังไม่เคย claim
+3. BEGIN TRANSACTION
+   a. SELECT code FROM reward_codes
+      WHERE pool_id = ? AND claimed = false
+      LIMIT 1 FOR UPDATE SKIP LOCKED
+   b. UPDATE reward_codes SET claimed = true, claimed_by = userId
+   c. INSERT INTO reward_claims (...)
+   d. UPDATE group_members SET reward_claimed = true WHERE user_id = userId
+4. COMMIT
+5. Return { code }
+  </pre>
+
+  <div class="callout tip">
+    <strong>Race condition:</strong> ใช้ <code>FOR UPDATE SKIP LOCKED</code> ป้องกันสองคนได้โค้ดเดียวกันพร้อมกัน
+  </div>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>08 · Reward System</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     09 — DATABASE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">09 — Data</div>
+  <div class="sec-title">Database Schema</div>
+
+  <div class="db-table">
+    <div class="db-table-header"><div class="db-table-name">campaigns</div><div class="db-table-desc">Campaign config + version</div></div>
+    <div class="db-col"><div class="db-col-name">id</div><div class="db-col-type">varchar PK</div><div class="db-col-desc">campaign slug e.g. "buddy_demo"</div></div>
+    <div class="db-col"><div class="db-col-name">config</div><div class="db-col-type">jsonb</div><div class="db-col-desc">CampaignConfig JSON</div></div>
+    <div class="db-col"><div class="db-col-name">version</div><div class="db-col-type">integer</div><div class="db-col-desc">auto-increment on save</div></div>
+    <div class="db-col"><div class="db-col-name">status</div><div class="db-col-type">varchar</div><div class="db-col-desc">draft | live | ended</div></div>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-header"><div class="db-table-name">quiz_answers</div><div class="db-table-desc">คำตอบ + axis scores ของแต่ละคน</div></div>
+    <div class="db-col"><div class="db-col-name">id</div><div class="db-col-type">uuid PK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">campaign_id</div><div class="db-col-type">varchar FK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">user_id</div><div class="db-col-type">varchar</div><div class="db-col-desc">LINE userId</div></div>
+    <div class="db-col"><div class="db-col-name">axis_scores</div><div class="db-col-type">jsonb</div><div class="db-col-desc">{"prep": 12, "live": 4, ...}</div></div>
+    <div class="db-col"><div class="db-col-name">archetype_code</div><div class="db-col-type">varchar</div><div class="db-col-desc">dominant archetype</div></div>
+    <div class="db-col"><div class="db-col-name">score_contribution</div><div class="db-col-type">integer</div><div class="db-col-desc">คะแนนที่ให้กลุ่ม (score mode)</div></div>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-header"><div class="db-table-name">pairs</div><div class="db-table-desc">Invite pair session</div></div>
+    <div class="db-col"><div class="db-col-name">id</div><div class="db-col-type">uuid PK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">token</div><div class="db-col-type">varchar UNIQUE</div><div class="db-col-desc">invite URL token</div></div>
+    <div class="db-col"><div class="db-col-name">inviter_id</div><div class="db-col-type">varchar</div><div class="db-col-desc">LINE userId ของ A</div></div>
+    <div class="db-col"><div class="db-col-name">invitee_id</div><div class="db-col-type">varchar</div><div class="db-col-desc">LINE userId ของ B (null จนกว่า B จะตอบ)</div></div>
+    <div class="db-col"><div class="db-col-name">status</div><div class="db-col-type">varchar</div><div class="db-col-desc">waiting | completed | expired</div></div>
+    <div class="db-col"><div class="db-col-name">expires_at</div><div class="db-col-type">timestamp</div><div class="db-col-desc">จาก invite_ttl_hours</div></div>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-header"><div class="db-table-name">groups</div><div class="db-table-desc">Group header</div></div>
+    <div class="db-col"><div class="db-col-name">id</div><div class="db-col-type">uuid PK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">campaign_id</div><div class="db-col-type">varchar FK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">created_by</div><div class="db-col-type">varchar</div><div class="db-col-desc">LINE userId ของผู้สร้าง</div></div>
+    <div class="db-col"><div class="db-col-name">overflow_mode</div><div class="db-col-type">enum</div><div class="db-col-desc">hard_cap | rolling | creator_pick</div></div>
+    <div class="db-col"><div class="db-col-name">status</div><div class="db-col-type">enum</div><div class="db-col-desc">open | reward_locked | closed</div></div>
+    <div class="db-col"><div class="db-col-name">current_batch</div><div class="db-col-type">integer</div><div class="db-col-desc">rolling mode batch counter</div></div>
+    <div class="db-col"><div class="db-col-name">locked_archetype_code</div><div class="db-col-type">varchar</div><div class="db-col-desc">ผลที่ lock แล้ว (ไม่เปลี่ยน)</div></div>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-header"><div class="db-table-name">group_members</div><div class="db-table-desc">สมาชิกกลุ่ม</div></div>
+    <div class="db-col"><div class="db-col-name">group_id</div><div class="db-col-type">uuid FK</div><div class="db-col-desc"></div></div>
+    <div class="db-col"><div class="db-col-name">user_id</div><div class="db-col-type">varchar</div><div class="db-col-desc">UNIQUE per group</div></div>
+    <div class="db-col"><div class="db-col-name">axis_scores</div><div class="db-col-type">jsonb</div><div class="db-col-desc">คะแนนรายแกน</div></div>
+    <div class="db-col"><div class="db-col-name">batch_no</div><div class="db-col-type">integer</div><div class="db-col-desc">rolling mode: คนนี้อยู่ batch ที่เท่าไหร่</div></div>
+    <div class="db-col"><div class="db-col-name">reward_claimed</div><div class="db-col-type">boolean</div><div class="db-col-desc"></div></div>
+  </div>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>09 · Database Schema</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     10 — API REFERENCE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">10 — Data</div>
+  <div class="sec-title">API Reference</div>
+
+  <h3>Config</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge get">GET</span></td><td>/api/config/:id</td><td>ดึง PublicConfig สำหรับ LIFF</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td>/api/admin/campaign</td><td>บันทึก CampaignConfig (admin only)</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td>/api/admin/campaign/:id</td><td>ดึง full config (admin only)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Quiz</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge post">POST</span></td><td>/api/answers</td><td>บันทึกคำตอบ + คำนวณ axis_scores + archetype</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Pair</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge post">POST</span></td><td>/api/pair/create</td><td>สร้าง invite token + ส่ง Flex Message</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td>/api/pair/:token</td><td>ดึงผลคู่ (พร้อม result rule)</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td>/api/pairs/:userId</td><td>ดู pair log ทั้งหมดของ user</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Group</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge post">POST</span></td><td>/api/group/create</td><td>สร้างกลุ่มใหม่ (ต้องตอบ quiz แล้ว)</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td>/api/group/:id/join</td><td>เข้าร่วมกลุ่ม (auto จัดการ overflow)</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td>/api/group/:id</td><td>ดูผลกลุ่ม + member list + canClaim</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td>/api/group/:id/claim</td><td>รับรางวัลกลุ่ม (race-condition safe)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rewards</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge get">GET</span></td><td>/api/rewards/:userId</td><td>ดู milestone status + claimed codes</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td>/api/rewards/claim</td><td>claim milestone reward</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td>/api/admin/reward-pools</td><td>ดู pool list + available codes (admin)</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td>/api/admin/reward-pools</td><td>สร้าง pool ใหม่ + upload codes (admin)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Auth Pattern</h3>
+  <p>ไม่มี session — ทุก request จาก LIFF ต้องส่ง LINE userId ใน header:</p>
+  <pre>
+X-Line-User-Id: Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  </pre>
+  <div class="callout warn">
+    <strong>Phase 1:</strong> Backend trust userId จาก header โดยตรง ไม่มี signature verification — ควรเพิ่ม LIFF access token validation ใน Phase 2
+  </div>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>10 · API Reference</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     11 — ADMIN CONSOLE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">11 — Admin &amp; LIFF</div>
+  <div class="sec-title">Admin Console</div>
+  <div class="sec-sub">React SPA ที่ /admin — ใช้สำหรับสร้างและตั้งค่า campaign ทั้งหมด</div>
+
+  <h3>Config Playground — 4 Steps + Advanced</h3>
+  <table>
+    <thead><tr><th>Step</th><th>หัวข้อ</th><th>ตั้งค่าอะไร</th></tr></thead>
+    <tbody>
+      <tr><td>Step 1</td><td>ตั้งแกนบุคลิก</td><td>Axis id / label / color / group_weight</td></tr>
+      <tr><td>Step 2</td><td>เขียนคำถาม</td><td>Question text + ตัวเลือก + คะแนนต่อ axis</td></tr>
+      <tr><td>Step 3</td><td>ตั้งผลลัพธ์</td><td>กริด axis×axis → title/body/image/score_contribution</td></tr>
+      <tr><td>Step 4</td><td>ผลลัพธ์กลุ่ม</td><td>GroupConfig: mode, archetypes, conditions, overflow, pools</td></tr>
+      <tr><td>Advanced</td><td>ตั้งค่าเพิ่มเติม</td><td>Brand, Copy, Rules, Messages, Rewards</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Appearance Console</h3>
+  <p>แก้ภาพและสี — ส่ง config ผ่าน <code>postMessage</code> ไปยัง iframe ที่ embed LIFF จริง เพื่อ preview แบบ real-time</p>
+  <pre>
+// Admin → LIFF iframe
+window.postMessage({ type: 'PREVIEW_CONFIG', config: { ...fullConfig, appearance } }, '*')
+
+// LIFF รับ
+window.addEventListener('message', e => {
+  if (e.data.type === 'PREVIEW_CONFIG') applyConfig(e.data.config)
+})
+  </pre>
+
+  <h3>Sidebar — Live Stats</h3>
+  <ul>
+    <li>จำนวน axis / คำถาม / ผลลัพธ์ที่กรอกแล้ว</li>
+    <li>Pair matrix — visual grid แสดง cell ที่ยังไม่มีผล</li>
+    <li>Validate — รายการ error/warning ก่อน Save</li>
+  </ul>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>11 · Admin Console</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     12 — LIFF SCREENS
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="sec-eyebrow">12 — Admin &amp; LIFF</div>
+  <div class="sec-title">LIFF App Screens</div>
+  <div class="sec-sub">React SPA ที่ root URL — เปิดใน LINE WebView ผ่าน LIFF SDK</div>
+
+  <h3>Screen Flow</h3>
+  <table>
+    <thead><tr><th>Screen</th><th>เงื่อนไขแสดง</th><th>ทำอะไร</th></tr></thead>
+    <tbody>
+      <tr><td>Intro</td><td>default (ไม่มี token)</td><td>ปุ่มเริ่มตอบ + ถ้ามี demo pair</td></tr>
+      <tr><td>Invited</td><td>?token=xxx + ยังไม่ตอบ</td><td>แสดงชื่อ inviter + ปุ่มตอบ</td></tr>
+      <tr><td>Quiz</td><td>หลัง intro / invited</td><td>ตอบ N คำถาม ทีละข้อ</td></tr>
+      <tr><td>Waiting</td><td>หลัง A สร้าง invite</td><td>รอ B ตอบ + แชร์ลิงก์</td></tr>
+      <tr><td>Summary</td><td>หลัง B ตอบ (A กด view)</td><td>archetype ตัวเอง + pair log</td></tr>
+      <tr><td>PairResult</td><td>กด pair ใน Summary</td><td>ผลลัพธ์คู่ full page</td></tr>
+      <tr><td>Group</td><td>?groupId=xxx หรือกด create</td><td>ผลกลุ่ม + member list + claim</td></tr>
+      <tr><td>Rewards</td><td>กด rewards ใน Summary</td><td>milestones + codes ที่ได้</td></tr>
+    </tbody>
+  </table>
+
+  <h3>URL Parameters</h3>
+  <table>
+    <thead><tr><th>Param</th><th>ความหมาย</th></tr></thead>
+    <tbody>
+      <tr><td>?token=xxx</td><td>invite token ของ pair — เปิด Invited screen</td></tr>
+      <tr><td>?groupId=xxx</td><td>group id — auto join แล้วเปิด Group screen</td></tr>
+    </tbody>
+  </table>
+
+  <h3>State Management</h3>
+  <p>ทั้งหมดอยู่ใน App.tsx — ไม่ใช้ global state library</p>
+  <pre>
+State ใน App.tsx:
+  screen: Screen           // current screen
+  config: AppConfig        // campaign config จาก API
+  myUserId: string         // จาก liff.getProfile()
+  groupId: string          // pending group join
+  answers: number[][]      // คำตอบก่อน submit
+  archetype: string        // ผล archetype ของตัวเอง
+  pairs: PairEntry[]       // pair log
+  </pre>
+
+  <h3>Theming</h3>
+  <p>ทุก color มาจาก <code>config.brand.primary</code> — ไม่มี hardcode ยกเว้นใน component ที่ยังไม่ได้ผูก config</p>
+
+  <div class="callout tip">
+    <strong>Preview Mode:</strong> ถ้า LIFF ถูก embed ใน Admin iframe → รับ config จาก postMessage แทน API ทำให้ preview ได้ real-time โดยไม่ต้อง save
+  </div>
+
+  <h3>Phase Roadmap</h3>
+  <table>
+    <thead><tr><th>Phase</th><th>สถานะ</th><th>ประกอบด้วย</th></tr></thead>
+    <tbody>
+      <tr><td>Phase 1</td><td>✓ Done</td><td>Pair quiz, Group result, Rewards, Admin config, Appearance console</td></tr>
+      <tr><td>Phase 2</td><td>In Progress</td><td>Backend integration, LINE Messaging API, Production data</td></tr>
+      <tr><td>Phase 3</td><td>Planned</td><td>Analytics dashboard, Multi-campaign management, LIFF access token auth</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>Laan Kijjakam — A&amp;D Document v1.0</span>
+    <span>12 · LIFF App Screens</span>
+  </div>
+</div>
+
+</body>
+</html>
