@@ -199,11 +199,14 @@ export interface ExtraBlockCtx {
 
 export function renderExtraBlock(id: string, ctx: ExtraBlockCtx): React.ReactNode {
   const g = ctx.geo;
+  // Matches LayoutEditor.tsx/LiffSection.tsx's shared DEFAULT_GEO (h:200, size:14,
+  // xRadius:8) — same field name, same fallback, so an unset value looks identical
+  // in the admin canvas and the real app instead of using an unrelated default here.
   switch (id) {
     case 'xImage': {
       const imgSrc = ctx.images?.['x_image'];
       if (!imgSrc) return null;
-      const h = Number(g['h']) || 160;
+      const h = Number(g['h']) || 200;
       const fit = (g['fit'] as CSSProperties['objectFit']) || 'cover';
       return <img key={id} src={imgSrc} alt="" style={{ display: 'block', width: '100%', height: h, objectFit: fit, borderRadius: 'var(--card-radius)' }} />;
     }
@@ -219,13 +222,13 @@ export function renderExtraBlock(id: string, ctx: ExtraBlockCtx): React.ReactNod
       );
     }
     case 'xSpacer':
-      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 16 }} />;
+      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 200 }} />;
     case 'xDivider':
       return <div key={id} style={{ display: 'block', height: 2, background: 'rgba(28,26,23,.15)' }} />;
     case 'xBox': {
       const color = g['xbgColor'];
       const bg = color === 'primary' ? 'var(--ac)' : color === 'soft' ? 'var(--accent-soft)' : color === 'surface' ? 'var(--card)' : 'var(--hl)';
-      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 80, borderRadius: Number(g['xRadius']) || 12, background: bg }} />;
+      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 200, borderRadius: Number(g['xRadius']) || 8, background: bg }} />;
     }
     case 'xCard': {
       // Simpler fallback chain than the admin preview's (no "⛓ path" debug
