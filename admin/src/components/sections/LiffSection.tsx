@@ -1186,6 +1186,8 @@ export default function LiffSection({ appearance, brand, copy, mode, axes = [], 
   const setFlow  = (b: BlockItem) => updateBlock(b.uid, () => ({ pos: undefined }));
   const updatePosField = (b: BlockItem, field: 'x'|'y'|'w', val: number) =>
     updateBlock(b.uid, cur => ({ pos: { ...(cur.pos ?? DEFAULT_POS), [field]: val } }));
+  const updatePosXY = (b: BlockItem, x: number, y: number) =>
+    updateBlock(b.uid, cur => ({ pos: { ...(cur.pos ?? DEFAULT_POS), x, y } }));
 
   /**
    * Rows for the data-source preview. Prefers the real campaign data set in the
@@ -2633,7 +2635,7 @@ export default function LiffSection({ appearance, brand, copy, mode, axes = [], 
             snap={snap}
             onMoveFloat={(uid, x, y) => {
               const b = curLayout.find(bl => bl.uid === uid);
-              if (b) { updatePosField(b, 'x', x); updatePosField(b, 'y', y); }
+              if (b) updatePosXY(b, x, y);
             }}
           />
         )}
