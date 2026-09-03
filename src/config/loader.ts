@@ -17,6 +17,37 @@ const CACHE_ENABLED = process.env.VERCEL !== '1';
 const cache = new Map<string, CampaignConfig>();
 const key = (id: string, v: number) => `${id}@${v}`;
 
+// Preprocess group archetypes (fix null conditions + ensure each size tier has a fallback), then validate.
+function parseConfigRow(raw: Record<string, unknown>, id: string, version: number): CampaignConfig {
+  if (Array.isArray((raw?.group as Record<string, unknown>)?.archetypes)) {
+    const archetypes = (raw.group as Record<string, unknown[]>).archetypes as Record<string, unknown>[];
+
+    // Fix: replace null conditions with undefined (Zod optional() rejects null)
+    // Fix: if a min_group_size tier has no fallback archetype, mark the first one as fallback
+    const fixed: Record<string, unknown>[] = archetypes.map((a) => ({
+      ...a,
+      condition: (a['condition'] ?? undefined) as unknown,
+    }));
+
+    const tiers = [...new Set(fixed.map((a) => a['min_group_size'] as number))];
+    for (const tier of tiers) {
+      const hasFallback = fixed.some((a) => a['min_group_size'] === tier && a['fallback'] === true);
+      if (!hasFallback) {
+        const idx = fixed.findIndex((a) => a['min_group_size'] === tier);
+        if (idx >= 0) fixed[idx] = { ...fixed[idx], fallback: true };
+      }
+    }
+
+    (raw.group as Record<string, unknown[]>).archetypes = fixed;
+  }
+  const parsed = CampaignConfig.safeParse(raw);
+  if (!parsed.success) {
+    console.error('[loader] config parse failed for', id, '@', version, JSON.stringify(parsed.error.issues.slice(0, 5)));
+    throw new Error('Config validation failed: ' + parsed.error.issues.map(i => i.path.join('.') + ': ' + i.message).join(', '));
+  }
+  return parsed.data;
+}
+
 async function loadVersion(id: string, version: number): Promise<CampaignConfig | null> {
   // Try Supabase first
   try {
@@ -28,35 +59,7 @@ async function loadVersion(id: string, version: number): Promise<CampaignConfig 
       .single();
 
     if (!error && data) {
-      // Preprocess group archetypes: fix null conditions + ensure each size tier has a fallback
-      const raw = data.config as Record<string, unknown>;
-      if (Array.isArray((raw?.group as Record<string, unknown>)?.archetypes)) {
-        const archetypes = (raw.group as Record<string, unknown[]>).archetypes as Record<string, unknown>[];
-
-        // Fix: replace null conditions with undefined (Zod optional() rejects null)
-        // Fix: if a min_group_size tier has no fallback archetype, mark the first one as fallback
-        const fixed: Record<string, unknown>[] = archetypes.map((a) => ({
-          ...a,
-          condition: (a['condition'] ?? undefined) as unknown,
-        }));
-
-        const tiers = [...new Set(fixed.map((a) => a['min_group_size'] as number))];
-        for (const tier of tiers) {
-          const hasFallback = fixed.some((a) => a['min_group_size'] === tier && a['fallback'] === true);
-          if (!hasFallback) {
-            const idx = fixed.findIndex((a) => a['min_group_size'] === tier);
-            if (idx >= 0) fixed[idx] = { ...fixed[idx], fallback: true };
-          }
-        }
-
-        (raw.group as Record<string, unknown[]>).archetypes = fixed;
-      }
-      const parsed = CampaignConfig.safeParse(raw);
-      if (!parsed.success) {
-        console.error('[loader] config parse failed for', id, '@', version, JSON.stringify(parsed.error.issues.slice(0, 5)));
-        throw new Error('Config validation failed: ' + parsed.error.issues.map(i => i.path.join('.') + ': ' + i.message).join(', '));
-      }
-      return parsed.data;
+      return parseConfigRow(data.config as Record<string, unknown>, id, version);
     }
   } catch (e) {
     console.error('[loader] DB load failed for', id, '@', version, e instanceof Error ? e.message : e);
@@ -75,6 +78,27 @@ async function loadVersion(id: string, version: number): Promise<CampaignConfig 
     // No files either
   }
 
+  return null;
+}
+
+// Single round-trip for the common "give me whatever's live" read (via the
+// current_campaign_configs view — see supabase/migrations/0011). Returns null
+// if the view isn't there yet (older DB) or the campaign has no live version,
+// so callers can fall back to the two-query path below.
+async function loadCurrentVersionConfig(id: string): Promise<{ version: number; config: CampaignConfig } | null> {
+  try {
+    const { data, error } = await db()
+      .from('current_campaign_configs')
+      .select('current_version, config')
+      .eq('campaign_id', id)
+      .single();
+
+    if (!error && data) {
+      return { version: data.current_version, config: parseConfigRow(data.config as Record<string, unknown>, id, data.current_version) };
+    }
+  } catch (e) {
+    // view missing or query failed — caller falls back to loadCurrentVersion + loadVersion
+  }
   return null;
 }
 
@@ -112,6 +136,15 @@ async function loadCurrentVersion(id: string): Promise<number | null> {
 }
 
 export async function getConfig(id: string, version?: number): Promise<CampaignConfig> {
+  if (version === undefined) {
+    const current = await loadCurrentVersionConfig(id);
+    if (current) {
+      cache.set(key(id, current.version), current.config);
+      return current.config;
+    }
+    // View unavailable — fall through to the explicit two-query path below.
+  }
+
   const v = version ?? (await loadCurrentVersion(id));
   if (v === null) throw new Error(`campaign not found: ${id}`);
 

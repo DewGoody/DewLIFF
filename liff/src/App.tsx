@@ -388,22 +388,28 @@ export default function App() {
         const token = liff.getIDToken();
         setToken(token);
 
-        // Eagerly get profile — store userId + display name in one call
+        // getProfile and getFriendship are independent LINE SDK calls — run them
+        // concurrently instead of back-to-back to shave one network round-trip
+        // off startup latency.
         let profileUserId = '';
-        try {
-          const profile = await liff.getProfile();
+        const [profileResult, friendshipResult] = await Promise.allSettled([
+          liff.getProfile(),
+          liff.getFriendship(),
+        ]);
+
+        if (profileResult.status === 'fulfilled') {
+          const profile = profileResult.value;
           profileUserId = profile.userId;
           setMyUserId(profile.userId);
           if (profile.displayName) {
             setMyDisplayName(profile.displayName);
             api('POST', '/api/quiz/set-name', { displayName: profile.displayName, pictureUrl: profile.pictureUrl }).catch(() => {});
           }
-        } catch { /* non-critical */ }
+        } /* non-critical if rejected */
 
-        try {
-          const friendship = await liff.getFriendship();
-          setIsFriend(friendship.friendFlag);
-        } catch { /* not available outside LINE */ }
+        if (friendshipResult.status === 'fulfilled') {
+          setIsFriend(friendshipResult.value.friendFlag);
+        } /* not available outside LINE */
 
         // LIFF sometimes encodes params inside ?liff.state=... — extract from all sources
         function resolveParams(): URLSearchParams {
