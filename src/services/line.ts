@@ -18,6 +18,12 @@ export async function verifyIdToken(idToken: string): Promise<LineProfile> {
   });
 
   if (!res.ok) {
+    // LINE's /verify returns a JSON body explaining *why* (e.g. "invalid_client",
+    // "ID Token expired") — surface it in the logs instead of a blanket 401,
+    // since that's the only way to tell a channel-id mismatch apart from an
+    // expired/malformed token from the Vercel function logs.
+    const body = await res.text().catch(() => '');
+    console.error('[line] id token verify failed', res.status, body, 'client_id=', env().LINE_CHANNEL_ID);
     throw new UnauthorizedError('Invalid LINE ID token');
   }
 
