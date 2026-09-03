@@ -48,7 +48,7 @@ export default function SymbolCollection({ config, campaignId, onBack }: Props) 
   // ── screen_config wiring: order / show / geo / float position ──────────────
   // topNav and symGrid have no data-source channel in the admin builder
   // (CH_OF doesn't list them), so there's no src() binding to resolve here.
-  const { blockOrder, blockVisible, geo, pos } = getScreenBlocks(appearance, 'Symbols', DEFAULT_ORDER);
+  const { blockOrder, blockVisible, geo, pos, src } = getScreenBlocks(appearance, 'Symbols', DEFAULT_ORDER);
 
   const symGridCols = (geo('symGrid').cols as string) === '4' ? 4 : 3;
 
@@ -181,8 +181,15 @@ export default function SymbolCollection({ config, campaignId, onBack }: Props) 
     topNav: renderTopNav,
     symGrid: renderSymGrid,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images as Record<string, string> | undefined, appearance?.font_scale);
+  // No single "the" matched archetype here (unlike Group.tsx's groupCtx) — this
+  // screen shows ALL archetypes the user has collected symbols for, so only the
+  // list channel (xRow/xChip's 'group' mode) has anything meaningful to bind to.
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, {
+      geo: geo(xid), copy, images: appearance?.images as Record<string, string> | undefined, fontScale: appearance?.font_scale,
+      srcText: src(xid, 'text'),
+      srcList: src(xid, 'list'), listCtx: { group: config.group?.archetypes },
+    });
   }
 
   // ── Build output ──────────────────────────────────────────────────────────

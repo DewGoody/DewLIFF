@@ -290,8 +290,11 @@ export default function SoloShare({ config, campaignId, liffId, archTitle, archT
     survivorCard: renderSurvivorCard,
     shareRow:     renderShareRow,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, (appearance as { images?: Record<string, string> })?.images, appearance?.font_scale);
+  // No axes[]/group[] in this screen's config (see the other blocks' resolveSrcText
+  // calls above, which pass {} for the same reason) — xCard/xRow/xChip render but
+  // always as "unbound" here.
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, { geo: geo(xid), copy, images: (appearance as { images?: Record<string, string> })?.images, fontScale: appearance?.font_scale });
   }
 
   // ── Build output ──────────────────────────────────────────────────────────

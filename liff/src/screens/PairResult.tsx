@@ -374,8 +374,12 @@ export default function PairResult({ config, partnerName, title, body, imageUrl,
     axisChips: cardOwnerId === 'axisChips' ? renderCardGroup : () => null,
     shareRow: renderShareRow,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, (appearance as { images?: Record<string, string> })?.images, appearance?.font_scale);
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, {
+      geo: geo(xid), copy, images: (appearance as { images?: Record<string, string> })?.images, fontScale: appearance?.font_scale,
+      srcText: src(xid, 'text'), textCtx: srcCtx,
+      srcList: src(xid, 'list'), listCtx: { axes: config.axes },
+    });
   }
 
   // ── Build output ──────────────────────────────────────────────────────────

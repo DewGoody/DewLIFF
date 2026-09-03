@@ -138,8 +138,12 @@ export default function Intro({ config, onStart }: Props) {
     cta:      renderCta,
     note:     renderNote,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid) as Record<string, unknown>, copy, appearance?.images, appearance?.font_scale);
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, {
+      geo: geo(xid) as Record<string, unknown>, copy, images: appearance?.images, fontScale: appearance?.font_scale,
+      srcText: src(xid, 'text'), textCtx: { axes },
+      srcList: src(xid, 'list'), listCtx: { axes },
+    });
   }
 
   // ── Build output ──────────────────────────────────────────────────────────

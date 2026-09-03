@@ -909,8 +909,15 @@ export default function Group({ groupId, campaignId, myUserId, config, liffId, i
     axisCounts: renderAxisCounts,
     inviteMore: renderInviteMore,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid) as Record<string, unknown>, copy, appearance?.images, appearance?.font_scale);
+  // config.group here carries only settings (min/max members etc.), not the full
+  // archetypes[] list — this screen only ever computes the ONE archetype that
+  // matched (groupCtx), so xRow/xChip's 'group' list mode has nothing to bind to.
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, {
+      geo: geo(xid) as Record<string, unknown>, copy, images: appearance?.images, fontScale: appearance?.font_scale,
+      srcText: src(xid, 'text'), textCtx: { axes: config.axes, group: groupCtx },
+      srcList: src(xid, 'list'), listCtx: { axes: config.axes },
+    });
   }
 
   // topNav/grpHero always bleed full-width outside the padded content wrapper

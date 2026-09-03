@@ -141,39 +141,79 @@ export function floatStyle(p: ScreenBlockPos): CSSProperties {
   };
 }
 
+// ── List-source resolution (xRow/xChip's 'list' channel) ───────────────────
+//
+// The generic-block equivalent of resolveSrcText/resolveSrcImage above.
+// Only 'axes' and 'group' are supported — both are static, public campaign
+// config that toPublicConfig already ships to the client before the quiz is
+// answered (src/config/public.ts).
+//
+// 'results' is deliberately NOT supported here: the full results[] list is
+// the answer key, and toPublicConfig withholds it from the client entirely —
+// only a user's own already-revealed single result is ever exposed, as one
+// resolved value via resolveSrcText's ctx.results (not a list to iterate).
+// 'members'/'pairs' are live per-user roster/pairing data carrying real
+// functional behavior (pairId, live status) that a generic list can't
+// reproduce safely — the same call Summary.tsx's pairLog block already makes
+// (see the comment above its srcCtx) applies here.
+export interface SrcListRow { primary: string; secondary: string }
+
+export interface SrcListContext {
+  axes?: Array<{ label?: string; body?: string }>;
+  group?: Array<{ title?: string; body?: string }>;
+}
+
+function listRowText(mode: string, row: Record<string, unknown>): SrcListRow {
+  if (mode === 'axes') return { primary: (row.label as string) ?? '', secondary: (row.body as string) ?? '' };
+  if (mode === 'group') return { primary: (row.title as string) ?? '', secondary: (row.body as string) ?? '' };
+  return { primary: '', secondary: '' };
+}
+
+export function resolveSrcList(src: ScreenBlockSrc | undefined, ctx: SrcListContext): { bound: boolean; rows: SrcListRow[] } {
+  if (!src || (src.mode !== 'axes' && src.mode !== 'group')) return { bound: false, rows: [] };
+  const rowsAll = src.mode === 'axes' ? (ctx.axes ?? []) : (ctx.group ?? []);
+  if (!rowsAll.length) return { bound: false, rows: [] };
+  const count = src.count ?? 3;
+  return { bound: true, rows: rowsAll.slice(0, count).map(r => listRowText(src.mode, r as Record<string, unknown>)) };
+}
+
 // ── Freeform decorative blocks ("เพิ่มบล็อก" library) ───────────────────────
 //
-// xImage/xText/xSpacer/xDivider/xBox have no fixed slot in any screen's own
-// RENDERERS map — the admin lets you drop them onto ANY screen (LiffSection.tsx
-// SLOTS, kind:'extra'). This is the one shared renderer every screen's
-// RENDERERS falls back to for those ids, mirroring the admin canvas preview's
-// own rendering (LiffSection.tsx renderBlockRows, cases 'xImage'..'xBox').
-//
-// xCard/xRow/xChip (the other 3 "extra" types) bind to real campaign data
-// (axes/results/group) and are intentionally NOT handled here yet — they need
-// a resolveSrcList() equivalent to resolveSrcText/resolveSrcImage above.
-export function renderExtraBlock(
-  id: string,
-  g: Record<string, unknown>,
-  copy: Record<string, string>,
-  images: Record<string, string> | undefined,
-  fontScale?: number,
-): React.ReactNode {
+// These 8 block types have no fixed slot in any screen's own RENDERERS map —
+// the admin lets you drop them onto ANY screen (LiffSection.tsx SLOTS,
+// kind:'extra'). This is the one shared renderer every screen's RENDERERS
+// falls back to for those ids, mirroring the admin canvas preview's own
+// rendering (LiffSection.tsx renderBlockRows, cases 'xImage'..'xChip').
+export interface ExtraBlockCtx {
+  geo: Record<string, unknown>;
+  copy: Record<string, string>;
+  images?: Record<string, string>;
+  fontScale?: number;
+  /** This block's 'text' channel binding (xCard) and the context to resolve it against. */
+  srcText?: ScreenBlockSrc;
+  textCtx?: SrcTextContext;
+  /** This block's 'list' channel binding (xRow/xChip) and the context to resolve it against. */
+  srcList?: ScreenBlockSrc;
+  listCtx?: SrcListContext;
+}
+
+export function renderExtraBlock(id: string, ctx: ExtraBlockCtx): React.ReactNode {
+  const g = ctx.geo;
   switch (id) {
     case 'xImage': {
-      const src = images?.['x_image'];
-      if (!src) return null;
+      const imgSrc = ctx.images?.['x_image'];
+      if (!imgSrc) return null;
       const h = Number(g['h']) || 160;
       const fit = (g['fit'] as CSSProperties['objectFit']) || 'cover';
-      return <img key={id} src={src} alt="" style={{ display: 'block', width: '100%', height: h, objectFit: fit, borderRadius: 'var(--card-radius)' }} />;
+      return <img key={id} src={imgSrc} alt="" style={{ display: 'block', width: '100%', height: h, objectFit: fit, borderRadius: 'var(--card-radius)' }} />;
     }
     case 'xText': {
-      const text = copy['x_text'];
+      const text = ctx.copy['x_text'];
       if (!text) return null;
       const size = Number(g['size']) || 14;
       const align = (g['align'] as CSSProperties['textAlign']) || 'center';
       return (
-        <div key={id} style={{ display: 'block', textAlign: align, font: `600 ${scaleFont(size, fontScale)}px/1.6 var(--font-body,'Bai Jamjuree'),sans-serif`, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+        <div key={id} style={{ display: 'block', textAlign: align, font: `600 ${scaleFont(size, ctx.fontScale)}px/1.6 var(--font-body,'Bai Jamjuree'),sans-serif`, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
           {text}
         </div>
       );
@@ -186,6 +226,46 @@ export function renderExtraBlock(
       const color = g['xbgColor'];
       const bg = color === 'primary' ? 'var(--ac)' : color === 'soft' ? 'var(--accent-soft)' : color === 'surface' ? 'var(--card)' : 'var(--hl)';
       return <div key={id} style={{ display: 'block', height: Number(g['h']) || 80, borderRadius: Number(g['xRadius']) || 12, background: bg }} />;
+    }
+    case 'xCard': {
+      // Simpler fallback chain than the admin preview's (no "⛓ path" debug
+      // placeholder — that's an authoring affordance, not something to show
+      // a real player): bound value, else the admin's manual text, else a
+      // generic label.
+      const bound = resolveSrcText(ctx.srcText, ctx.textCtx ?? {}, ctx.copy);
+      const label = bound || ctx.copy['x_text'] || 'การ์ดผลลัพธ์';
+      const pad = Number(g['pad']) || 16;
+      return (
+        <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: 6, background: 'var(--card)', border: 'var(--border)', borderRadius: 'var(--card-radius)', padding: pad, boxShadow: 'var(--shadow)' }}>
+          <div style={{ font: `700 15px/1.5 var(--font-body,'Bai Jamjuree'),sans-serif`, color: 'var(--ink)' }}>{label}</div>
+        </div>
+      );
+    }
+    case 'xRow': {
+      const rl = resolveSrcList(ctx.srcList, ctx.listCtx ?? {});
+      if (!rl.bound) return <div key={id} style={{ display: 'block', font: "500 12px 'Bai Jamjuree',sans-serif", color: 'var(--ink3)' }}>แถวรายการ — ยังไม่ได้เลือกแหล่งข้อมูล</div>;
+      return (
+        <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rl.rows.map((row, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 10px', border: '2px solid var(--ink)', borderRadius: 'var(--radius)', background: 'var(--card)', boxShadow: '2px 3px 0 var(--ink)' }}>
+              <div style={{ font: "700 12.5px 'Bai Jamjuree',sans-serif", color: 'var(--ink)' }}>{row.primary || '—'}</div>
+              {row.secondary && <div style={{ font: "400 10.5px 'Bai Jamjuree',sans-serif", color: 'var(--ink2)' }}>{row.secondary}</div>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    case 'xChip': {
+      const rl = resolveSrcList(ctx.srcList, ctx.listCtx ?? {});
+      const align = (g['align'] as string) === 'left' ? 'flex-start' : 'center';
+      if (!rl.bound) return <div key={id} style={{ display: 'inline-block', padding: '4px 10px', border: '2px solid var(--ink)', borderRadius: 20, background: 'var(--accent-soft)', font: "600 11px 'Bai Jamjuree',sans-serif" }}>chip</div>;
+      return (
+        <div key={id} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', justifyContent: align }}>
+          {rl.rows.map((row, i) => (
+            <span key={i} style={{ padding: '4px 10px', border: '2px solid var(--ink)', borderRadius: 20, background: 'var(--accent-soft)', font: "600 11px 'Bai Jamjuree',sans-serif" }}>{row.primary || '—'}</span>
+          ))}
+        </div>
+      );
     }
     default:
       return null;

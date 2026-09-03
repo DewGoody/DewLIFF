@@ -549,8 +549,12 @@ export default function Summary({
     symbolsRow:   renderSymbolsRow,
     pairLog:      renderPairLog,
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, {
+      geo: geo(xid), copy, images: appearance?.images, fontScale: appearance?.font_scale,
+      srcText: src(xid, 'text'), textCtx: srcCtx,
+      srcList: src(xid, 'list'), listCtx: { axes: config.axes },
+    });
   }
 
   const visible = blockOrder.filter(blockVisible);

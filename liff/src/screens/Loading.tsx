@@ -59,8 +59,10 @@ export default function Loading({ config }: Props) {
       </div>
     ),
   };
-  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
-    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  // No axes/results/group context exists yet at Loading time (see the note on
+  // getScreenBlocks above) — xCard/xRow/xChip render here but always as "unbound".
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox', 'xCard', 'xRow', 'xChip']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, { geo: geo(xid), copy, images: appearance?.images, fontScale: appearance?.font_scale });
   }
 
   const visible = blockOrder.filter(blockVisible);
