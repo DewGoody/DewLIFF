@@ -3,7 +3,7 @@ import { api } from '../api';
 import { getAxisCard, findAxisId } from '../data';
 import AddFriendNudge, { nudgeSeen } from './AddFriendNudge';
 import { shareOrCopy } from '../shareUtils';
-import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults, type SrcTextContext, type ArtStyleAppearance } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults, renderExtraBlock, type SrcTextContext, type ArtStyleAppearance } from '../screenConfig';
 
 interface PairEntry {
   pairId: string; role: 'inviter'|'invitee'; partnerName: string;
@@ -549,6 +549,9 @@ export default function Summary({
     symbolsRow:   renderSymbolsRow,
     pairLog:      renderPairLog,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  }
 
   const visible = blockOrder.filter(blockVisible);
   const flowBlocks = visible.filter(id => !pos(id));

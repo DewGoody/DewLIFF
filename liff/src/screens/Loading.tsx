@@ -1,4 +1,4 @@
-import { getScreenBlocks, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface Props {
   config?: {
@@ -59,6 +59,9 @@ export default function Loading({ config }: Props) {
       </div>
     ),
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  }
 
   const visible = blockOrder.filter(blockVisible);
   const flowBlocks  = visible.filter(id => !pos(id));

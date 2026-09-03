@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface BlockGeo { h?: number; pad?: number; fit?: string; color?: string; sticky?: string; align?: string }
 
@@ -138,6 +138,9 @@ export default function Intro({ config, onStart }: Props) {
     cta:      renderCta,
     note:     renderNote,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid) as Record<string, unknown>, copy, appearance?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 

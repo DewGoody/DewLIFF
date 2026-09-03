@@ -3,7 +3,7 @@ import { api } from '../api';
 import { getAxisCard, findAxisId } from '../data';
 import AddFriendNudge, { nudgeSeen } from './AddFriendNudge';
 import { shareOrCopy } from '../shareUtils';
-import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont, getPatternDefaults } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont, getPatternDefaults, renderExtraBlock } from '../screenConfig';
 
 interface BlockGeo { h?: number; pad?: number; reveal?: string; style?: string }
 
@@ -909,6 +909,9 @@ export default function Group({ groupId, campaignId, myUserId, config, liffId, i
     axisCounts: renderAxisCounts,
     inviteMore: renderInviteMore,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid) as Record<string, unknown>, copy, appearance?.images, appearance?.font_scale);
+  }
 
   // topNav/grpHero always bleed full-width outside the padded content wrapper
   // (matching the screen's original layout); the rest render inside it. Order

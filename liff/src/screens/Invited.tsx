@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getAxisCard, findAxisId } from '../data';
 import AddFriendNudge, { nudgeSeen } from './AddFriendNudge';
-import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, resolveSrcImage, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface TeamInfo {
   archTitle?: string;
@@ -236,6 +236,9 @@ export default function Invited({ config, inviterName, inviterPic, inviterArchLa
     cta:         renderCta,
     note:        renderNote,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 

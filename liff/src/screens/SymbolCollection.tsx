@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
-import { getScreenBlocks, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface Archetype {
   code: string;
@@ -181,6 +181,9 @@ export default function SymbolCollection({ config, campaignId, onBack }: Props) 
     topNav: renderTopNav,
     symGrid: renderSymGrid,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images as Record<string, string> | undefined, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 

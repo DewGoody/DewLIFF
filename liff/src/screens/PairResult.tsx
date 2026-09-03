@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getAxisCard, findAxisId } from '../data';
 import AddFriendNudge, { nudgeSeen } from './AddFriendNudge';
 import { shareOrCopy } from '../shareUtils';
-import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults, renderExtraBlock } from '../screenConfig';
 
 interface Props {
   config: {
@@ -374,6 +374,9 @@ export default function PairResult({ config, partnerName, title, body, imageUrl,
     axisChips: cardOwnerId === 'axisChips' ? renderCardGroup : () => null,
     shareRow: renderShareRow,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, (appearance as { images?: Record<string, string> })?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 

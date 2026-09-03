@@ -141,6 +141,57 @@ export function floatStyle(p: ScreenBlockPos): CSSProperties {
   };
 }
 
+// ── Freeform decorative blocks ("เพิ่มบล็อก" library) ───────────────────────
+//
+// xImage/xText/xSpacer/xDivider/xBox have no fixed slot in any screen's own
+// RENDERERS map — the admin lets you drop them onto ANY screen (LiffSection.tsx
+// SLOTS, kind:'extra'). This is the one shared renderer every screen's
+// RENDERERS falls back to for those ids, mirroring the admin canvas preview's
+// own rendering (LiffSection.tsx renderBlockRows, cases 'xImage'..'xBox').
+//
+// xCard/xRow/xChip (the other 3 "extra" types) bind to real campaign data
+// (axes/results/group) and are intentionally NOT handled here yet — they need
+// a resolveSrcList() equivalent to resolveSrcText/resolveSrcImage above.
+export function renderExtraBlock(
+  id: string,
+  g: Record<string, unknown>,
+  copy: Record<string, string>,
+  images: Record<string, string> | undefined,
+  fontScale?: number,
+): React.ReactNode {
+  switch (id) {
+    case 'xImage': {
+      const src = images?.['x_image'];
+      if (!src) return null;
+      const h = Number(g['h']) || 160;
+      const fit = (g['fit'] as CSSProperties['objectFit']) || 'cover';
+      return <img key={id} src={src} alt="" style={{ display: 'block', width: '100%', height: h, objectFit: fit, borderRadius: 'var(--card-radius)' }} />;
+    }
+    case 'xText': {
+      const text = copy['x_text'];
+      if (!text) return null;
+      const size = Number(g['size']) || 14;
+      const align = (g['align'] as CSSProperties['textAlign']) || 'center';
+      return (
+        <div key={id} style={{ display: 'block', textAlign: align, font: `600 ${scaleFont(size, fontScale)}px/1.6 var(--font-body,'Bai Jamjuree'),sans-serif`, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+          {text}
+        </div>
+      );
+    }
+    case 'xSpacer':
+      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 16 }} />;
+    case 'xDivider':
+      return <div key={id} style={{ display: 'block', height: 2, background: 'rgba(28,26,23,.15)' }} />;
+    case 'xBox': {
+      const color = g['xbgColor'];
+      const bg = color === 'primary' ? 'var(--ac)' : color === 'soft' ? 'var(--accent-soft)' : color === 'surface' ? 'var(--card)' : 'var(--hl)';
+      return <div key={id} style={{ display: 'block', height: Number(g['h']) || 80, borderRadius: Number(g['xRadius']) || 12, background: bg }} />;
+    }
+    default:
+      return null;
+  }
+}
+
 // ── Font scale (03 Typography) ──────────────────────────────────────────────
 
 /**

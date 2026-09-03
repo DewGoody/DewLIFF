@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface QuestionData { id: string; kicker?: string; text: string; options: { id: string; label: string }[] }
 interface AxisConfig { label?: string; label_en?: string; body?: string; image_url?: string }
@@ -137,6 +137,9 @@ export default function Question({ config, questionIndex, onAnswer, onBack }: Pr
     options: renderOptions,
     backRow: renderBackRow,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
   // progress keeps its own top padding wrapper (like Intro's kv); qCard/options/backRow

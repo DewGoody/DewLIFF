@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AddFriendNudge, { nudgeSeen } from './AddFriendNudge';
 import { shareOrCopy } from '../shareUtils';
-import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults, type ArtStyleAppearance } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, getPatternDefaults, renderExtraBlock, type ArtStyleAppearance } from '../screenConfig';
 
 interface Props {
   config: {
@@ -290,6 +290,9 @@ export default function SoloShare({ config, campaignId, liffId, archTitle, archT
     survivorCard: renderSurvivorCard,
     shareRow:     renderShareRow,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, (appearance as { images?: Record<string, string> })?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 

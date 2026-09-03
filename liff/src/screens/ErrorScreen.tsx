@@ -1,4 +1,4 @@
-import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont } from '../screenConfig';
+import { getScreenBlocks, resolveSrcText, floatStyle, scaleFont, renderExtraBlock } from '../screenConfig';
 
 interface AxisConfig { label?: string; label_en?: string; body?: string; image_url?: string }
 
@@ -69,6 +69,9 @@ export default function ErrorScreen({ title, body, onRetry, copy = {}, cardUrl, 
     errCopy: renderErrCopy,
     errRetry: renderErrRetry,
   };
+  for (const xid of ['xImage', 'xText', 'xSpacer', 'xDivider', 'xBox']) {
+    RENDERERS[xid] = () => renderExtraBlock(xid, geo(xid), copy, appearance?.images, appearance?.font_scale);
+  }
 
   // ── Build output ──────────────────────────────────────────────────────────
 
