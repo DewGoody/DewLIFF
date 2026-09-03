@@ -357,11 +357,17 @@ export default function App() {
   // --- Init ---
   useEffect(() => {
     if (IS_PREVIEW) return; // skip real init in preview mode
-    // Apply cached theme immediately so loading screen shows correct colors before API responds
+    // Apply cached theme immediately so loading screen shows correct colors,
+    // copy and images (e.g. the loading art) before the real config fetch
+    // resolves, instead of the bare defaults.
     try {
       const cid = parseCampaignId();
       const cached = cid && localStorage.getItem(`theme_${cid}`);
-      if (cached) { const { brand, appearance } = JSON.parse(cached); applyTheme(brand, appearance); }
+      if (cached) {
+        const { brand, appearance } = JSON.parse(cached);
+        applyTheme(brand, appearance);
+        setConfig(prev => ({ ...prev, brand, appearance }));
+      }
     } catch {}
     async function init() {
       try {
