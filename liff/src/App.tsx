@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { setToken, api } from './api';
+import { api } from './api';
 import { getAxisCard, findAxisId } from './data';
 import { getScreenBlocks, floatStyle, scaleFont, getPatternDefaults } from './screenConfig';
 import Loading from './screens/Loading';
@@ -390,9 +390,6 @@ export default function App() {
           liff.login({ redirectUri: location.href });
           return;
         }
-
-        const token = liff.getIDToken();
-        setToken(token);
 
         // getProfile and getFriendship are independent LINE SDK calls — run them
         // concurrently instead of back-to-back to shave one network round-trip
