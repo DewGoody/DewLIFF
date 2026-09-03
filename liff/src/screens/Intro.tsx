@@ -70,15 +70,10 @@ export default function Intro({ config, onStart }: Props) {
 
   const renderKv = () => {
     if (!blockVisible('kv')) return null;
+    if (!kvUrl) return null; // matches every other image block (e.g. Loading's loadArt) — hide, don't show a dev placeholder to real players
     const g = geo('kv');
     const heightStyle = g.h ? { height: g.h, objectFit: (g.fit || 'cover') as React.CSSProperties['objectFit'] } : {};
-    return kvUrl ? (
-      <img key="kv" src={kvUrl} alt="" style={{ display:'block', width:'100%', height:'auto', ...heightStyle }} />
-    ) : (
-      <div key="kv" style={{ height: g.h || 200, background:'linear-gradient(180deg,#FCEFE0 0%,#F7F1E3 100%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ color:'var(--ink3)', font:`500 ${fs(11)}px var(--font-body,'Bai Jamjuree'),sans-serif`, border:'1.5px dashed var(--ink3)', padding:'8px 14px', borderRadius:8 }}>KV IMAGE</div>
-      </div>
-    );
+    return <img key="kv" src={kvUrl} alt="" style={{ display:'block', width:'100%', height:'auto', ...heightStyle }} />;
   };
 
   const renderInfoCard = () => {

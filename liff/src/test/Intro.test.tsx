@@ -27,9 +27,9 @@ describe('Intro — default behavior (no screen_config)', () => {
     expect(onStart).toHaveBeenCalledWith(false);
   });
 
-  it('renders the KV placeholder when no image is configured', () => {
-    render(<Intro config={baseConfig} onStart={vi.fn()} />);
-    expect(screen.getByText('KV IMAGE')).toBeInTheDocument();
+  it('renders no KV image element when no image is configured (hidden, not a placeholder box)', () => {
+    const { container } = render(<Intro config={baseConfig} onStart={vi.fn()} />);
+    expect(container.querySelector('img')).toBeNull();
   });
 });
 

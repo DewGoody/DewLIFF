@@ -144,8 +144,6 @@ const KIND: Record<string, { c: string; label: string; icon: string }> = {
   extra:  { c:'#B07B12', label:'ตกแต่ง',       icon:'✦' },
 };
 
-const EXTRAS = ['xImage','xText','xSpacer','xDivider','xBox','xCard','xRow','xChip'];
-
 const ART_SHAPES: Record<string, { r: number; radius: number }> = {
   card:   { r:4/3,  radius:8 },
   circle: { r:1,    radius:999 },
@@ -768,7 +766,6 @@ export default function LayoutEditor({
             const def = SLOTS[b.id] || { label: b.id, kind: 'extra', bind: '' };
             const kd  = KIND[def.kind] || KIND.extra;
             const selected = sel === b.uid;
-            const isExtra  = EXTRAS.includes(b.id);
             const rows = rowsNorm(b);
 
             return (
@@ -795,7 +792,7 @@ export default function LayoutEditor({
                     <span style={{ ...MONO, fontSize: 9.5, fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap' }}>{def.label}</span>
                     {def.bind && <span style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,.65)', whiteSpace: 'nowrap', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>🔒 {def.bind}</span>}
                     <button onClick={e => { e.stopPropagation(); onToggleShow(b.uid); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 10, color: '#FFFFFF', padding: '0 1px' }}>{b.show ? '◉' : '◌'}</button>
-                    {isExtra && <button onClick={e => { e.stopPropagation(); onRemove(b.uid); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 9, color: '#FFD9DE', padding: '0 1px' }}>✕</button>}
+                    <button onClick={e => { e.stopPropagation(); onRemove(b.uid); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 9, color: '#FFD9DE', padding: '0 1px' }}>✕</button>
                   </div>
                 )}
 
